@@ -2,9 +2,11 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import type { ConnectionStatus, SftpEntry } from '@/types';
 import * as sftpIpc from '@ipc/sftp';
+import { openInEditor } from '@utils/openInEditor';
 import type { TerminalStore } from './TerminalStore';
 import type { SessionStore } from './SessionStore';
 import type { FileConnectionStore } from './FileConnectionStore';
+import type { SettingsStore } from './SettingsStore';
 
 function joinRemotePath(parent: string, name: string): string {
   const base = parent === '/' ? '' : parent.replace(/\/$/, '');
@@ -33,9 +35,14 @@ export class FileBrowserStore {
   error: string | null = null;
   selectedEntry: SftpEntry | null = null;
   private connectionStatus: ConnectionStatus | null = null;
+  private settingsStore: SettingsStore | null = null;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setSettingsStore(settingsStore: SettingsStore) {
+    this.settingsStore = settingsStore;
   }
 
   get breadcrumbs(): { label: string; path: string }[] {
@@ -210,6 +217,98 @@ export class FileBrowserStore {
 
   selectEntry(entry: SftpEntry | null) {
     this.selectedEntry = entry;
+  }
+
+  async copyPath(path: string) {
+    try {
+      await navigator.clipboard.writeText(path);
+    } catch (e) {
+      console.error('[FileBrowserStore] copyPath failed:', e);
+    }
+  }
+
+  async openEntry(entry: SftpEntry) {
+    if (entry.isDirectory) {
+      this.navigateTo(entry.path);
+      return;
+    }
+
+    if (!this.connectionId) return;
+    if (!this.settingsStore) {
+      this.error = 'SettingsStore не инициализирован';
+      return;
+    }
+
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+
+    try {
+      const { localPath } = await sftpIpc.sftpFetchToCache(
+        this.connectionId,
+        entry.path,
+      );
+      await openInEditor(localPath, this.settingsStore.settings.defaultEditorPath);
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    } catch (e) {
+      runInAction(() => {
+        this.error = e instanceof Error ? e.message : 'Не удалось открыть файл';
+        this.isLoading = false;
+      });
+    }
+  }
+
+  async deleteEntry(entry: SftpEntry) {
+    if (!this.connectionId) return;
+    if (!window.confirm(`Удалить «${entry.name}»?`)) return;
+
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+
+    try {
+      await sftpIpc.sftpDelete(this.connectionId, entry.path, entry.isDirectory);
+      await this.loadDir(this.cwd);
+    } catch (e) {
+      runInAction(() => {
+        this.error = e instanceof Error ? e.message : 'Не удалось удалить';
+        this.isLoading = false;
+      });
+    }
+  }
+
+  async renameEntry(entry: SftpEntry, newName?: string) {
+    if (!this.connectionId) return;
+
+    const nextName =
+      newName ??
+      window.prompt('Новое имя', entry.name)?.trim() ??
+      '';
+    if (!nextName) return;
+
+    const parent =
+      entry.path.split('/').slice(0, -1).join('/') || '/';
+    const newPath = joinRemotePath(parent, nextName);
+
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+
+    try {
+      await sftpIpc.sftpRename(this.connectionId, entry.path, newPath);
+      await this.loadDir(this.cwd);
+    } catch (e) {
+      runInAction(() => {
+        this.error =
+          e instanceof Error ? e.message : 'Не удалось переименовать';
+        this.isLoading = false;
+      });
+    }
   }
 
   async upload() {

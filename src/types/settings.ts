@@ -7,6 +7,7 @@ export const appSettingsSchema = z.object({
   terminalFontFamily: z.string().min(1),
   defaultSshPort: z.number().int().min(1).max(65535),
   defaultFtpPort: z.number().int().min(1).max(65535),
+  defaultEditorPath: z.string(),
 });
 
 export type AppSettings = z.infer<typeof appSettingsSchema>;
@@ -18,4 +19,5 @@ export const defaultAppSettings: AppSettings = {
   terminalFontFamily: 'Consolas, "Courier New", monospace',
   defaultSshPort: 22,
   defaultFtpPort: 21,
+  defaultEditorPath: '',
 };

@@ -20,6 +20,8 @@ export class RootStore {
     this.fileBrowserStore = new FileBrowserStore();
     this.fileConnectionStore = new FileConnectionStore();
     this.settingsStore = new SettingsStore();
+
+    this.fileBrowserStore.setSettingsStore(this.settingsStore);
   }
 }
 

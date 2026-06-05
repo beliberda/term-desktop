@@ -258,6 +258,57 @@ impl ConnectionPool {
         }
     }
 
+    pub async fn delete(
+        &self,
+        connection_id: &str,
+        remote_path: &str,
+        is_directory: bool,
+    ) -> Result<(), String> {
+        let handle = self.get(connection_id)?;
+        match &handle.kind {
+            ConnectionKind::Ssh {
+                ssh_handle,
+                sftp,
+                ..
+            } => crate::services::sftp::delete(ssh_handle, sftp, remote_path, is_directory).await,
+            ConnectionKind::Ftp { client } => ftp::delete(client, remote_path, is_directory).await,
+        }
+    }
+
+    pub async fn rename(
+        &self,
+        connection_id: &str,
+        old_path: &str,
+        new_path: &str,
+    ) -> Result<(), String> {
+        let handle = self.get(connection_id)?;
+        match &handle.kind {
+            ConnectionKind::Ssh {
+                ssh_handle,
+                sftp,
+                ..
+            } => crate::services::sftp::rename(ssh_handle, sftp, old_path, new_path).await,
+            ConnectionKind::Ftp { client } => ftp::rename(client, old_path, new_path).await,
+        }
+    }
+
+    pub async fn fetch_to_cache(
+        &self,
+        app: &tauri::AppHandle,
+        connection_id: &str,
+        remote_path: &str,
+    ) -> Result<String, String> {
+        let handle = self.get(connection_id)?;
+        match &handle.kind {
+            ConnectionKind::Ssh {
+                ssh_handle,
+                sftp,
+                ..
+            } => crate::services::sftp::fetch_to_cache(app, ssh_handle, sftp, remote_path).await,
+            ConnectionKind::Ftp { client } => ftp::fetch_to_cache(app, client, remote_path).await,
+        }
+    }
+
     fn get(&self, connection_id: &str) -> Result<&ConnectionHandle, String> {
         self.connections
             .get(connection_id)

@@ -9,6 +9,25 @@
     "core:default",
     "dialog:default",
     "dialog:allow-save",
-    "core:event:default"
+    "core:event:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$TEMP/**" }
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "editor",
+          "cmd": { "validator": "^[A-Za-z]:\\\\\\\\.+\\\\\\\\[^\\\\\\\\]+\\\\.exe$" },
+          "args": [{ "validator": "^.+$" }],
+          "sidecar": false
+        }
+      ]
+    }
   ]
 }

@@ -42,6 +42,8 @@ fn init_tracing(app: &tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             init_tracing(&app.handle());
 
@@ -72,6 +74,9 @@ pub fn run() {
             commands::sftp::sftp_upload,
             commands::sftp::sftp_download,
             commands::sftp::sftp_mkdir,
+            commands::sftp::sftp_delete,
+            commands::sftp::sftp_rename,
+            commands::sftp::sftp_fetch_to_cache,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

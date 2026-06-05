@@ -9,6 +9,8 @@ pub struct AppSettings {
     pub terminal_font_family: String,
     pub default_ssh_port: u16,
     pub default_ftp_port: u16,
+    #[serde(default)]
+    pub default_editor_path: String,
 }
 
 impl Default for AppSettings {
@@ -20,6 +22,7 @@ impl Default for AppSettings {
             terminal_font_family: "Consolas, \"Courier New\", monospace".to_string(),
             default_ssh_port: 22,
             default_ftp_port: 21,
+            default_editor_path: String::new(),
         }
     }
 }

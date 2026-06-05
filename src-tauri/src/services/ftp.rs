@@ -199,6 +199,97 @@ pub async fn mkdir(client: &SharedFtpClient, remote_path: &str) -> Result<(), St
         .map_err(|e| format!("failed to create directory: {e}"))
 }
 
+pub async fn rename(
+    client: &SharedFtpClient,
+    old_path: &str,
+    new_path: &str,
+) -> Result<(), String> {
+    let old_path = normalize_remote_path(old_path);
+    let new_path = normalize_remote_path(new_path);
+    let mut ftp = client.lock().await;
+    ftp.rename(&old_path, &new_path)
+        .await
+        .map_err(|e| format!("failed to rename: {e}"))
+}
+
+async fn delete_inner(
+    client: &SharedFtpClient,
+    remote_path: &str,
+    is_directory: bool,
+) -> Result<(), String> {
+    let remote_path = normalize_remote_path(remote_path);
+    if is_directory {
+        let entries = list_dir(client, &remote_path).await?;
+        for entry in entries {
+            Box::pin(delete_inner(client, &entry.path, entry.is_directory)).await?;
+        }
+        let mut ftp = client.lock().await;
+        ftp.rmdir(&remote_path)
+            .await
+            .map_err(|e| format!("failed to remove directory: {e}"))
+    } else {
+        let mut ftp = client.lock().await;
+        ftp.rm(&remote_path)
+            .await
+            .map_err(|e| format!("failed to remove file: {e}"))
+    }
+}
+
+pub async fn delete(
+    client: &SharedFtpClient,
+    remote_path: &str,
+    is_directory: bool,
+) -> Result<(), String> {
+    delete_inner(client, remote_path, is_directory).await
+}
+
+pub async fn fetch_to_cache(
+    app: &tauri::AppHandle,
+    client: &SharedFtpClient,
+    remote_path: &str,
+) -> Result<String, String> {
+    use tauri::Manager;
+
+    let remote_path = normalize_remote_path(remote_path);
+    let filename = remote_path
+        .split('/')
+        .filter(|p| !p.is_empty())
+        .last()
+        .ok_or_else(|| "invalid remote path".to_string())?;
+
+    let cache_dir = app
+        .path()
+        .app_cache_dir()
+        .map_err(|e| format!("failed to resolve app cache dir: {e}"))?
+        .join("termassh")
+        .join("open");
+    std::fs::create_dir_all(&cache_dir)
+        .map_err(|e| format!("failed to create cache dir: {e}"))?;
+
+    let local_path = cache_dir.join(filename);
+
+    let mut ftp = client.lock().await;
+    let mut stream = ftp
+        .retr_as_stream(&remote_path)
+        .await
+        .map_err(|e| format!("failed to download file: {e}"))?;
+
+    let mut data = Vec::new();
+    stream
+        .read_to_end(&mut data)
+        .await
+        .map_err(|e| format!("failed to read FTP stream: {e}"))?;
+
+    ftp.finalize_retr_stream(stream)
+        .await
+        .map_err(|e| format!("failed to finalize download: {e}"))?;
+
+    std::fs::write(&local_path, data)
+        .map_err(|e| format!("failed to write cached file: {e}"))?;
+
+    Ok(local_path.to_string_lossy().to_string())
+}
+
 pub async fn disconnect_client(client: &SharedFtpClient) {
     let mut ftp = client.lock().await;
     let _ = ftp.quit().await;

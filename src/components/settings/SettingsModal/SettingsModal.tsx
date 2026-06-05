@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { open } from '@tauri-apps/plugin-dialog';
 import { useStores } from '@stores/index';
 import type { AppSettings } from '@/types';
 import styles from './SettingsModal.module.css';
@@ -24,6 +25,16 @@ export const SettingsModal = observer(function SettingsModal() {
   const handleClose = () => {
     settingsStore.closeForm();
     setDraft(null);
+  };
+
+  const handleBrowseEditor = async () => {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'Executable', extensions: ['exe'] }],
+    });
+    if (typeof selected === 'string') {
+      update('defaultEditorPath', selected);
+    }
   };
 
   return (
@@ -81,6 +92,28 @@ export const SettingsModal = observer(function SettingsModal() {
             value={values.terminalFontFamily}
             onChange={(e) => update('terminalFontFamily', e.target.value)}
           />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="settings-editor-path">
+            Редактор по умолчанию (опционально)
+          </label>
+          <div className={styles.keyRow}>
+            <input
+              id="settings-editor-path"
+              type="text"
+              className={styles.input}
+              value={values.defaultEditorPath}
+              onChange={(e) => update('defaultEditorPath', e.target.value)}
+              placeholder="Пусто — системное приложение по умолчанию"
+            />
+            <button
+              type="button"
+              className={styles.browseBtn}
+              onClick={() => void handleBrowseEditor()}
+            >
+              Обзор
+            </button>
+          </div>
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-ssh-port">

@@ -2,6 +2,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use russh_sftp::client::SftpSession;
+use tauri::Manager;
 use tokio::sync::Mutex;
 
 use crate::models::sftp::SftpEntry;
@@ -208,4 +209,115 @@ pub async fn mkdir(
     sftp.create_dir(&remote_path)
         .await
         .map_err(|e| format!("failed to create directory: {e}"))
+}
+
+pub async fn rename(
+    ssh_handle: &SharedSshHandle,
+    cache: &SftpSessionCache,
+    old_path: &str,
+    new_path: &str,
+) -> Result<(), String> {
+    let old_path = normalize_remote_path(old_path);
+    let new_path = normalize_remote_path(new_path);
+
+    ensure_sftp(ssh_handle, cache).await?;
+    let guard = cache.0.lock().await;
+    let sftp = guard
+        .as_ref()
+        .ok_or_else(|| "SFTP session not initialized".to_string())?;
+
+    sftp.rename(old_path, new_path)
+        .await
+        .map_err(|e| format!("failed to rename: {e}"))
+}
+
+async fn delete_inner(
+    ssh_handle: &SharedSshHandle,
+    cache: &SftpSessionCache,
+    remote_path: &str,
+    is_directory: bool,
+) -> Result<(), String> {
+    let remote_path = normalize_remote_path(remote_path);
+
+    if is_directory {
+        let entries = list_dir(ssh_handle, cache, &remote_path).await?;
+        for entry in entries {
+            Box::pin(delete_inner(
+                ssh_handle,
+                cache,
+                &entry.path,
+                entry.is_directory,
+            ))
+            .await?;
+        }
+
+        ensure_sftp(ssh_handle, cache).await?;
+        let guard = cache.0.lock().await;
+        let sftp = guard
+            .as_ref()
+            .ok_or_else(|| "SFTP session not initialized".to_string())?;
+        sftp.remove_dir(remote_path)
+            .await
+            .map_err(|e| format!("failed to remove directory: {e}"))
+    } else {
+        ensure_sftp(ssh_handle, cache).await?;
+        let guard = cache.0.lock().await;
+        let sftp = guard
+            .as_ref()
+            .ok_or_else(|| "SFTP session not initialized".to_string())?;
+        sftp.remove_file(remote_path)
+            .await
+            .map_err(|e| format!("failed to remove file: {e}"))
+    }
+}
+
+pub async fn delete(
+    ssh_handle: &SharedSshHandle,
+    cache: &SftpSessionCache,
+    remote_path: &str,
+    is_directory: bool,
+) -> Result<(), String> {
+    delete_inner(ssh_handle, cache, remote_path, is_directory).await
+}
+
+pub async fn fetch_to_cache(
+    app: &tauri::AppHandle,
+    ssh_handle: &SharedSshHandle,
+    cache: &SftpSessionCache,
+    remote_path: &str,
+) -> Result<String, String> {
+    let remote_path = normalize_remote_path(remote_path);
+
+    let filename = remote_path
+        .split('/')
+        .filter(|p| !p.is_empty())
+        .last()
+        .ok_or_else(|| "invalid remote path".to_string())?;
+
+    let cache_dir = app
+        .path()
+        .app_cache_dir()
+        .map_err(|e| format!("failed to resolve app cache dir: {e}"))?
+        .join("termassh")
+        .join("open");
+    std::fs::create_dir_all(&cache_dir)
+        .map_err(|e| format!("failed to create cache dir: {e}"))?;
+
+    let local_path = cache_dir.join(filename);
+
+    ensure_sftp(ssh_handle, cache).await?;
+    let guard = cache.0.lock().await;
+    let sftp = guard
+        .as_ref()
+        .ok_or_else(|| "SFTP session not initialized".to_string())?;
+
+    let data = sftp
+        .read(&remote_path)
+        .await
+        .map_err(|e| format!("failed to read remote file: {e}"))?;
+
+    std::fs::write(&local_path, data)
+        .map_err(|e| format!("failed to write cached file: {e}"))?;
+
+    Ok(local_path.to_string_lossy().to_string())
 }

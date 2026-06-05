@@ -36,3 +36,33 @@ export async function sftpMkdir(
 ): Promise<void> {
   await safeInvoke('sftp_mkdir', { connectionId, remotePath });
 }
+
+export async function sftpDelete(
+  connectionId: string,
+  remotePath: string,
+  isDirectory: boolean,
+): Promise<void> {
+  await safeInvoke('sftp_delete', { connectionId, remotePath, isDirectory });
+}
+
+export async function sftpRename(
+  connectionId: string,
+  oldPath: string,
+  newPath: string,
+): Promise<void> {
+  await safeInvoke('sftp_rename', { connectionId, oldPath, newPath });
+}
+
+export interface FetchToCacheResponse {
+  localPath: string;
+}
+
+export async function sftpFetchToCache(
+  connectionId: string,
+  remotePath: string,
+): Promise<FetchToCacheResponse> {
+  return safeInvoke<FetchToCacheResponse>('sftp_fetch_to_cache', {
+    connectionId,
+    remotePath,
+  });
+}
