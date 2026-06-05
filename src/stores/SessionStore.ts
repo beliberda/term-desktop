@@ -44,6 +44,10 @@ export class SessionStore {
     this.error = null;
   }
 
+  selectSession(id: string) {
+    this.selectedId = id;
+  }
+
   openEditForm(id: string) {
     const session = this.sessions.find((s) => s.id === id);
     if (!session) return;
@@ -52,6 +56,36 @@ export class SessionStore {
     this.isFormOpen = true;
     this.formErrors = {};
     this.error = null;
+  }
+
+  async duplicateSession(id: string) {
+    const source = this.sessions.find((s) => s.id === id);
+    if (!source) return;
+
+    const copy = prepareSessionForSave(
+      {
+        ...source,
+        id: crypto.randomUUID(),
+        name: `${source.name} (копия)`,
+      },
+      true,
+    );
+
+    const next = [...this.sessions, copy];
+
+    try {
+      await sessionsIpc.sessionsSave(next);
+      runInAction(() => {
+        this.sessions = next;
+        this.selectedId = copy.id;
+        this.error = null;
+      });
+    } catch (e) {
+      runInAction(() => {
+        this.error =
+          e instanceof Error ? e.message : 'Не удалось дублировать сессию';
+      });
+    }
   }
 
   closeForm() {

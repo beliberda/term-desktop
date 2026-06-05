@@ -1,9 +1,22 @@
+import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '@stores/index';
+import { SessionContextMenu } from './SessionContextMenu';
 import styles from './SessionList.module.css';
+
+interface ContextMenuState {
+  sessionId: string;
+  x: number;
+  y: number;
+}
 
 export const SessionList = observer(function SessionList() {
   const { sessionStore, terminalStore } = useStores();
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+
+  const contextSession = contextMenu
+    ? sessionStore.sessions.find((s) => s.id === contextMenu.sessionId)
+    : null;
 
   if (sessionStore.isLoading) {
     return <div className={styles.stateMessage}>Загрузка сессий...</div>;
@@ -30,10 +43,18 @@ export const SessionList = observer(function SessionList() {
           <li
             key={session.id}
             className={`${styles.item} ${sessionStore.selectedId === session.id ? styles.itemSelected : ''}`}
-            onClick={() => sessionStore.openEditForm(session.id)}
-            onDoubleClick={() =>
-              terminalStore.requestConnect(session.id, session)
-            }
+            onClick={() => {
+              sessionStore.selectSession(session.id);
+              terminalStore.requestConnect(session.id, session);
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu({
+                sessionId: session.id,
+                x: e.clientX,
+                y: e.clientY,
+              });
+            }}
           >
             <div className={styles.info}>
               <div className={styles.name}>{session.name}</div>
@@ -42,6 +63,17 @@ export const SessionList = observer(function SessionList() {
               </div>
             </div>
             <span className={styles.badge}>{session.protocol}</span>
+            <button
+              type="button"
+              className={styles.editBtn}
+              title="Редактировать"
+              onClick={(e) => {
+                e.stopPropagation();
+                sessionStore.openEditForm(session.id);
+              }}
+            >
+              ✎
+            </button>
             <button
               type="button"
               className={styles.deleteBtn}
@@ -58,6 +90,13 @@ export const SessionList = observer(function SessionList() {
           </li>
         ))}
       </ul>
+      {contextMenu && contextSession && (
+        <SessionContextMenu
+          session={contextSession}
+          anchor={{ x: contextMenu.x, y: contextMenu.y }}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 });

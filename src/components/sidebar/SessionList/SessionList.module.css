@@ -61,6 +61,7 @@
   flex-shrink: 0;
 }
 
+.editBtn,
 .deleteBtn {
   flex-shrink: 0;
   width: 24px;
@@ -70,8 +71,17 @@
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
+}
+
+.editBtn:hover {
+  background: var(--color-tab-inactive);
+  color: var(--color-accent);
+}
+
+.deleteBtn {
+  font-size: 16px;
 }
 
 .deleteBtn:hover {
