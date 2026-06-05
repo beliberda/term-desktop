@@ -92,9 +92,36 @@ export const SftpFileList = observer(function SftpFileList() {
                 >
                   {entry.isDirectory ? '📁' : '📄'}
                 </span>
-                <span className={styles.name} title={entry.name}>
-                  {entry.name}
-                </span>
+                {fileBrowserStore.renameTargetPath === entry.path ? (
+                  <input
+                    type="text"
+                    className={styles.renameInput}
+                    value={fileBrowserStore.renameDraft}
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      fileBrowserStore.renameDraft = e.target.value;
+                    }}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        void fileBrowserStore.commitRename();
+                      }
+                      if (e.key === 'Escape') {
+                        e.preventDefault();
+                        fileBrowserStore.cancelRename();
+                      }
+                    }}
+                    onBlur={() => fileBrowserStore.cancelRename()}
+                  />
+                ) : (
+                  <span className={styles.name} title={entry.name}>
+                    {entry.name}
+                  </span>
+                )}
                 <span className={styles.meta}>
                   {entry.isDirectory ? '—' : formatSize(entry.size)}
                 </span>

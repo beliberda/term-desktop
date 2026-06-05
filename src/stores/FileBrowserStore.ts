@@ -34,6 +34,8 @@ export class FileBrowserStore {
   isLoading = false;
   error: string | null = null;
   selectedEntry: SftpEntry | null = null;
+  renameTargetPath: string | null = null;
+  renameDraft = '';
   private connectionStatus: ConnectionStatus | null = null;
   private settingsStore: SettingsStore | null = null;
 
@@ -175,6 +177,7 @@ export class FileBrowserStore {
     if (!this.connectionId) return;
 
     const target = path ?? this.cwd;
+    this.cancelRename();
 
     runInAction(() => {
       this.isLoading = true;
@@ -217,6 +220,51 @@ export class FileBrowserStore {
 
   selectEntry(entry: SftpEntry | null) {
     this.selectedEntry = entry;
+  }
+
+  startRename(entry: SftpEntry) {
+    this.renameTargetPath = entry.path;
+    this.renameDraft = entry.name;
+  }
+
+  cancelRename() {
+    this.renameTargetPath = null;
+    this.renameDraft = '';
+  }
+
+  async commitRename() {
+    if (!this.connectionId) return;
+
+    const targetPath = this.renameTargetPath;
+    if (!targetPath) return;
+
+    const nextName = this.renameDraft.trim();
+    if (!nextName) {
+      this.cancelRename();
+      return;
+    }
+
+    const parent =
+      targetPath.split('/').slice(0, -1).join('/') || '/';
+    const newPath = joinRemotePath(parent, nextName);
+
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+
+    try {
+      await sftpIpc.sftpRename(this.connectionId, targetPath, newPath);
+      await this.loadDir(this.cwd);
+    } catch (e) {
+      runInAction(() => {
+        this.error =
+          e instanceof Error ? e.message : 'Не удалось переименовать';
+        this.isLoading = false;
+      });
+    } finally {
+      this.cancelRename();
+    }
   }
 
   async copyPath(path: string) {
@@ -263,6 +311,45 @@ export class FileBrowserStore {
 
   async deleteEntry(entry: SftpEntry) {
     if (!this.connectionId) return;
+
+    // Перед удалением сбрасываем inline rename, чтобы не оставлять инпут "висеть"
+    // при изменении списка.
+    this.cancelRename();
+
+    if (entry.isDirectory) {
+      runInAction(() => {
+        this.isLoading = true;
+        this.error = null;
+      });
+
+      try {
+        const { count } = await sftpIpc.sftpCountFiles(
+          this.connectionId,
+          entry.path,
+        );
+
+        const ok = window.confirm(
+          `Удалить каталог «${entry.name}»?\nПуть: ${entry.path}\nФайлов: ${count}`,
+        );
+        if (!ok) {
+          runInAction(() => {
+            this.isLoading = false;
+          });
+          return;
+        }
+
+        await sftpIpc.sftpDelete(this.connectionId, entry.path, true);
+        await this.loadDir(this.cwd);
+      } catch (e) {
+        runInAction(() => {
+          this.error = e instanceof Error ? e.message : 'Не удалось удалить';
+          this.isLoading = false;
+        });
+      }
+
+      return;
+    }
+
     if (!window.confirm(`Удалить «${entry.name}»?`)) return;
 
     runInAction(() => {
@@ -271,7 +358,7 @@ export class FileBrowserStore {
     });
 
     try {
-      await sftpIpc.sftpDelete(this.connectionId, entry.path, entry.isDirectory);
+      await sftpIpc.sftpDelete(this.connectionId, entry.path, false);
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
@@ -284,10 +371,7 @@ export class FileBrowserStore {
   async renameEntry(entry: SftpEntry, newName?: string) {
     if (!this.connectionId) return;
 
-    const nextName =
-      newName ??
-      window.prompt('Новое имя', entry.name)?.trim() ??
-      '';
+    const nextName = (newName ?? '').trim();
     if (!nextName) return;
 
     const parent =
@@ -422,5 +506,6 @@ export class FileBrowserStore {
     this.isLoading = false;
     this.error = null;
     this.selectedEntry = null;
+    this.cancelRename();
   }
 }

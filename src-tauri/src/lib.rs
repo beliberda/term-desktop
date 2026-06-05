@@ -75,6 +75,7 @@ pub fn run() {
             commands::sftp::sftp_download,
             commands::sftp::sftp_mkdir,
             commands::sftp::sftp_delete,
+            commands::sftp::sftp_count_files,
             commands::sftp::sftp_rename,
             commands::sftp::sftp_fetch_to_cache,
         ])

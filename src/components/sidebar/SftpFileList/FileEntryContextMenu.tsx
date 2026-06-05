@@ -96,7 +96,7 @@ export const FileEntryContextMenu = observer(function FileEntryContextMenu({
         type="button"
         className={styles.menuItem}
         onClick={() => {
-          void fileBrowserStore.renameEntry(entry);
+          fileBrowserStore.startRename(entry);
           onClose();
         }}
       >

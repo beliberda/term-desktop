@@ -243,6 +243,35 @@ pub async fn delete(
     delete_inner(client, remote_path, is_directory).await
 }
 
+async fn count_files_inner(
+    client: &SharedFtpClient,
+    remote_path: &str,
+) -> Result<u64, String> {
+    let remote_path = normalize_remote_path(remote_path);
+    // Ожидаем, что `remote_path` передаётся именно каталогом (как в UX для удаления).
+    // Для корректности: если это окажется файлом, `list_dir` упадёт и вернём ошибку наружу.
+    let entries = list_dir(client, &remote_path).await?;
+    let mut total_files = 0u64;
+
+    for entry in entries {
+        if entry.is_directory {
+            total_files += Box::pin(count_files_inner(client, &entry.path)).await?;
+        } else {
+            total_files += 1;
+        }
+    }
+
+    Ok(total_files)
+}
+
+/// Рекурсивный подсчёт файлов внутри пути (каталоги не считаются).
+pub async fn count_files(
+    client: &SharedFtpClient,
+    remote_path: &str,
+) -> Result<u64, String> {
+    count_files_inner(client, remote_path).await
+}
+
 pub async fn fetch_to_cache(
     app: &tauri::AppHandle,
     client: &SharedFtpClient,

@@ -280,6 +280,58 @@ pub async fn delete(
     delete_inner(ssh_handle, cache, remote_path, is_directory).await
 }
 
+async fn count_files_inner(
+    ssh_handle: &SharedSshHandle,
+    cache: &SftpSessionCache,
+    remote_path: &str,
+) -> Result<u64, String> {
+    let remote_path = normalize_remote_path(remote_path);
+
+    ensure_sftp(ssh_handle, cache).await?;
+
+    // Определяем, каталог это или файл, через metadata, чтобы корректно обрабатывать файлы.
+    let is_dir = {
+        let guard = cache.0.lock().await;
+        let sftp = guard
+            .as_ref()
+            .ok_or_else(|| "SFTP session not initialized".to_string())?;
+
+        let metadata = sftp
+            .metadata(&remote_path)
+            .await
+            .map_err(|e| format!("failed to stat: {e}"))?;
+
+        metadata.is_dir()
+    };
+
+    if !is_dir {
+        return Ok(1);
+    }
+
+    let entries = list_dir(ssh_handle, cache, &remote_path).await?;
+    let mut total_files = 0u64;
+
+    for entry in entries {
+        if entry.is_directory {
+            total_files += Box::pin(count_files_inner(ssh_handle, cache, &entry.path)).await?;
+        } else {
+            total_files += 1;
+        }
+    }
+
+    Ok(total_files)
+}
+
+/// Рекурсивный подсчёт файлов внутри пути.
+/// Важно: учитываются только файлы, сами каталоги не считаются.
+pub async fn count_files(
+    ssh_handle: &SharedSshHandle,
+    cache: &SftpSessionCache,
+    remote_path: &str,
+) -> Result<u64, String> {
+    count_files_inner(ssh_handle, cache, remote_path).await
+}
+
 pub async fn fetch_to_cache(
     app: &tauri::AppHandle,
     ssh_handle: &SharedSshHandle,

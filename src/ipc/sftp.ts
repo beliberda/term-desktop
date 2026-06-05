@@ -57,11 +57,25 @@ export interface FetchToCacheResponse {
   localPath: string;
 }
 
+export interface CountFilesResponse {
+  count: number;
+}
+
 export async function sftpFetchToCache(
   connectionId: string,
   remotePath: string,
 ): Promise<FetchToCacheResponse> {
   return safeInvoke<FetchToCacheResponse>('sftp_fetch_to_cache', {
+    connectionId,
+    remotePath,
+  });
+}
+
+export async function sftpCountFiles(
+  connectionId: string,
+  remotePath: string,
+): Promise<CountFilesResponse> {
+  return safeInvoke<CountFilesResponse>('sftp_count_files', {
     connectionId,
     remotePath,
   });

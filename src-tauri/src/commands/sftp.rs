@@ -66,6 +66,23 @@ pub async fn sftp_delete(
     pool.delete(&connection_id, &remote_path, is_directory).await
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CountFilesResponse {
+    pub count: u64,
+}
+
+#[tauri::command]
+pub async fn sftp_count_files(
+    pool: State<'_, PoolState>,
+    connection_id: String,
+    remote_path: String,
+) -> Result<CountFilesResponse, String> {
+    let pool = pool.lock().await;
+    let count = pool.count_files(&connection_id, &remote_path).await?;
+    Ok(CountFilesResponse { count })
+}
+
 #[tauri::command]
 pub async fn sftp_rename(
     pool: State<'_, PoolState>,

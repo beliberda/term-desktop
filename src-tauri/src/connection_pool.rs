@@ -182,6 +182,22 @@ impl ConnectionPool {
         }
     }
 
+    pub async fn count_files(
+        &self,
+        connection_id: &str,
+        remote_path: &str,
+    ) -> Result<u64, String> {
+        let handle = self.get(connection_id)?;
+        match &handle.kind {
+            ConnectionKind::Ssh {
+                ssh_handle,
+                sftp,
+                ..
+            } => crate::services::sftp::count_files(ssh_handle, sftp, remote_path).await,
+            ConnectionKind::Ftp { client } => ftp::count_files(client, remote_path).await,
+        }
+    }
+
     pub async fn upload_file(
         &self,
         connection_id: &str,
