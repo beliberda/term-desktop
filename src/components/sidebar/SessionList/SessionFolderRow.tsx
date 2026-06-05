@@ -41,14 +41,10 @@ export const SessionFolderRow = observer(function SessionFolderRow({
     opacity: isDragging ? 0.45 : 1,
   };
 
-  const setRefs = (node: HTMLLIElement | null) => {
-    setNodeRef(node);
-    setDropRef(node);
-  };
-
   return (
-    <li ref={setRefs} style={style} className={styles.folderBlock}>
+    <li ref={setNodeRef} style={style} className={styles.folderBlock}>
       <div
+        ref={setDropRef}
         className={`${styles.folderRow} ${isOver ? styles.folderRowOver : ""}`}
         style={{ paddingLeft: 12 + depth * 14 }}
         onContextMenu={(e) => onFolderContextMenu(e, folder)}

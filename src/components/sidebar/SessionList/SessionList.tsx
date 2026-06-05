@@ -4,7 +4,6 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -12,12 +11,15 @@ import { observer } from "mobx-react-lite";
 import type { SessionConfig, SessionFolder } from "@/types";
 import { useStores } from "@stores/index";
 import { connectSession } from "@utils/connectSession";
-import { isFolderId } from "@utils/sessionTree";
+import { canMoveIntoFolder, isFolderId } from "@utils/sessionTree";
 import { SessionContextMenu } from "./SessionContextMenu";
-
+import { FolderContextMenu } from "./FolderContextMenu";
 import { SessionTreeList } from "./SessionTreeList";
+import {
+  parseFolderDroppableId,
+  sessionListCollisionDetection,
+} from "./sessionListCollisionDetection";
 import styles from "./SessionList.module.css";
-import { FolderContextMenu } from "@/components/sidebar/SessionList/FolderContextMenu";
 
 interface SessionContextMenuState {
   session: SessionConfig;
@@ -47,6 +49,18 @@ export const SessionList = observer(function SessionList() {
     }),
   );
 
+  const moveIntoFolder = (activeId: string, folderId: string) => {
+    const file = sessionStore.toFile();
+    if (!canMoveIntoFolder(file, activeId, folderId)) {
+      return;
+    }
+
+    const folder = sessionStore.getFolderById(folderId);
+    if (!folder) return;
+
+    sessionStore.moveItem(activeId, folderId, folder.childOrder.length);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragId(null);
@@ -56,11 +70,9 @@ export const SessionList = observer(function SessionList() {
     const overId = String(over.id);
     if (activeId === overId) return;
 
-    if (overId.startsWith("droppable-folder-")) {
-      const folderId = overId.replace("droppable-folder-", "");
-      const folder = sessionStore.getFolderById(folderId);
-      if (!folder) return;
-      sessionStore.moveItem(activeId, folderId, folder.childOrder.length);
+    const folderFromDroppable = parseFolderDroppableId(overId);
+    if (folderFromDroppable) {
+      moveIntoFolder(activeId, folderFromDroppable);
       return;
     }
 
@@ -70,6 +82,12 @@ export const SessionList = observer(function SessionList() {
     }
 
     if (overId.startsWith("droppable-")) {
+      return;
+    }
+
+    // Drop на строку папки (sortable id) — помещаем внутрь папки
+    if (sessionStore.getFolderById(overId)) {
+      moveIntoFolder(activeId, overId);
       return;
     }
 
@@ -130,7 +148,7 @@ export const SessionList = observer(function SessionList() {
       )}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={sessionListCollisionDetection}
         onDragStart={(event) => setActiveDragId(String(event.active.id))}
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveDragId(null)}
