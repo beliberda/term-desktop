@@ -124,7 +124,16 @@ impl ConfigService {
             }
         }
 
+        let child_placed_ids: HashSet<String> = current
+            .folders
+            .iter()
+            .flat_map(|folder| folder.child_order.iter().cloned())
+            .collect();
+
         for session_id in &accepted_session_ids {
+            if child_placed_ids.contains(session_id) {
+                continue;
+            }
             if !current.root_order.contains(session_id) {
                 current.root_order.push(session_id.clone());
             }
@@ -181,7 +190,7 @@ impl ConfigService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::SessionConfig;
+    use crate::models::{SessionConfig, SessionFolder};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn temp_sessions_path() -> PathBuf {
@@ -247,6 +256,39 @@ mod tests {
         assert_eq!(result.imported, 0);
         assert_eq!(result.skipped, 1);
         assert_eq!(result.file.sessions.len(), 1);
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn merge_import_keeps_sessions_in_folder_child_order() {
+        let path = temp_sessions_path();
+        let service = ConfigService::new_for_test(path.clone());
+        let existing = SessionsFile::default();
+        service.save(&existing).expect("save");
+
+        let session = make_session("sess-in-folder", "VPN RU");
+        let incoming = SessionsFile {
+            schema_version: 2,
+            root_order: vec!["folder-1".into()],
+            folders: vec![SessionFolder {
+                id: "folder-1".into(),
+                name: "VPN Servers".into(),
+                parent_id: None,
+                collapsed: false,
+                child_order: vec!["sess-in-folder".into()],
+            }],
+            sessions: vec![session],
+        };
+
+        let result = service.merge_import(incoming).expect("merge");
+        assert_eq!(result.imported, 2);
+        assert!(!result.file.root_order.contains(&"sess-in-folder".to_string()));
+        assert_eq!(
+            result.file.folders[0].child_order,
+            vec!["sess-in-folder".to_string()]
+        );
+        result.file.validate().expect("valid");
 
         let _ = fs::remove_file(path);
     }

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "rootOrder": [
+    "a0000000-0000-4000-8000-000000000001",
+    "a0000000-0000-4000-8000-000000000003"
+  ],
+  "folders": [
+    {
+      "id": "a0000000-0000-4000-8000-000000000001",
+      "name": "Production",
+      "collapsed": false,
+      "childOrder": ["a0000000-0000-4000-8000-000000000002"]
+    }
+  ],
+  "sessions": [
+    {
+      "id": "a0000000-0000-4000-8000-000000000002",
+      "name": "Web Server",
+      "protocol": "ssh",
+      "host": "192.168.1.10",
+      "port": 22,
+      "username": "deploy",
+      "authType": "privateKey",
+      "privateKeyPath": "C:\\Users\\User\\.ssh\\id_rsa",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "a0000000-0000-4000-8000-000000000003",
+      "name": "Staging FTP",
+      "protocol": "ftp",
+      "host": "ftp.example.com",
+      "port": 21,
+      "username": "ftpuser",
+      "authType": "password",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}

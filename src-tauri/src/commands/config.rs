@@ -1,3 +1,4 @@
+use std::fs;
 use std::sync::{Arc, Mutex};
 
 use tauri::{AppHandle, State};
@@ -60,4 +61,27 @@ pub fn sessions_import(
     };
 
     config.import_from_path(&path.into_path().map_err(|e| e.to_string())?)
+}
+
+const SESSIONS_IMPORT_EXAMPLE: &str =
+    include_str!("../../../public/sessions-import-example.json");
+
+#[tauri::command]
+pub fn sessions_download_example(app: AppHandle) -> Result<(), String> {
+    let path = app
+        .dialog()
+        .file()
+        .add_filter("JSON", &["json"])
+        .set_file_name("sessions-import-example.json")
+        .blocking_save_file();
+
+    let Some(path) = path else {
+        return Ok(());
+    };
+
+    fs::write(
+        path.into_path().map_err(|e| e.to_string())?,
+        SESSIONS_IMPORT_EXAMPLE,
+    )
+    .map_err(|e| format!("failed to write example file: {e}"))
 }

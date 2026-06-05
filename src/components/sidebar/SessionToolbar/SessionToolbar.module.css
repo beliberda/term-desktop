@@ -1,9 +1,11 @@
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 8px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
+  overflow: visible;
 }
 
 .button {
@@ -28,4 +30,65 @@
   font-size: 18px;
   line-height: 1;
   font-weight: 600;
+}
+
+.importDropdown {
+  position: relative;
+  flex: 1;
+  display: flex;
+  overflow: visible;
+}
+
+.importDropdown>.button {
+  width: 100%;
+}
+
+.caret {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.importMenu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  padding-top: 4px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.importDropdown:hover .importMenu,
+.importDropdown:focus-within .importMenu {
+  display: block;
+}
+
+.importMenuInner {
+  width: 100%;
+  min-width: 168px;
+  padding: 4px 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.menuItem:hover {
+  background: var(--color-tab-inactive);
 }

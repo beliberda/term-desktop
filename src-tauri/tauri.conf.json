@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "TermaSSH",
-  "version": "0.1.0",
+  "version": "../package.json",
   "identifier": "com.termassh.desktop",
   "build": {
     "frontendDist": "../build",
@@ -25,10 +25,14 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "dmg"],
     "windows": {
       "wix": {
         "language": ["ru-RU", "en-US"]
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico"
       }
     },
     "icon": [

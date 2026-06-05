@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react';
-import { observer } from 'mobx-react-lite';
-import { open } from '@tauri-apps/plugin-dialog';
-import { useStores } from '@stores/index';
-import { getDefaultPort, type AuthType, type Protocol, type SessionConfig } from '@/types';
-import styles from './SessionForm.module.css';
+import { useEffect, useState } from "react";
+import { observer } from "mobx-react-lite";
+import { open } from "@tauri-apps/plugin-dialog";
+import { useStores } from "@stores/index";
+import {
+  getDefaultPort,
+  type AuthType,
+  type Protocol,
+  type SessionConfig,
+} from "@/types";
+import styles from "./SessionForm.module.css";
 
 export const SessionForm = observer(function SessionForm() {
   const { sessionStore, settingsStore } = useStores();
@@ -28,24 +33,21 @@ export const SessionForm = observer(function SessionForm() {
 
   const handleProtocolChange = (protocol: Protocol) => {
     const port =
-      protocol === 'ftp'
+      protocol === "ftp"
         ? settingsStore.settings.defaultFtpPort
         : settingsStore.settings.defaultSshPort;
     update({
       protocol,
       port: port || getDefaultPort(protocol),
-      ...(protocol === 'ftp' ? { authType: 'password' as const } : {}),
+      ...(protocol === "ftp" ? { authType: "password" as const } : {}),
     });
   };
 
   const handleBrowseKey = async () => {
     const selected = await open({
       multiple: false,
-      filters: [
-        { name: 'Key files', extensions: ['pem', 'key', 'ppk', 'pub'] },
-      ],
     });
-    if (typeof selected === 'string') {
+    if (typeof selected === "string") {
       update({ privateKeyPath: selected });
     }
   };
@@ -73,7 +75,7 @@ export const SessionForm = observer(function SessionForm() {
         aria-modal="true"
       >
         <h2 className={styles.title}>
-          {isNew ? 'Новая сессия' : 'Редактирование сессии'}
+          {isNew ? "Новая сессия" : "Редактирование сессии"}
         </h2>
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
@@ -98,7 +100,9 @@ export const SessionForm = observer(function SessionForm() {
                 id="session-protocol"
                 className={styles.select}
                 value={session.protocol}
-                onChange={(e) => handleProtocolChange(e.target.value as Protocol)}
+                onChange={(e) =>
+                  handleProtocolChange(e.target.value as Protocol)
+                }
               >
                 <option value="ssh">SSH</option>
                 <option value="sftp">SFTP</option>
@@ -118,7 +122,9 @@ export const SessionForm = observer(function SessionForm() {
                 value={session.port}
                 onChange={(e) => update({ port: Number(e.target.value) })}
               />
-              {errors.port && <span className={styles.error}>{errors.port}</span>}
+              {errors.port && (
+                <span className={styles.error}>{errors.port}</span>
+              )}
             </div>
           </div>
 
@@ -157,14 +163,12 @@ export const SessionForm = observer(function SessionForm() {
             <select
               id="session-auth"
               className={styles.select}
-              value={session.protocol === 'ftp' ? 'password' : session.authType}
-              disabled={session.protocol === 'ftp'}
-              onChange={(e) =>
-                update({ authType: e.target.value as AuthType })
-              }
+              value={session.protocol === "ftp" ? "password" : session.authType}
+              disabled={session.protocol === "ftp"}
+              onChange={(e) => update({ authType: e.target.value as AuthType })}
             >
               <option value="password">Password</option>
-              {session.protocol !== 'ftp' && (
+              {session.protocol !== "ftp" && (
                 <>
                   <option value="privateKey">Private Key</option>
                   <option value="agent">SSH Agent</option>
@@ -173,7 +177,7 @@ export const SessionForm = observer(function SessionForm() {
             </select>
           </div>
 
-          {session.authType === 'privateKey' && session.protocol !== 'ftp' && (
+          {session.authType === "privateKey" && session.protocol !== "ftp" && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="session-key">
                 Путь к ключу
@@ -182,7 +186,7 @@ export const SessionForm = observer(function SessionForm() {
                 <input
                   id="session-key"
                   className={styles.input}
-                  value={session.privateKeyPath ?? ''}
+                  value={session.privateKeyPath ?? ""}
                   onChange={(e) => update({ privateKeyPath: e.target.value })}
                 />
                 <button
@@ -206,7 +210,7 @@ export const SessionForm = observer(function SessionForm() {
             <input
               id="session-default-path"
               className={styles.input}
-              value={session.defaultPath ?? ''}
+              value={session.defaultPath ?? ""}
               onChange={(e) => update({ defaultPath: e.target.value })}
               placeholder="/home/user"
             />
@@ -220,10 +224,7 @@ export const SessionForm = observer(function SessionForm() {
             >
               Отмена
             </button>
-            <button
-              type="submit"
-              className={`${styles.btn} ${styles.btnSave}`}
-            >
+            <button type="submit" className={`${styles.btn} ${styles.btnSave}`}>
               Сохранить
             </button>
           </div>

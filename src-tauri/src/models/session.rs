@@ -543,6 +543,15 @@ mod tests {
     }
 
     #[test]
+    fn import_example_file_is_valid() {
+        const EXAMPLE: &str = include_str!("../../../public/sessions-import-example.json");
+        let file = SessionsFile::from_json(EXAMPLE).expect("parse example");
+        let (prepared, skipped) = file.prepare_for_import();
+        assert_eq!(skipped, 0);
+        prepared.validate().expect("valid example");
+    }
+
+    #[test]
     fn prepare_for_import_skips_invalid_sessions() {
         let json = r#"{
             "schemaVersion": 2,

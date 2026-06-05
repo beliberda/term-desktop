@@ -32,6 +32,10 @@ export async function sessionsExport(): Promise<void> {
   await safeInvoke('sessions_export');
 }
 
+export async function sessionsDownloadExample(): Promise<void> {
+  await safeInvoke('sessions_download_example');
+}
+
 export async function sessionsImport(): Promise<SessionsImportResult> {
   const data = await safeInvoke<unknown>('sessions_import');
   const raw = data as {

@@ -61,6 +61,7 @@ pub fn run() {
             commands::config::sessions_save,
             commands::config::sessions_export,
             commands::config::sessions_import,
+            commands::config::sessions_download_example,
             commands::settings::settings_load,
             commands::settings::settings_save,
             commands::terminal::terminal_connect,

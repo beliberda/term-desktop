@@ -381,6 +381,18 @@ export class SessionStore {
     }
   }
 
+  async downloadImportExample() {
+    try {
+      await sessionsIpc.sessionsDownloadExample();
+      this.error = null;
+    } catch (e) {
+      this.error =
+        e instanceof Error
+          ? e.message
+          : 'Не удалось скачать пример файла импорта';
+    }
+  }
+
   async importSessions() {
     try {
       const result = await sessionsIpc.sessionsImport();
