@@ -41,18 +41,9 @@ export const SessionItemRow = observer(function SessionItemRow({
       data-session-id={session.id}
       className={`${styles.item} ${sessionStore.selectedId === session.id ? styles.itemSelected : ''}`}
       onContextMenu={(e) => onContextMenu(e, session)}
+      {...attributes}
+      {...listeners}
     >
-      <button
-        type="button"
-        className={styles.dragHandle}
-        title="Перетащить"
-        aria-label="Перетащить"
-        {...attributes}
-        {...listeners}
-        onClick={(e) => e.stopPropagation()}
-      >
-        ⋮⋮
-      </button>
       <div className={styles.info}>
         <div className={styles.name}>{session.name}</div>
         <div className={styles.host}>
@@ -64,6 +55,7 @@ export const SessionItemRow = observer(function SessionItemRow({
         type="button"
         className={styles.editBtn}
         title="Редактировать"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           sessionStore.openEditForm(session.id);
@@ -75,6 +67,7 @@ export const SessionItemRow = observer(function SessionItemRow({
         type="button"
         className={styles.deleteBtn}
         title="Удалить"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           if (window.confirm(`Удалить сессию «${session.name}»?`)) {

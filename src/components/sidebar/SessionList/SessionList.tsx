@@ -117,8 +117,14 @@ export const SessionList = observer(function SessionList() {
     sessionStore.moveItem(activeId, overParent, overIndex);
   };
 
-  const handleItemClick = (session: SessionConfig) => {
-    connectSession(session, stores);
+  const getSessionFromEvent = (target: EventTarget | null) => {
+    const row = (target as HTMLElement | null)?.closest<HTMLElement>(
+      "[data-session-id]",
+    );
+    if (!row) return null;
+    const sessionId = row.dataset.sessionId;
+    if (!sessionId) return null;
+    return sessionStore.getSessionById(sessionId) ?? null;
   };
 
   if (sessionStore.isLoading) {
@@ -156,13 +162,12 @@ export const SessionList = observer(function SessionList() {
         <div
           className={styles.treeScroll}
           onClick={(e) => {
-            const target = e.target as HTMLElement;
-            const row = target.closest<HTMLElement>("[data-session-id]");
-            if (!row) return;
-            const sessionId = row.dataset.sessionId;
-            if (!sessionId) return;
-            const session = sessionStore.getSessionById(sessionId);
-            if (session) handleItemClick(session);
+            const session = getSessionFromEvent(e.target);
+            if (session) sessionStore.selectSession(session.id);
+          }}
+          onDoubleClick={(e) => {
+            const session = getSessionFromEvent(e.target);
+            if (session) connectSession(session, stores);
           }}
         >
           <SessionTreeList
