@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { TerminalTabBar } from '@components/terminal/TerminalTabBar/TerminalTabBar';
-import { TerminalView } from '@components/terminal/TerminalView/TerminalView';
+import { TerminalTabPanels } from '@components/terminal/TerminalTabPanels/TerminalTabPanels';
 import { useStores } from '@stores/index';
 import styles from './TerminalWorkspace.module.css';
 
@@ -26,6 +26,8 @@ export const TerminalWorkspace = observer(function TerminalWorkspace() {
   const bannerMessage = activeTab
     ? statusBannerMessage(activeTab.status, activeTab.errorMessage)
     : null;
+  const showReconnect =
+    activeTab !== null && terminalStore.canReconnect(activeTab);
 
   return (
     <div className={styles.workspace}>
@@ -36,21 +38,35 @@ export const TerminalWorkspace = observer(function TerminalWorkspace() {
             className={`${styles.banner} ${activeTab.status === 'error' ? styles.bannerError : styles.bannerInfo}`}
           >
             <span className={styles.bannerMessage}>{bannerMessage}</span>
-            <button
-              type="button"
-              className={styles.bannerClose}
-              onClick={() => terminalStore.closeTab(activeTab.id)}
-            >
-              Закрыть вкладку
-            </button>
+            <div className={styles.bannerActions}>
+              {showReconnect && (
+                <button
+                  type="button"
+                  className={styles.bannerReconnect}
+                  onClick={() => void terminalStore.reconnectTab(activeTab.id)}
+                >
+                  Переподключить
+                </button>
+              )}
+              <button
+                type="button"
+                className={styles.bannerClose}
+                onClick={() => terminalStore.closeTab(activeTab.id)}
+              >
+                Закрыть вкладку
+              </button>
+            </div>
           </div>
         )}
-        {activeTab ? (
-          <TerminalView />
+        {terminalStore.tabs.length > 0 ? (
+          <TerminalTabPanels />
         ) : (
           <div className={styles.empty}>
             Двойной клик по сессии в sidebar для подключения
           </div>
+        )}
+        {showReconnect && (
+          <div className={styles.hintFooter}>Ctrl+R — переподключиться</div>
         )}
       </div>
     </div>

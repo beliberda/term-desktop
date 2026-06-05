@@ -50,6 +50,14 @@
   white-space: nowrap;
 }
 
+.bannerActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.bannerReconnect,
 .bannerClose {
   flex-shrink: 0;
   padding: 4px 10px;
@@ -61,8 +69,18 @@
   cursor: pointer;
 }
 
+.bannerReconnect:hover,
 .bannerClose:hover {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: var(--color-text);
+}
+
+.hintFooter {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-tab-inactive);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
 }

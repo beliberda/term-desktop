@@ -41,6 +41,15 @@ export function useAppShortcuts() {
         return;
       }
 
+      if (key === 'r') {
+        const tab = terminalStore.activeTab;
+        if (tab && terminalStore.canReconnect(tab)) {
+          e.preventDefault();
+          void terminalStore.reconnectTab(tab.id);
+        }
+        return;
+      }
+
       if (key === 'w') {
         if (terminalStore.activeTabId) {
           e.preventDefault();
