@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 use crate::models::sftp::SftpEntry;
 use crate::models::SessionConfig;
 use crate::services::ssh::CONNECT_TIMEOUT_SECS;
+use crate::utils::cache_paths::open_cache_path;
 use crate::utils::sftp_paths::normalize_remote_path;
 
 pub type SharedFtpClient = Arc<Mutex<AsyncFtpStream>>;
@@ -277,46 +278,12 @@ pub async fn fetch_to_cache(
     client: &SharedFtpClient,
     remote_path: &str,
 ) -> Result<String, String> {
-    use tauri::Manager;
-
     let remote_path = normalize_remote_path(remote_path);
-    let filename = remote_path
-        .split('/')
-        .filter(|p| !p.is_empty())
-        .last()
-        .ok_or_else(|| "invalid remote path".to_string())?;
+    let local_path = open_cache_path(app, &remote_path)?;
+    let local_path_str = local_path.to_string_lossy().to_string();
 
-    let cache_dir = app
-        .path()
-        .app_cache_dir()
-        .map_err(|e| format!("failed to resolve app cache dir: {e}"))?
-        .join("termassh")
-        .join("open");
-    std::fs::create_dir_all(&cache_dir)
-        .map_err(|e| format!("failed to create cache dir: {e}"))?;
-
-    let local_path = cache_dir.join(filename);
-
-    let mut ftp = client.lock().await;
-    let mut stream = ftp
-        .retr_as_stream(&remote_path)
-        .await
-        .map_err(|e| format!("failed to download file: {e}"))?;
-
-    let mut data = Vec::new();
-    stream
-        .read_to_end(&mut data)
-        .await
-        .map_err(|e| format!("failed to read FTP stream: {e}"))?;
-
-    ftp.finalize_retr_stream(stream)
-        .await
-        .map_err(|e| format!("failed to finalize download: {e}"))?;
-
-    std::fs::write(&local_path, data)
-        .map_err(|e| format!("failed to write cached file: {e}"))?;
-
-    Ok(local_path.to_string_lossy().to_string())
+    download_file(client, &remote_path, &local_path_str).await?;
+    Ok(local_path_str)
 }
 
 pub async fn disconnect_client(client: &SharedFtpClient) {

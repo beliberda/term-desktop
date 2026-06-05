@@ -86,10 +86,10 @@ export const FileBrowserPanel = observer(function FileBrowserPanel() {
         {fileBrowserStore.error && (
           <p className={styles.error}>{fileBrowserStore.error}</p>
         )}
-        {fileBrowserStore.isLoading && fileBrowserStore.entries.length > 0 && (
-          <p className={styles.loading}>Обновление...</p>
-        )}
         <SftpFileList />
+        {fileBrowserStore.isLoading && fileBrowserStore.entries.length > 0 && (
+          <p className={styles.loadingBottom}>Обновление...</p>
+        )}
       </div>
     );
   }

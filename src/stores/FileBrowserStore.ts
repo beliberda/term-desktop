@@ -288,7 +288,6 @@ export class FileBrowserStore {
     }
 
     runInAction(() => {
-      this.isLoading = true;
       this.error = null;
     });
 
@@ -298,13 +297,9 @@ export class FileBrowserStore {
         entry.path,
       );
       await openInEditor(localPath, this.settingsStore.settings.defaultEditorPath);
-      runInAction(() => {
-        this.isLoading = false;
-      });
     } catch (e) {
       runInAction(() => {
         this.error = e instanceof Error ? e.message : 'Не удалось открыть файл';
-        this.isLoading = false;
       });
     }
   }

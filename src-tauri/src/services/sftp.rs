@@ -2,11 +2,11 @@ use std::path::Path;
 use std::sync::Arc;
 
 use russh_sftp::client::SftpSession;
-use tauri::Manager;
 use tokio::sync::Mutex;
 
 use crate::models::sftp::SftpEntry;
 use crate::services::ssh::SharedSshHandle;
+use crate::utils::cache_paths::open_cache_path;
 use crate::utils::sftp_paths::normalize_remote_path;
 
 pub struct SftpSessionCache(pub Arc<Mutex<Option<SftpSession>>>);
@@ -47,6 +47,11 @@ async fn ensure_sftp(
 
     *guard = Some(sftp);
     Ok(())
+}
+
+async fn reset_sftp_session(cache: &SftpSessionCache) {
+    let mut guard = cache.0.lock().await;
+    *guard = None;
 }
 
 fn mtime_to_iso(mtime: Option<u32>) -> Option<String> {
@@ -135,15 +140,17 @@ pub async fn download_file(
     let remote_path = normalize_remote_path(remote_path);
 
     ensure_sftp(ssh_handle, cache).await?;
-    let guard = cache.0.lock().await;
-    let sftp = guard
-        .as_ref()
-        .ok_or_else(|| "SFTP session not initialized".to_string())?;
 
-    let data = sftp
-        .read(&remote_path)
-        .await
-        .map_err(|e| format!("failed to read remote file: {e}"))?;
+    let data = {
+        let guard = cache.0.lock().await;
+        let sftp = guard
+            .as_ref()
+            .ok_or_else(|| "SFTP session not initialized".to_string())?;
+
+        sftp.read(&remote_path)
+            .await
+            .map_err(|e| format!("failed to read remote file: {e}"))?
+    };
 
     if let Some(parent) = Path::new(local_path).parent() {
         if !parent.as_os_str().is_empty() {
@@ -332,44 +339,51 @@ pub async fn count_files(
     count_files_inner(ssh_handle, cache, remote_path).await
 }
 
-pub async fn fetch_to_cache(
+async fn fetch_to_cache_inner(
     app: &tauri::AppHandle,
     ssh_handle: &SharedSshHandle,
     cache: &SftpSessionCache,
     remote_path: &str,
 ) -> Result<String, String> {
     let remote_path = normalize_remote_path(remote_path);
-
-    let filename = remote_path
-        .split('/')
-        .filter(|p| !p.is_empty())
-        .last()
-        .ok_or_else(|| "invalid remote path".to_string())?;
-
-    let cache_dir = app
-        .path()
-        .app_cache_dir()
-        .map_err(|e| format!("failed to resolve app cache dir: {e}"))?
-        .join("termassh")
-        .join("open");
-    std::fs::create_dir_all(&cache_dir)
-        .map_err(|e| format!("failed to create cache dir: {e}"))?;
-
-    let local_path = cache_dir.join(filename);
+    let local_path = open_cache_path(app, &remote_path)?;
+    let local_path_str = local_path.to_string_lossy().to_string();
 
     ensure_sftp(ssh_handle, cache).await?;
-    let guard = cache.0.lock().await;
-    let sftp = guard
-        .as_ref()
-        .ok_or_else(|| "SFTP session not initialized".to_string())?;
 
-    let data = sftp
-        .read(&remote_path)
-        .await
-        .map_err(|e| format!("failed to read remote file: {e}"))?;
+    {
+        let guard = cache.0.lock().await;
+        let sftp = guard
+            .as_ref()
+            .ok_or_else(|| "SFTP session not initialized".to_string())?;
 
-    std::fs::write(&local_path, data)
-        .map_err(|e| format!("failed to write cached file: {e}"))?;
+        let metadata = sftp
+            .metadata(&remote_path)
+            .await
+            .map_err(|e| format!("failed to stat remote file: {e}"))?;
 
-    Ok(local_path.to_string_lossy().to_string())
+        if metadata.is_dir() {
+            return Err("cannot open directory as file".to_string());
+        }
+    }
+
+    download_file(ssh_handle, cache, &remote_path, &local_path_str).await?;
+    Ok(local_path_str)
+}
+
+pub async fn fetch_to_cache(
+    app: &tauri::AppHandle,
+    ssh_handle: &SharedSshHandle,
+    cache: &SftpSessionCache,
+    remote_path: &str,
+) -> Result<String, String> {
+    match fetch_to_cache_inner(app, ssh_handle, cache, remote_path).await {
+        Ok(path) => Ok(path),
+        Err(err) => {
+            reset_sftp_session(cache).await;
+            fetch_to_cache_inner(app, ssh_handle, cache, remote_path)
+                .await
+                .map_err(|retry_err| format!("{err}; retry failed: {retry_err}"))
+        }
+    }
 }

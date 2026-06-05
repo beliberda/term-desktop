@@ -29,7 +29,7 @@
 
 .selected {
   background: var(--color-accent);
-  color: var(--color-bg);
+  color: white;
 }
 
 .icon {

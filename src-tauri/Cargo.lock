@@ -91,6 +91,7 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "futures",
+ "open",
  "russh",
  "russh-keys",
  "russh-sftp",
