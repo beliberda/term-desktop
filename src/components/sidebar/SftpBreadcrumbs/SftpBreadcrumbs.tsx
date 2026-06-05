@@ -22,7 +22,21 @@ export const SftpBreadcrumbs = observer(function SftpBreadcrumbs() {
           return (
             <span key={crumb.path} className={styles.item}>
               {index > 0 && <span className={styles.sep}>/</span>}
-              {isLast && <span className={styles.current}>{crumb.label}</span>}
+              {isLast ? (
+                <span className={styles.current}>{crumb.label}</span>
+              ) : (
+                <>
+                  {crumb.label !== "/" && (
+                    <button
+                      type="button"
+                      className={styles.link}
+                      onClick={() => fileBrowserStore.navigateTo(crumb.path)}
+                    >
+                      {crumb.label}
+                    </button>
+                  )}
+                </>
+              )}
             </span>
           );
         })}
