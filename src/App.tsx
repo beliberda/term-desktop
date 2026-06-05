@@ -1,9 +1,7 @@
-function App() {
+import { AppShell } from '@components/layout/AppShell/AppShell';
 
-  return (
-    <>
-    </>
-  )
+function App() {
+  return <AppShell />;
 }
 
-export default App
+export default App;

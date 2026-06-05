@@ -1,0 +1,19 @@
+.statusBar {
+  display: flex;
+  align-items: center;
+  height: var(--statusbar-height);
+  padding: 0 12px;
+  background: var(--color-sidebar-bg);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.label {
+  margin-right: 6px;
+}
+
+.value {
+  color: var(--color-text);
+}

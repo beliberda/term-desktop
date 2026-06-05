@@ -1,5 +1,5 @@
 {
-  "name": "vite-typescript-react-template",
+  "name": "termassh",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,13 +7,19 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.11.0",
+    "mobx": "^6.16.0",
+    "mobx-react-lite": "^4.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^22.7.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",

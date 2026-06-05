@@ -1,0 +1,14 @@
+.tabBar {
+  display: flex;
+  align-items: center;
+  height: var(--tabbar-height);
+  background: var(--color-tab-inactive);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  padding: 0 8px;
+}
+
+.empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}

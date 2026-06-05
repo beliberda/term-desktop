@@ -1,0 +1,20 @@
+:root {
+  --sidebar-width: 240px;
+  --statusbar-height: 28px;
+  --tabbar-height: 36px;
+
+  --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+
+  --color-bg: #1e1e1e;
+  --color-sidebar-bg: #252526;
+  --color-panel-bg: #1e1e1e;
+  --color-border: #3c3c3c;
+  --color-text: #cccccc;
+  --color-text-muted: #858585;
+  --color-accent: #0078d4;
+  --color-accent-hover: #1a86d9;
+  --color-tab-active: #1e1e1e;
+  --color-tab-inactive: #2d2d2d;
+}
