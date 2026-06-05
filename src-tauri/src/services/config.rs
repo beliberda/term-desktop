@@ -1,9 +1,10 @@
+use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 
 use tauri::Manager;
 
-use crate::models::SessionsFile;
+use crate::models::{SessionsFile, SessionsImportResult};
 
 pub struct ConfigService {
     file_path: PathBuf,
@@ -19,6 +20,11 @@ impl ConfigService {
         Ok(Self {
             file_path: dir.join("sessions.json"),
         })
+    }
+
+    #[cfg(test)]
+    pub fn new_for_test(file_path: PathBuf) -> Self {
+        Self { file_path }
     }
 
     pub fn load(&self) -> Result<SessionsFile, String> {
@@ -47,39 +53,113 @@ impl ConfigService {
         Ok(())
     }
 
-    pub fn merge_import(&self, incoming: SessionsFile) -> Result<SessionsFile, String> {
-        incoming.validate()?;
+    pub fn merge_import(&self, incoming: SessionsFile) -> Result<SessionsImportResult, String> {
+        let (incoming, invalid_skipped) = incoming.prepare_for_import();
+        let mut skipped = invalid_skipped;
 
         let mut current = self.load()?;
-        let mut session_map = std::collections::HashMap::new();
-        for session in current.sessions {
-            session_map.insert(session.id.clone(), session);
-        }
+        let mut existing_ids: HashSet<String> =
+            current.sessions.iter().map(|s| s.id.clone()).collect();
+        let mut existing_names: HashSet<String> = current
+            .sessions
+            .iter()
+            .map(|s| s.name.trim().to_string())
+            .collect();
+        let mut existing_folder_ids: HashSet<String> =
+            current.folders.iter().map(|f| f.id.clone()).collect();
+
+        let mut accepted_session_ids: HashSet<String> = HashSet::new();
+        let mut accepted_folder_ids: HashSet<String> = HashSet::new();
+        let mut imported = 0u32;
+
         for session in incoming.sessions {
-            session_map.insert(session.id.clone(), session);
-        }
-        current.sessions = session_map.into_values().collect();
+            let name_key = session.name.trim().to_string();
+            if existing_ids.contains(&session.id) || existing_names.contains(&name_key) {
+                skipped += 1;
+                continue;
+            }
 
-        let mut folder_map = std::collections::HashMap::new();
-        for folder in current.folders {
-            folder_map.insert(folder.id.clone(), folder);
+            existing_ids.insert(session.id.clone());
+            existing_names.insert(name_key);
+            accepted_session_ids.insert(session.id.clone());
+            current.sessions.push(session);
+            imported += 1;
         }
+
+        let incoming_folder_placements: Vec<(String, Option<String>)> = incoming
+            .folders
+            .iter()
+            .map(|folder| (folder.id.clone(), folder.parent_id.clone()))
+            .collect();
+
         for folder in incoming.folders {
-            folder_map.insert(folder.id.clone(), folder);
-        }
-        current.folders = folder_map.into_values().collect();
+            if existing_folder_ids.contains(&folder.id) {
+                skipped += 1;
+                continue;
+            }
 
-        let mut root_order = current.root_order;
+            let mut folder = folder;
+            folder.child_order.retain(|id| {
+                accepted_session_ids.contains(id) || accepted_folder_ids.contains(id)
+            });
+
+            existing_folder_ids.insert(folder.id.clone());
+            accepted_folder_ids.insert(folder.id.clone());
+            current.folders.push(folder);
+            imported += 1;
+        }
+
+        let accepted_ids: HashSet<String> = accepted_session_ids
+            .iter()
+            .chain(accepted_folder_ids.iter())
+            .cloned()
+            .collect();
+
         for id in incoming.root_order {
-            if !root_order.contains(&id) {
-                root_order.push(id);
+            if !accepted_ids.contains(&id) {
+                continue;
+            }
+            if !current.root_order.contains(&id) {
+                current.root_order.push(id);
             }
         }
-        current.root_order = root_order;
-        current.schema_version = 2;
 
+        for session_id in &accepted_session_ids {
+            if !current.root_order.contains(session_id) {
+                current.root_order.push(session_id.clone());
+            }
+        }
+
+        for (folder_id, parent_id) in incoming_folder_placements {
+            if !accepted_folder_ids.contains(&folder_id) {
+                continue;
+            }
+            if let Some(parent_id) = parent_id {
+                if accepted_folder_ids.contains(&parent_id) {
+                    if let Some(parent) =
+                        current.folders.iter_mut().find(|folder| folder.id == parent_id)
+                    {
+                        if !parent.child_order.contains(&folder_id) {
+                            parent.child_order.push(folder_id);
+                        }
+                    }
+                    continue;
+                }
+            }
+            if !current.root_order.contains(&folder_id) {
+                current.root_order.push(folder_id);
+            }
+        }
+
+        current.schema_version = 2;
+        current.validate()?;
         self.save(&current)?;
-        Ok(current)
+
+        Ok(SessionsImportResult {
+            file: current,
+            imported,
+            skipped,
+        })
     }
 
     pub fn export_to_path(&self, path: &PathBuf) -> Result<(), String> {
@@ -90,10 +170,100 @@ impl ConfigService {
         Ok(())
     }
 
-    pub fn import_from_path(&self, path: &PathBuf) -> Result<SessionsFile, String> {
+    pub fn import_from_path(&self, path: &PathBuf) -> Result<SessionsImportResult, String> {
         let content = fs::read_to_string(path)
             .map_err(|e| format!("failed to read import file: {e}"))?;
         let data = SessionsFile::from_json(&content)?;
         self.merge_import(data)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::SessionConfig;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_sessions_path() -> PathBuf {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("time")
+            .as_nanos();
+        std::env::temp_dir().join(format!("termassh-sessions-{nanos}.json"))
+    }
+
+    fn make_session(id: &str, name: &str) -> SessionConfig {
+        SessionConfig {
+            id: id.into(),
+            name: name.into(),
+            protocol: "ssh".into(),
+            host: "10.0.0.1".into(),
+            port: 22,
+            username: "user".into(),
+            auth_type: "password".into(),
+            private_key_path: None,
+            default_path: None,
+            created_at: "2024-01-01T00:00:00Z".into(),
+            updated_at: "2024-01-01T00:00:00Z".into(),
+        }
+    }
+
+    fn file_with_sessions(sessions: Vec<SessionConfig>) -> SessionsFile {
+        let root_order = sessions.iter().map(|s| s.id.clone()).collect();
+        SessionsFile {
+            schema_version: 2,
+            root_order,
+            folders: Vec::new(),
+            sessions,
+        }
+    }
+
+    #[test]
+    fn merge_import_skips_duplicate_id() {
+        let path = temp_sessions_path();
+        let service = ConfigService::new_for_test(path.clone());
+        let existing = file_with_sessions(vec![make_session("id-1", "Existing")]);
+        service.save(&existing).expect("save");
+
+        let incoming = file_with_sessions(vec![make_session("id-1", "NewName")]);
+        let result = service.merge_import(incoming).expect("merge");
+        assert_eq!(result.imported, 0);
+        assert_eq!(result.skipped, 1);
+        assert_eq!(result.file.sessions.len(), 1);
+        assert_eq!(result.file.sessions[0].name, "Existing");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn merge_import_skips_duplicate_name() {
+        let path = temp_sessions_path();
+        let service = ConfigService::new_for_test(path.clone());
+        let existing = file_with_sessions(vec![make_session("id-1", "Prod")]);
+        service.save(&existing).expect("save");
+
+        let incoming = file_with_sessions(vec![make_session("id-2", "Prod")]);
+        let result = service.merge_import(incoming).expect("merge");
+        assert_eq!(result.imported, 0);
+        assert_eq!(result.skipped, 1);
+        assert_eq!(result.file.sessions.len(), 1);
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn merge_import_adds_new_session() {
+        let path = temp_sessions_path();
+        let service = ConfigService::new_for_test(path.clone());
+        let existing = file_with_sessions(vec![make_session("id-1", "Existing")]);
+        service.save(&existing).expect("save");
+
+        let incoming = file_with_sessions(vec![make_session("id-2", "New")]);
+        let result = service.merge_import(incoming).expect("merge");
+        assert_eq!(result.imported, 1);
+        assert_eq!(result.skipped, 0);
+        assert_eq!(result.file.sessions.len(), 2);
+
+        let _ = fs::remove_file(path);
     }
 }

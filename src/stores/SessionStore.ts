@@ -9,6 +9,7 @@ import {
   type SessionsFile,
 } from '@/types';
 import * as sessionsIpc from '@ipc/sessions';
+import type { TerminalStore } from './TerminalStore';
 import {
   canMoveIntoFolder,
   deleteFolderFromTree,
@@ -36,9 +37,14 @@ export class SessionStore {
   formErrors: Record<string, string> = {};
 
   private persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private terminalStore: TerminalStore | null = null;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setTerminalStore(terminalStore: TerminalStore) {
+    this.terminalStore = terminalStore;
   }
 
   get hasItems(): boolean {
@@ -377,11 +383,24 @@ export class SessionStore {
 
   async importSessions() {
     try {
-      const file = await sessionsIpc.sessionsImport();
+      const result = await sessionsIpc.sessionsImport();
+      const validSessionIds = new Set(result.file.sessions.map((s) => s.id));
+
       runInAction(() => {
-        this.applyFile(file);
-        this.error = null;
+        this.applyFile(result.file);
+
+        if (result.imported === 0 && result.skipped === 0) {
+          this.error = null;
+        } else if (result.imported === 0) {
+          this.error = `Не импортировано ни одной сессии. Пропущено: ${result.skipped}`;
+        } else if (result.skipped > 0) {
+          this.error = `Импортировано: ${result.imported}. Пропущено: ${result.skipped}`;
+        } else {
+          this.error = null;
+        }
       });
+
+      await this.terminalStore?.closeTabsForMissingSessions(validSessionIds);
     } catch (e) {
       runInAction(() => {
         this.error =

@@ -22,6 +22,7 @@ export class RootStore {
     this.settingsStore = new SettingsStore();
 
     this.fileBrowserStore.setSettingsStore(this.settingsStore);
+    this.sessionStore.setTerminalStore(this.terminalStore);
   }
 }
 

@@ -98,6 +98,16 @@ export class TerminalStore {
     }
   }
 
+  async closeTabsForMissingSessions(validSessionIds: Set<string>) {
+    const orphanTabIds = this.tabs
+      .filter((tab) => !validSessionIds.has(tab.sessionId))
+      .map((tab) => tab.id);
+
+    for (const tabId of orphanTabIds) {
+      await this.closeTab(tabId);
+    }
+  }
+
   async closeTab(tabId: string) {
     const tab = this.tabs.find((t) => t.id === tabId);
     if (tab?.connectionId) {

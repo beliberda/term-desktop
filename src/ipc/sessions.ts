@@ -3,7 +3,20 @@ import {
   sessionsFileV2Schema,
   type SessionsFile,
 } from '@/types';
+import { z } from 'zod';
 import { safeInvoke } from './client';
+
+export type SessionsImportResult = {
+  file: SessionsFile;
+  imported: number;
+  skipped: number;
+};
+
+const sessionsImportResultSchema = z.object({
+  file: sessionsFileV2Schema,
+  imported: z.number(),
+  skipped: z.number(),
+});
 
 export async function sessionsList(): Promise<SessionsFile> {
   const data = await safeInvoke<unknown>('sessions_list');
@@ -19,7 +32,16 @@ export async function sessionsExport(): Promise<void> {
   await safeInvoke('sessions_export');
 }
 
-export async function sessionsImport(): Promise<SessionsFile> {
+export async function sessionsImport(): Promise<SessionsImportResult> {
   const data = await safeInvoke<unknown>('sessions_import');
-  return sessionsFileV2Schema.parse(migrateSessionsFile(data));
+  const raw = data as {
+    file: unknown;
+    imported: number;
+    skipped: number;
+  };
+  return sessionsImportResultSchema.parse({
+    file: migrateSessionsFile(raw.file),
+    imported: raw.imported,
+    skipped: raw.skipped,
+  });
 }

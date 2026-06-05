@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, State};
 use tauri_plugin_dialog::DialogExt;
 
-use crate::models::SessionsFile;
+use crate::models::{SessionsFile, SessionsImportResult};
 use crate::services::ConfigService;
 
 type ConfigState = Arc<Mutex<ConfigService>>;
@@ -41,18 +41,23 @@ pub fn sessions_export(app: AppHandle, state: State<'_, ConfigState>) -> Result<
 pub fn sessions_import(
     app: AppHandle,
     state: State<'_, ConfigState>,
-) -> Result<SessionsFile, String> {
+) -> Result<SessionsImportResult, String> {
     let path = app
         .dialog()
         .file()
         .add_filter("JSON", &["json"])
         .blocking_pick_file();
 
+    let config = state.lock().map_err(|e| e.to_string())?;
+
     let Some(path) = path else {
-        let config = state.lock().map_err(|e| e.to_string())?;
-        return config.load();
+        let file = config.load()?;
+        return Ok(SessionsImportResult {
+            file,
+            imported: 0,
+            skipped: 0,
+        });
     };
 
-    let config = state.lock().map_err(|e| e.to_string())?;
     config.import_from_path(&path.into_path().map_err(|e| e.to_string())?)
 }
