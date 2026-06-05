@@ -8,6 +8,7 @@ Desktop SSH/SFTP/FTP клиент (аналог MobaXterm).
 |----------|----------|
 | [architecture.md](./architecture.md) | Архитектура: слои, модули, потоки данных, модели |
 | [tech-stack.md](./tech-stack.md) | Стек технологий и обоснование выбора |
+| [build-and-deploy.md](./build-and-deploy.md) | Зависимости по ОС, сборка, артефакты, релиз |
 | [development-plan.md](./development-plan.md) | Поэтапный план разработки MVP |
 
 ## Краткое резюме
