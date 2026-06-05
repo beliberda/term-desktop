@@ -22,11 +22,47 @@
   font-size: var(--font-size-sm);
 }
 
-.error {
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 8px 12px;
-  background: #3c1f1f;
-  color: #f48771;
   font-size: var(--font-size-sm);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
+}
+
+.bannerError {
+  background: #3c1f1f;
+  color: #f48771;
+}
+
+.bannerInfo {
+  background: var(--color-tab-inactive);
+  color: var(--color-text-muted);
+}
+
+.bannerMessage {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bannerClose {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.bannerClose:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text);
 }

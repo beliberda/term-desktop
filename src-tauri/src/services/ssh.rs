@@ -126,7 +126,10 @@ async fn authenticate(
                 .as_ref()
                 .ok_or_else(|| anyhow!("privateKeyPath is required"))?;
             let key_path = validate_key_path(path).map_err(|e| anyhow!(e))?;
-            let key_pair = load_secret_key(key_path, None)
+            let passphrase = password
+                .as_deref()
+                .filter(|p| !p.is_empty());
+            let key_pair = load_secret_key(key_path, passphrase)
                 .map_err(|e| anyhow!("failed to load private key: {e}"))?;
             let ok = handle
                 .authenticate_publickey(&session.username, Arc::new(key_pair))

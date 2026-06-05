@@ -9,10 +9,7 @@ use crate::events::emit_connection_status;
 use crate::models::sftp::SftpEntry;
 use crate::models::SessionConfig;
 use crate::services::ftp::{self, SharedFtpClient};
-use crate::services::ssh::{
-    connect_and_authenticate, run_shell_session, ChannelCommand, SharedSshHandle,
-    CONNECT_TIMEOUT_SECS,
-};
+use crate::services::ssh::{run_shell_session, ChannelCommand, SharedSshHandle};
 use crate::services::sftp::SftpSessionCache;
 
 pub enum ConnectionKind {
@@ -43,25 +40,13 @@ impl ConnectionPool {
         }
     }
 
-    pub async fn connect_ssh(
+    pub fn register_ssh(
         &mut self,
         app: AppHandle,
+        connection_id: String,
         session: SessionConfig,
-        password: Option<String>,
-    ) -> Result<String, String> {
-        let connection_id = Uuid::new_v4().to_string();
-        tracing::info!(connection_id = %connection_id, session_id = %session.id, "SSH connect started");
-        emit_connection_status(&app, &connection_id, "connecting", None);
-
-        let ssh_handle = tokio::time::timeout(
-            std::time::Duration::from_secs(CONNECT_TIMEOUT_SECS),
-            connect_and_authenticate(&session, password),
-        )
-        .await
-        .map_err(|_| "Connection timeout (30s)".to_string())?
-        .map_err(|e| e.to_string())?;
-
-        let ssh_handle: SharedSshHandle = Arc::new(Mutex::new(ssh_handle));
+        ssh_handle: SharedSshHandle,
+    ) {
         let sftp = SftpSessionCache::new();
         let (input_tx, input_rx) = mpsc::unbounded_channel();
 
@@ -74,7 +59,7 @@ impl ConnectionPool {
         });
 
         self.connections.insert(
-            connection_id.clone(),
+            connection_id,
             ConnectionHandle {
                 session_id: session.id,
                 kind: ConnectionKind::Ssh {
@@ -85,8 +70,6 @@ impl ConnectionPool {
                 },
             },
         );
-
-        Ok(connection_id)
     }
 
     pub async fn connect_ftp(
@@ -116,10 +99,9 @@ impl ConnectionPool {
     }
 
     pub async fn disconnect(&mut self, connection_id: &str) -> Result<(), String> {
-        let handle = self
-            .connections
-            .remove(connection_id)
-            .ok_or_else(|| format!("connection not found: {connection_id}"))?;
+        let Some(handle) = self.connections.remove(connection_id) else {
+            return Ok(());
+        };
 
         tracing::info!(
             connection_id = %connection_id,

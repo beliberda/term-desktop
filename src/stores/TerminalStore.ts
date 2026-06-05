@@ -2,20 +2,76 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import type { ConnectionStatusPayload, TerminalOutputPayload, TerminalTab } from '@/types';
 import type { SessionConfig } from '@/types';
 import * as terminalIpc from '@ipc/terminal';
+import { getIpcErrorMessage } from '@ipc/client';
 import { listenTerminalOutput } from '@ipc/events';
+import type { SessionStore } from './SessionStore';
 
 type OutputHandler = (payload: TerminalOutputPayload) => void;
+
+export type PendingConnect = {
+  sessionId: string;
+  passphraseRetry?: boolean;
+};
+
+function isSessionNotFoundError(message: string): boolean {
+  return message.toLowerCase().includes('session not found');
+}
+
+function shouldPromptPassphrase(
+  authType: string | undefined,
+  password: string | undefined,
+  message: string,
+): boolean {
+  if (authType !== 'privateKey') return false;
+  const lower = message.toLowerCase();
+  if (!password) {
+    return (
+      lower.includes('encrypted') ||
+      lower.includes('failed to load private key')
+    );
+  }
+  return lower.includes('failed to load private key');
+}
 
 export class TerminalStore {
   tabs: TerminalTab[] = [];
   activeTabId: string | null = null;
-  pendingConnect: { sessionId: string } | null = null;
+  pendingConnect: PendingConnect | null = null;
+  private sessionStore: SessionStore | null = null;
   private listenersInitialized = false;
   private outputHandlers = new Set<OutputHandler>();
   private unlistenFns: Array<() => void> = [];
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setSessionStore(sessionStore: SessionStore) {
+    this.sessionStore = sessionStore;
+  }
+
+  clearStalePendingConnect(validSessionIds: Set<string>) {
+    if (
+      this.pendingConnect &&
+      !validSessionIds.has(this.pendingConnect.sessionId)
+    ) {
+      this.pendingConnect = null;
+    }
+  }
+
+  private resolveSession(
+    sessionId: string,
+    session?: SessionConfig,
+  ): SessionConfig | undefined {
+    return session ?? this.sessionStore?.getSessionById(sessionId);
+  }
+
+  private schedulePassphrasePrompt(sessionId: string, tabId: string) {
+    this.tabs = this.tabs.filter((t) => t.id !== tabId);
+    if (this.activeTabId === tabId) {
+      this.activeTabId = this.tabs[this.tabs.length - 1]?.id ?? null;
+    }
+    this.pendingConnect = { sessionId, passphraseRetry: true };
   }
 
   get activeTab(): TerminalTab | null {
@@ -44,11 +100,30 @@ export class TerminalStore {
   }
 
   requestConnect(sessionId: string, session?: SessionConfig) {
-    if (session?.authType === 'password') {
-      this.pendingConnect = { sessionId };
+    void this.beginConnect(sessionId, session);
+  }
+
+  private async beginConnect(sessionId: string, session?: SessionConfig) {
+    await this.sessionStore?.flushPersist();
+    const resolved = this.resolveSession(sessionId, session);
+    if (!resolved) {
+      runInAction(() => {
+        this.pendingConnect = null;
+        if (this.sessionStore) {
+          this.sessionStore.error = 'Сессия не найдена в списке подключений.';
+        }
+      });
       return;
     }
-    void this.openTab(sessionId);
+
+    if (resolved.authType === 'password') {
+      runInAction(() => {
+        this.pendingConnect = { sessionId };
+      });
+      return;
+    }
+
+    await this.openTab(sessionId, undefined, resolved);
   }
 
   cancelPendingConnect() {
@@ -56,10 +131,20 @@ export class TerminalStore {
   }
 
   async openTab(sessionId: string, password?: string, session?: SessionConfig) {
+    await this.sessionStore?.flushPersist();
+    const resolved = this.resolveSession(sessionId, session);
+    if (!resolved) {
+      runInAction(() => {
+        this.pendingConnect = null;
+        if (this.sessionStore) {
+          this.sessionStore.error = 'Сессия не найдена в списке подключений.';
+        }
+      });
+      return;
+    }
+
     const tabId = crypto.randomUUID();
-    const title = session
-      ? `${session.name} (${session.host})`
-      : `Session ${sessionId.slice(0, 8)}`;
+    const title = `${resolved.name} (${resolved.host})`;
 
     const tab: TerminalTab = {
       id: tabId,
@@ -80,6 +165,13 @@ export class TerminalStore {
         sessionId,
         password,
       );
+      const tabStillOpen = this.tabs.some((x) => x.id === tabId);
+      if (!tabStillOpen) {
+        void terminalIpc.terminalDisconnect(connectionId).catch((err) => {
+          console.error('[TerminalStore] orphan disconnect failed:', err);
+        });
+        return;
+      }
       runInAction(() => {
         const t = this.tabs.find((x) => x.id === tabId);
         if (t) {
@@ -87,12 +179,37 @@ export class TerminalStore {
         }
       });
     } catch (e) {
+      const message = getIpcErrorMessage(e);
+
+      if (shouldPromptPassphrase(resolved.authType, password, message)) {
+        runInAction(() => {
+          this.schedulePassphrasePrompt(sessionId, tabId);
+        });
+        return;
+      }
+
+      if (isSessionNotFoundError(message)) {
+        await this.sessionStore?.load();
+        runInAction(() => {
+          this.tabs = this.tabs.filter((t) => t.id !== tabId);
+          if (this.activeTabId === tabId) {
+            this.activeTabId = this.tabs[this.tabs.length - 1]?.id ?? null;
+          }
+          this.pendingConnect = null;
+          if (this.sessionStore) {
+            this.sessionStore.error =
+              'Сессия не найдена. Список сессий обновлён — попробуйте подключиться снова.';
+          }
+        });
+        return;
+      }
+
       runInAction(() => {
         const t = this.tabs.find((x) => x.id === tabId);
         if (t) {
+          t.connectionId = undefined;
           t.status = 'error';
-          t.errorMessage =
-            e instanceof Error ? e.message : 'Не удалось подключиться';
+          t.errorMessage = message;
         }
       });
     }
@@ -108,15 +225,9 @@ export class TerminalStore {
     }
   }
 
-  async closeTab(tabId: string) {
+  closeTab(tabId: string) {
     const tab = this.tabs.find((t) => t.id === tabId);
-    if (tab?.connectionId) {
-      try {
-        await terminalIpc.terminalDisconnect(tab.connectionId);
-      } catch (e) {
-        console.error('[TerminalStore] disconnect failed:', e);
-      }
-    }
+    const connectionId = tab?.connectionId;
 
     runInAction(() => {
       this.tabs = this.tabs.filter((t) => t.id !== tabId);
@@ -124,6 +235,12 @@ export class TerminalStore {
         this.activeTabId = this.tabs[this.tabs.length - 1]?.id ?? null;
       }
     });
+
+    if (connectionId) {
+      void terminalIpc.terminalDisconnect(connectionId).catch((e) => {
+        console.error('[TerminalStore] disconnect failed:', e);
+      });
+    }
   }
 
   setActiveTab(tabId: string) {
@@ -156,10 +273,35 @@ export class TerminalStore {
 
   handleConnectionStatus(payload: ConnectionStatusPayload) {
     runInAction(() => {
+      if (payload.status === 'error' && payload.message) {
+        const connectingTab =
+          this.tabs.find(
+            (t) =>
+              !t.connectionId &&
+              t.status === 'connecting' &&
+              t.id === this.activeTabId,
+          ) ??
+          this.tabs.find((t) => !t.connectionId && t.status === 'connecting');
+
+        if (connectingTab) {
+          const session = this.resolveSession(connectingTab.sessionId);
+          if (
+            session &&
+            shouldPromptPassphrase(session.authType, undefined, payload.message)
+          ) {
+            this.schedulePassphrasePrompt(
+              connectingTab.sessionId,
+              connectingTab.id,
+            );
+            return;
+          }
+        }
+      }
+
       let tab = this.tabs.find(
         (t) => t.connectionId === payload.connectionId,
       );
-      if (!tab) {
+      if (!tab && payload.status === 'connected') {
         tab = this.tabs.find(
           (t) => !t.connectionId && t.status === 'connecting',
         );
@@ -168,6 +310,13 @@ export class TerminalStore {
         }
       }
       if (!tab) return;
+
+      if (payload.status === 'error' || payload.status === 'disconnected') {
+        tab.connectionId = undefined;
+      } else if (payload.status === 'connected') {
+        tab.connectionId = payload.connectionId;
+      }
+
       tab.status = payload.status;
       if (payload.message) {
         tab.errorMessage = payload.message;

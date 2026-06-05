@@ -30,36 +30,31 @@ export const TerminalTabBar = observer(function TerminalTabBar() {
   return (
     <div className={styles.tabBar}>
       {terminalStore.tabs.map((tab) => (
-        <button
+        <div
           key={tab.id}
-          type="button"
           className={`${styles.tab} ${terminalStore.activeTabId === tab.id ? styles.tabActive : ''}`}
-          onClick={() => terminalStore.setActiveTab(tab.id)}
         >
-          <span
-            className={`${styles.statusDot} ${statusClass(tab.status)}`}
-            title={tab.status}
-          />
-          <span className={styles.tabTitle}>{tab.title}</span>
-          <span
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className={styles.tabMain}
+            onClick={() => terminalStore.setActiveTab(tab.id)}
+          >
+            <span
+              className={`${styles.statusDot} ${statusClass(tab.status)}`}
+              title={tab.status}
+            />
+            <span className={styles.tabTitle}>{tab.title}</span>
+          </button>
+          <button
+            type="button"
             className={styles.closeBtn}
             title="Закрыть"
-            onClick={(e) => {
-              e.stopPropagation();
-              void terminalStore.closeTab(tab.id);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.stopPropagation();
-                void terminalStore.closeTab(tab.id);
-              }
-            }}
+            aria-label={`Закрыть ${tab.title}`}
+            onClick={() => terminalStore.closeTab(tab.id)}
           >
             ×
-          </span>
-        </button>
+          </button>
+        </div>
       ))}
     </div>
   );

@@ -22,6 +22,10 @@ export const TerminalView = observer(function TerminalView() {
   const fitAddonRef = useRef<FitAddon | null>(null);
   const activeTabId = terminalStore.activeTabId;
   const activeConnectionId = terminalStore.activeConnectionId;
+  const activeTabStatus = terminalStore.activeTab?.status;
+
+  const canResize =
+    activeConnectionId !== null && activeTabStatus === 'connected';
 
   useEffect(() => {
     if (!containerRef.current || !activeTabId) return;
@@ -53,7 +57,8 @@ export const TerminalView = observer(function TerminalView() {
     const resizeObserver = new ResizeObserver(() => {
       fitAddon.fit();
       const connectionId = terminalStore.activeConnectionId;
-      if (connectionId) {
+      const status = terminalStore.activeTab?.status;
+      if (connectionId && status === 'connected') {
         void terminalStore.resize(connectionId, term.cols, term.rows);
       }
     });
@@ -85,15 +90,15 @@ export const TerminalView = observer(function TerminalView() {
   useEffect(() => {
     if (terminalRef.current && fitAddonRef.current && containerRef.current) {
       fitAddonRef.current.fit();
-      if (activeConnectionId) {
+      if (canResize) {
         void terminalStore.resize(
-          activeConnectionId,
+          activeConnectionId!,
           terminalRef.current.cols,
           terminalRef.current.rows,
         );
       }
     }
-  }, [activeConnectionId, terminalStore]);
+  }, [activeConnectionId, activeTabStatus, canResize, terminalStore]);
 
   if (!activeTabId) {
     return null;

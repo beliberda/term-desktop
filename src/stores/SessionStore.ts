@@ -91,6 +91,21 @@ export class SessionStore {
     }, PERSIST_DEBOUNCE_MS);
   }
 
+  async flushPersist() {
+    if (this.persistTimer) {
+      clearTimeout(this.persistTimer);
+      this.persistTimer = null;
+      await this.persist();
+    }
+  }
+
+  clearPendingConnectForSession(sessionId: string) {
+    const pending = this.terminalStore?.pendingConnect;
+    if (pending?.sessionId === sessionId) {
+      this.terminalStore?.cancelPendingConnect();
+    }
+  }
+
   private async persist() {
     const file = this.toFile();
     try {
@@ -363,6 +378,10 @@ export class SessionStore {
         }
         this.error = null;
       });
+      this.clearPendingConnectForSession(id);
+      await this.terminalStore?.closeTabsForMissingSessions(
+        new Set(file.sessions.map((s) => s.id)),
+      );
     } catch (e) {
       runInAction(() => {
         this.error =
@@ -413,6 +432,7 @@ export class SessionStore {
       });
 
       await this.terminalStore?.closeTabsForMissingSessions(validSessionIds);
+      this.terminalStore?.clearStalePendingConnect(validSessionIds);
     } catch (e) {
       runInAction(() => {
         this.error =

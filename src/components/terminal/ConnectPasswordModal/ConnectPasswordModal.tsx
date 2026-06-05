@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '@stores/index';
 import styles from './ConnectPasswordModal.module.css';
@@ -10,16 +10,31 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
   const sshPending = terminalStore.pendingConnect;
   const ftpPending = fileConnectionStore.pendingConnect;
   const pending = sshPending ?? ftpPending;
+  const pendingKey = sshPending
+    ? `${sshPending.sessionId}:${sshPending.passphraseRetry ? 'passphrase' : 'password'}`
+    : ftpPending
+      ? `ftp:${ftpPending.sessionId}`
+      : null;
+
+  useEffect(() => {
+    if (pendingKey) setPassword('');
+  }, [pendingKey]);
+
   if (!pending) return null;
 
   const session = sessionStore.sessions.find((s) => s.id === pending.sessionId);
   const isFtp = session?.protocol === 'ftp';
+  const isPassphraseRetry =
+    !isFtp && sshPending?.passphraseRetry === true;
+  const canConnect = Boolean(session) && Boolean(password);
 
   const handleConnect = () => {
     if (isFtp) {
       void fileConnectionStore.connect(pending.sessionId, password);
-    } else {
+    } else if (session) {
       void terminalStore.openTab(pending.sessionId, password, session);
+    } else {
+      terminalStore.cancelPendingConnect();
     }
     setPassword('');
   };
@@ -42,16 +57,22 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
         aria-modal="true"
       >
         <h2 className={styles.title}>
-          {isFtp ? 'FTP-подключение' : 'Подключение'}
+          {isFtp
+            ? 'FTP-подключение'
+            : isPassphraseRetry
+              ? 'Пароль ключа'
+              : 'Подключение'}
         </h2>
         <p className={styles.hint}>
-          {session
-            ? `${session.name} — ${session.username}@${session.host}`
-            : 'Введите пароль для подключения'}
+          {!session
+            ? 'Сессия не найдена. Возможно, она была удалена или изменена после импорта.'
+            : isPassphraseRetry
+              ? `${session.name} — ${session.username}@${session.host}. Ключ зашифрован, введите passphrase.`
+              : `${session.name} — ${session.username}@${session.host}`}
         </p>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="connect-password">
-            Пароль
+            {isPassphraseRetry ? 'Passphrase' : 'Пароль'}
           </label>
           <input
             id="connect-password"
@@ -77,7 +98,7 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
             type="button"
             className={`${styles.btn} ${styles.btnConnect}`}
             onClick={handleConnect}
-            disabled={!password}
+            disabled={!canConnect}
           >
             Подключить
           </button>
