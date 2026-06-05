@@ -10,9 +10,14 @@ export {
   protocolSchema,
   authTypeSchema,
   sessionSchema,
+  sessionFolderSchema,
   sessionsFileSchema,
+  sessionsFileV2Schema,
   getDefaultPort,
   createEmptySession,
+  createEmptyFolder,
+  createEmptySessionsFile,
+  migrateSessionsFile,
   prepareSessionForSave,
 } from './session';
 
@@ -20,7 +25,9 @@ export type {
   Protocol,
   AuthType,
   SessionConfig,
+  SessionFolder,
   SessionsFile,
+  SessionsFileV2,
 } from './session';
 
 export {

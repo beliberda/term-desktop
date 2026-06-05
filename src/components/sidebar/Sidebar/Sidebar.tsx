@@ -5,6 +5,7 @@ import { SessionToolbar } from '@components/sidebar/SessionToolbar/SessionToolba
 import { SessionList } from '@components/sidebar/SessionList/SessionList';
 import { SessionForm } from '@components/sidebar/SessionForm/SessionForm';
 import { FileBrowserPanel } from '@components/sidebar/FileBrowserPanel/FileBrowserPanel';
+import { SidebarResizeHandle } from '@components/sidebar/SidebarResizeHandle/SidebarResizeHandle';
 import styles from './Sidebar.module.css';
 
 export const Sidebar = observer(function Sidebar() {
@@ -12,6 +13,7 @@ export const Sidebar = observer(function Sidebar() {
 
   return (
     <aside className={styles.sidebar}>
+      <SidebarResizeHandle />
       <SidebarTabs />
       {appStore.sidebarTab === 'sessions' && <SessionToolbar />}
       <div className={styles.content}>

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use tauri::Manager;
 
-use crate::models::{SessionConfig, SessionsFile};
+use crate::models::SessionsFile;
 
 pub struct ConfigService {
     file_path: PathBuf,
@@ -28,30 +28,14 @@ impl ConfigService {
 
         let content = fs::read_to_string(&self.file_path)
             .map_err(|e| format!("failed to read sessions file: {e}"))?;
-        let data: SessionsFile = serde_json::from_str(&content)
-            .map_err(|e| format!("failed to parse sessions file: {e}"))?;
 
-        if data.schema_version != 1 {
-            return Err(format!(
-                "unsupported schema version: {}",
-                data.schema_version
-            ));
-        }
-
-        Ok(data)
+        SessionsFile::from_json(&content)
     }
 
-    pub fn save_all(&self, sessions: &[SessionConfig]) -> Result<(), String> {
-        for session in sessions {
-            session.validate()?;
-        }
+    pub fn save(&self, data: &SessionsFile) -> Result<(), String> {
+        data.validate()?;
 
-        let data = SessionsFile {
-            schema_version: 1,
-            sessions: sessions.to_vec(),
-        };
-
-        let content = serde_json::to_string_pretty(&data)
+        let content = serde_json::to_string_pretty(data)
             .map_err(|e| format!("failed to serialize sessions: {e}"))?;
 
         let temp_path = self.file_path.with_extension("json.tmp");
@@ -63,26 +47,39 @@ impl ConfigService {
         Ok(())
     }
 
-    pub fn merge_import(&self, incoming: Vec<SessionConfig>) -> Result<Vec<SessionConfig>, String> {
-        for session in &incoming {
-            session.validate()?;
-        }
+    pub fn merge_import(&self, incoming: SessionsFile) -> Result<SessionsFile, String> {
+        incoming.validate()?;
 
         let mut current = self.load()?;
-        for session in incoming {
-            if let Some(existing) = current
-                .sessions
-                .iter_mut()
-                .find(|s| s.id == session.id)
-            {
-                *existing = session;
-            } else {
-                current.sessions.push(session);
+        let mut session_map = std::collections::HashMap::new();
+        for session in current.sessions {
+            session_map.insert(session.id.clone(), session);
+        }
+        for session in incoming.sessions {
+            session_map.insert(session.id.clone(), session);
+        }
+        current.sessions = session_map.into_values().collect();
+
+        let mut folder_map = std::collections::HashMap::new();
+        for folder in current.folders {
+            folder_map.insert(folder.id.clone(), folder);
+        }
+        for folder in incoming.folders {
+            folder_map.insert(folder.id.clone(), folder);
+        }
+        current.folders = folder_map.into_values().collect();
+
+        let mut root_order = current.root_order;
+        for id in incoming.root_order {
+            if !root_order.contains(&id) {
+                root_order.push(id);
             }
         }
+        current.root_order = root_order;
+        current.schema_version = 2;
 
-        self.save_all(&current.sessions)?;
-        Ok(current.sessions)
+        self.save(&current)?;
+        Ok(current)
     }
 
     pub fn export_to_path(&self, path: &PathBuf) -> Result<(), String> {
@@ -93,19 +90,10 @@ impl ConfigService {
         Ok(())
     }
 
-    pub fn import_from_path(&self, path: &PathBuf) -> Result<Vec<SessionConfig>, String> {
+    pub fn import_from_path(&self, path: &PathBuf) -> Result<SessionsFile, String> {
         let content = fs::read_to_string(path)
             .map_err(|e| format!("failed to read import file: {e}"))?;
-        let data: SessionsFile = serde_json::from_str(&content)
-            .map_err(|e| format!("failed to parse import file: {e}"))?;
-
-        if data.schema_version != 1 {
-            return Err(format!(
-                "unsupported schema version: {}",
-                data.schema_version
-            ));
-        }
-
-        self.merge_import(data.sessions)
+        let data = SessionsFile::from_json(&content)?;
+        self.merge_import(data)
     }
 }

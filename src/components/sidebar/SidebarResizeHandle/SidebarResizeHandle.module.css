@@ -1,0 +1,14 @@
+.handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+  touch-action: none;
+}
+
+.handle:hover {
+  background: rgba(0, 120, 212, 0.35);
+}

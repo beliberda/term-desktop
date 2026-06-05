@@ -1,23 +1,21 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import type { SessionConfig } from '@/types';
+import type { SessionFolder } from '@/types';
 import { useStores } from '@stores/index';
-import { connectSession } from '@utils/connectSession';
 import styles from './SessionContextMenu.module.css';
 
-interface SessionContextMenuProps {
-  session: SessionConfig;
+interface FolderContextMenuProps {
+  folder: SessionFolder;
   anchor: { x: number; y: number };
   onClose: () => void;
 }
 
-export const SessionContextMenu = observer(function SessionContextMenu({
-  session,
+export const FolderContextMenu = observer(function FolderContextMenu({
+  folder,
   anchor,
   onClose,
-}: SessionContextMenuProps) {
-  const stores = useStores();
-  const { sessionStore } = stores;
+}: FolderContextMenuProps) {
+  const { sessionStore } = useStores();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -57,34 +55,24 @@ export const SessionContextMenu = observer(function SessionContextMenu({
     };
   }, [onClose]);
 
-  const handleConnect = () => {
-    connectSession(session, stores);
-    onClose();
-  };
-
-  const handleEdit = () => {
-    sessionStore.openEditForm(session.id);
-    onClose();
-  };
-
-  const handleDuplicate = () => {
-    void sessionStore.duplicateSession(session.id);
-    onClose();
-  };
-
-  const handleDelete = () => {
-    if (window.confirm(`Удалить сессию «${session.name}»?`)) {
-      void sessionStore.deleteSession(session.id);
+  const handleRename = () => {
+    const nextName = window.prompt('Название папки', folder.name)?.trim();
+    if (nextName) {
+      sessionStore.renameFolder(folder.id, nextName);
     }
     onClose();
   };
 
-  const handleUngroup = () => {
-    sessionStore.ungroupSession(session.id);
+  const handleDelete = () => {
+    if (
+      window.confirm(
+        `Удалить папку «${folder.name}»? Содержимое будет перемещено в корень.`,
+      )
+    ) {
+      sessionStore.deleteFolder(folder.id);
+    }
     onClose();
   };
-
-  const isInFolder = sessionStore.getParentId(session.id) !== null;
 
   return (
     <div
@@ -93,20 +81,29 @@ export const SessionContextMenu = observer(function SessionContextMenu({
       style={{ left: anchor.x, top: anchor.y }}
       role="menu"
     >
-      <button type="button" className={styles.menuItem} onClick={handleConnect}>
-        Подключиться
+      <button
+        type="button"
+        className={styles.menuItem}
+        onClick={() => {
+          sessionStore.toggleFolderCollapsed(folder.id);
+          onClose();
+        }}
+      >
+        {folder.collapsed ? 'Развернуть' : 'Свернуть'}
       </button>
-      <button type="button" className={styles.menuItem} onClick={handleEdit}>
-        Редактировать
+      <button type="button" className={styles.menuItem} onClick={handleRename}>
+        Переименовать
       </button>
-      <button type="button" className={styles.menuItem} onClick={handleDuplicate}>
-        Дублировать
+      <button
+        type="button"
+        className={styles.menuItem}
+        onClick={() => {
+          void sessionStore.createFolder(folder.id);
+          onClose();
+        }}
+      >
+        Создать подпапку
       </button>
-      {isInFolder && (
-        <button type="button" className={styles.menuItem} onClick={handleUngroup}>
-          Убрать из папки
-        </button>
-      )}
       <button
         type="button"
         className={`${styles.menuItem} ${styles.menuItemDanger}`}

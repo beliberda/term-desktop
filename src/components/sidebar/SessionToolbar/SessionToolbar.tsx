@@ -18,6 +18,14 @@ export const SessionToolbar = observer(function SessionToolbar() {
       <button
         type="button"
         className={styles.button}
+        title="Новая папка"
+        onClick={() => sessionStore.createFolder(null)}
+      >
+        📁
+      </button>
+      <button
+        type="button"
+        className={styles.button}
         onClick={() => sessionStore.importSessions()}
       >
         Import

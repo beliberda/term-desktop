@@ -5,10 +5,24 @@
   overflow: hidden;
 }
 
-.list {
+.treeScroll {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
+}
+
+.list {
   list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.listNested {
+  margin: 0;
+}
+
+.listOver {
+  background: rgba(0, 120, 212, 0.08);
 }
 
 .item {
@@ -122,4 +136,80 @@
   font-size: var(--font-size-sm);
   color: #f48771;
   border-bottom: 1px solid var(--color-border);
+}
+
+.dragHandle {
+  flex-shrink: 0;
+  width: 20px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: grab;
+  font-size: 10px;
+  line-height: 1;
+  padding: 0;
+  touch-action: none;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.folderBlock {
+  list-style: none;
+}
+
+.folderRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--color-border);
+  cursor: default;
+}
+
+.folderRowOver {
+  background: rgba(0, 120, 212, 0.12);
+}
+
+.collapseBtn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+
+.folderIcon {
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.folderName {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dragOverlay {
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: var(--color-tab-inactive);
+  border: 1px solid var(--color-accent);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }

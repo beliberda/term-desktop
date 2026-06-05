@@ -2,6 +2,9 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import {
   appSettingsSchema,
   defaultAppSettings,
+  SIDEBAR_WIDTH_DEFAULT,
+  SIDEBAR_WIDTH_MAX,
+  SIDEBAR_WIDTH_MIN,
   type AppSettings,
 } from '@/types/settings';
 import * as settingsIpc from '@ipc/settings';
@@ -11,6 +14,8 @@ export class SettingsStore {
   isLoading = false;
   isFormOpen = false;
   error: string | null = null;
+
+  private saveSidebarTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -22,15 +27,19 @@ export class SettingsStore {
       const data = await settingsIpc.settingsLoad();
       const parsed = appSettingsSchema.safeParse(data);
       runInAction(() => {
-        this.settings = parsed.success ? parsed.data : { ...defaultAppSettings };
+        this.settings = parsed.success
+          ? { ...defaultAppSettings, ...parsed.data }
+          : { ...defaultAppSettings };
         this.isLoading = false;
         this.applyTheme();
+        this.applySidebarWidth();
       });
     } catch (e) {
       runInAction(() => {
         this.settings = { ...defaultAppSettings };
         this.isLoading = false;
         this.applyTheme();
+        this.applySidebarWidth();
       });
       console.error('[SettingsStore] load failed:', e);
     }
@@ -60,6 +69,7 @@ export class SettingsStore {
         this.isFormOpen = false;
         this.error = null;
         this.applyTheme();
+        this.applySidebarWidth();
       });
     } catch (e) {
       runInAction(() => {
@@ -71,5 +81,30 @@ export class SettingsStore {
 
   applyTheme() {
     document.documentElement.dataset.theme = this.settings.theme;
+  }
+
+  applySidebarWidth() {
+    const width = this.settings.sidebarWidth ?? SIDEBAR_WIDTH_DEFAULT;
+    document.documentElement.style.setProperty('--sidebar-width', `${width}px`);
+  }
+
+  setSidebarWidth(width: number) {
+    const clamped = Math.min(
+      SIDEBAR_WIDTH_MAX,
+      Math.max(SIDEBAR_WIDTH_MIN, Math.round(width)),
+    );
+    this.settings = { ...this.settings, sidebarWidth: clamped };
+    this.applySidebarWidth();
+  }
+
+  async saveSidebarWidth() {
+    if (this.saveSidebarTimer) {
+      clearTimeout(this.saveSidebarTimer);
+    }
+
+    this.saveSidebarTimer = setTimeout(() => {
+      this.saveSidebarTimer = null;
+      void this.save(this.settings);
+    }, 300);
   }
 }

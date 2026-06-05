@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+export const SIDEBAR_WIDTH_MIN = 180;
+export const SIDEBAR_WIDTH_MAX = 520;
+export const SIDEBAR_WIDTH_DEFAULT = 240;
+
 export const appSettingsSchema = z.object({
   schemaVersion: z.literal(1),
   theme: z.enum(['dark', 'light']),
@@ -8,6 +12,12 @@ export const appSettingsSchema = z.object({
   defaultSshPort: z.number().int().min(1).max(65535),
   defaultFtpPort: z.number().int().min(1).max(65535),
   defaultEditorPath: z.string(),
+  sidebarWidth: z
+    .number()
+    .int()
+    .min(SIDEBAR_WIDTH_MIN)
+    .max(SIDEBAR_WIDTH_MAX)
+    .default(SIDEBAR_WIDTH_DEFAULT),
 });
 
 export type AppSettings = z.infer<typeof appSettingsSchema>;
@@ -20,4 +30,5 @@ export const defaultAppSettings: AppSettings = {
   defaultSshPort: 22,
   defaultFtpPort: 21,
   defaultEditorPath: '',
+  sidebarWidth: SIDEBAR_WIDTH_DEFAULT,
 };

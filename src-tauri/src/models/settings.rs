@@ -11,6 +11,12 @@ pub struct AppSettings {
     pub default_ftp_port: u16,
     #[serde(default)]
     pub default_editor_path: String,
+    #[serde(default = "default_sidebar_width")]
+    pub sidebar_width: u16,
+}
+
+fn default_sidebar_width() -> u16 {
+    240
 }
 
 impl Default for AppSettings {
@@ -23,6 +29,7 @@ impl Default for AppSettings {
             default_ssh_port: 22,
             default_ftp_port: 21,
             default_editor_path: String::new(),
+            sidebar_width: default_sidebar_width(),
         }
     }
 }

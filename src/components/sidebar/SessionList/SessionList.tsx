@@ -1,12 +1,32 @@
-import { useState } from 'react';
-import { observer } from 'mobx-react-lite';
-import { useStores } from '@stores/index';
-import { connectSession } from '@utils/connectSession';
-import { SessionContextMenu } from './SessionContextMenu';
-import styles from './SessionList.module.css';
+import { useState } from "react";
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { observer } from "mobx-react-lite";
+import type { SessionConfig, SessionFolder } from "@/types";
+import { useStores } from "@stores/index";
+import { connectSession } from "@utils/connectSession";
+import { isFolderId } from "@utils/sessionTree";
+import { SessionContextMenu } from "./SessionContextMenu";
 
-interface ContextMenuState {
-  sessionId: string;
+import { SessionTreeList } from "./SessionTreeList";
+import styles from "./SessionList.module.css";
+import { FolderContextMenu } from "@/components/sidebar/SessionList/FolderContextMenu";
+
+interface SessionContextMenuState {
+  session: SessionConfig;
+  x: number;
+  y: number;
+}
+
+interface FolderContextMenuState {
+  folder: SessionFolder;
   x: number;
   y: number;
 }
@@ -14,86 +34,160 @@ interface ContextMenuState {
 export const SessionList = observer(function SessionList() {
   const stores = useStores();
   const { sessionStore } = stores;
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [sessionMenu, setSessionMenu] =
+    useState<SessionContextMenuState | null>(null);
+  const [folderMenu, setFolderMenu] = useState<FolderContextMenuState | null>(
+    null,
+  );
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
-  const contextSession = contextMenu
-    ? sessionStore.sessions.find((s) => s.id === contextMenu.sessionId)
-    : null;
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveDragId(null);
+    if (!over) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    if (activeId === overId) return;
+
+    if (overId.startsWith("droppable-folder-")) {
+      const folderId = overId.replace("droppable-folder-", "");
+      const folder = sessionStore.getFolderById(folderId);
+      if (!folder) return;
+      sessionStore.moveItem(activeId, folderId, folder.childOrder.length);
+      return;
+    }
+
+    if (overId === "droppable-root") {
+      sessionStore.moveItem(activeId, null, sessionStore.rootOrder.length);
+      return;
+    }
+
+    if (overId.startsWith("droppable-")) {
+      return;
+    }
+
+    const overParent = sessionStore.getParentId(overId);
+    const activeParent = sessionStore.getParentId(activeId);
+
+    if (overParent === activeParent) {
+      sessionStore.reorderInParent(activeParent, activeId, overId);
+      return;
+    }
+
+    const parentOrder =
+      overParent === null
+        ? sessionStore.rootOrder
+        : (sessionStore.getFolderById(overParent)?.childOrder ?? []);
+    const overIndex = parentOrder.indexOf(overId);
+    if (overIndex < 0) return;
+
+    if (
+      isFolderId(sessionStore.toFile(), activeId) &&
+      overParent &&
+      !sessionStore.getFolderById(overParent)
+    ) {
+      return;
+    }
+
+    sessionStore.moveItem(activeId, overParent, overIndex);
+  };
+
+  const handleItemClick = (session: SessionConfig) => {
+    connectSession(session, stores);
+  };
 
   if (sessionStore.isLoading) {
     return <div className={styles.stateMessage}>Загрузка сессий...</div>;
   }
 
-  if (sessionStore.sessions.length === 0) {
+  if (!sessionStore.hasItems) {
     return (
       <div className={styles.empty}>
         <p className={styles.emptyTitle}>Нет сессий</p>
-        <p className={styles.emptyHint}>
-          Нажмите + чтобы создать подключение
-        </p>
+        <p className={styles.emptyHint}>Нажмите + чтобы создать подключение</p>
       </div>
     );
   }
+
+  const activeSession = activeDragId
+    ? sessionStore.getSessionById(activeDragId)
+    : null;
+  const activeFolder = activeDragId
+    ? sessionStore.getFolderById(activeDragId)
+    : null;
 
   return (
     <div className={styles.container}>
       {sessionStore.error && (
         <div className={styles.error}>{sessionStore.error}</div>
       )}
-      <ul className={styles.list}>
-        {sessionStore.sessions.map((session) => (
-          <li
-            key={session.id}
-            className={`${styles.item} ${sessionStore.selectedId === session.id ? styles.itemSelected : ''}`}
-            onClick={() => connectSession(session, stores)}
-            onContextMenu={(e) => {
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={(event) => setActiveDragId(String(event.active.id))}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveDragId(null)}
+      >
+        <div
+          className={styles.treeScroll}
+          onClick={(e) => {
+            const target = e.target as HTMLElement;
+            const row = target.closest<HTMLElement>("[data-session-id]");
+            if (!row) return;
+            const sessionId = row.dataset.sessionId;
+            if (!sessionId) return;
+            const session = sessionStore.getSessionById(sessionId);
+            if (session) handleItemClick(session);
+          }}
+        >
+          <SessionTreeList
+            parentId={null}
+            onSessionContextMenu={(e, session) => {
               e.preventDefault();
-              setContextMenu({
-                sessionId: session.id,
+              setSessionMenu({
+                session,
                 x: e.clientX,
                 y: e.clientY,
               });
             }}
-          >
-            <div className={styles.info}>
-              <div className={styles.name}>{session.name}</div>
-              <div className={styles.host}>
-                {session.username}@{session.host}:{session.port}
-              </div>
-            </div>
-            <span className={styles.badge}>{session.protocol}</span>
-            <button
-              type="button"
-              className={styles.editBtn}
-              title="Редактировать"
-              onClick={(e) => {
-                e.stopPropagation();
-                sessionStore.openEditForm(session.id);
-              }}
-            >
-              ✎
-            </button>
-            <button
-              type="button"
-              className={styles.deleteBtn}
-              title="Удалить"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (window.confirm(`Удалить сессию «${session.name}»?`)) {
-                  sessionStore.deleteSession(session.id);
-                }
-              }}
-            >
-              ×
-            </button>
-          </li>
-        ))}
-      </ul>
-      {contextMenu && contextSession && (
+            onFolderContextMenu={(e, folder) => {
+              e.preventDefault();
+              setFolderMenu({
+                folder,
+                x: e.clientX,
+                y: e.clientY,
+              });
+            }}
+          />
+        </div>
+        <DragOverlay>
+          {activeSession && (
+            <div className={styles.dragOverlay}>{activeSession.name}</div>
+          )}
+          {activeFolder && (
+            <div className={styles.dragOverlay}>📁 {activeFolder.name}</div>
+          )}
+        </DragOverlay>
+      </DndContext>
+      {sessionMenu && (
         <SessionContextMenu
-          session={contextSession}
-          anchor={{ x: contextMenu.x, y: contextMenu.y }}
-          onClose={() => setContextMenu(null)}
+          session={sessionMenu.session}
+          anchor={{ x: sessionMenu.x, y: sessionMenu.y }}
+          onClose={() => setSessionMenu(null)}
+        />
+      )}
+      {folderMenu && (
+        <FolderContextMenu
+          folder={folderMenu.folder}
+          anchor={{ x: folderMenu.x, y: folderMenu.y }}
+          onClose={() => setFolderMenu(null)}
         />
       )}
     </div>

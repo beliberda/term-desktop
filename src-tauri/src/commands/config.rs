@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, State};
 use tauri_plugin_dialog::DialogExt;
 
-use crate::models::{SessionConfig, SessionsFile};
+use crate::models::SessionsFile;
 use crate::services::ConfigService;
 
 type ConfigState = Arc<Mutex<ConfigService>>;
@@ -15,12 +15,9 @@ pub fn sessions_list(state: State<'_, ConfigState>) -> Result<SessionsFile, Stri
 }
 
 #[tauri::command]
-pub fn sessions_save(
-    sessions: Vec<SessionConfig>,
-    state: State<'_, ConfigState>,
-) -> Result<(), String> {
+pub fn sessions_save(data: SessionsFile, state: State<'_, ConfigState>) -> Result<(), String> {
     let config = state.lock().map_err(|e| e.to_string())?;
-    config.save_all(&sessions)
+    config.save(&data)
 }
 
 #[tauri::command]
@@ -44,7 +41,7 @@ pub fn sessions_export(app: AppHandle, state: State<'_, ConfigState>) -> Result<
 pub fn sessions_import(
     app: AppHandle,
     state: State<'_, ConfigState>,
-) -> Result<Vec<SessionConfig>, String> {
+) -> Result<SessionsFile, String> {
     let path = app
         .dialog()
         .file()
@@ -53,7 +50,7 @@ pub fn sessions_import(
 
     let Some(path) = path else {
         let config = state.lock().map_err(|e| e.to_string())?;
-        return Ok(config.load()?.sessions);
+        return config.load();
     };
 
     let config = state.lock().map_err(|e| e.to_string())?;
