@@ -50,3 +50,10 @@ pub fn validate_protocol(protocol: &str) -> Result<(), String> {
         _ => Err(format!("unsupported protocol: {protocol}")),
     }
 }
+
+pub fn validate_ftp_protocol(protocol: &str) -> Result<(), String> {
+    match protocol {
+        "ftp" => Ok(()),
+        _ => Err(format!("session protocol must be ftp, got: {protocol}")),
+    }
+}

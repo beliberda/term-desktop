@@ -21,46 +21,46 @@ function formatDate(iso?: string): string {
 }
 
 export const SftpFileList = observer(function SftpFileList() {
-  const { sftpBrowserStore } = useStores();
+  const { fileBrowserStore } = useStores();
 
   const handleClick = (entry: SftpEntry) => {
     if (entry.isDirectory) {
-      sftpBrowserStore.navigateTo(entry.path);
+      fileBrowserStore.navigateTo(entry.path);
       return;
     }
-    sftpBrowserStore.selectEntry(entry);
+    fileBrowserStore.selectEntry(entry);
   };
 
   const handleDoubleClick = (entry: SftpEntry) => {
     if (entry.isDirectory) {
-      sftpBrowserStore.navigateTo(entry.path);
+      fileBrowserStore.navigateTo(entry.path);
       return;
     }
-    void sftpBrowserStore.download(entry);
+    void fileBrowserStore.download(entry);
   };
 
   const handleContextMenu = (e: MouseEvent, entry: SftpEntry) => {
     e.preventDefault();
-    sftpBrowserStore.selectEntry(entry);
-    void sftpBrowserStore.download(entry);
+    fileBrowserStore.selectEntry(entry);
+    void fileBrowserStore.download(entry);
   };
 
-  if (sftpBrowserStore.isLoading && sftpBrowserStore.entries.length === 0) {
+  if (fileBrowserStore.isLoading && fileBrowserStore.entries.length === 0) {
     return <p className={styles.status}>Загрузка...</p>;
   }
 
-  if (sftpBrowserStore.entries.length === 0) {
+  if (fileBrowserStore.entries.length === 0) {
     return <p className={styles.status}>Папка пуста</p>;
   }
 
   return (
     <ul className={styles.list}>
-      {sftpBrowserStore.cwd !== '/' && (
+      {fileBrowserStore.cwd !== '/' && (
         <li>
           <button
             type="button"
             className={styles.row}
-            onClick={() => sftpBrowserStore.navigateUp()}
+            onClick={() => fileBrowserStore.navigateUp()}
           >
             <span className={`${styles.icon} ${styles.dir}`}>📁</span>
             <span className={styles.name}>..</span>
@@ -68,9 +68,9 @@ export const SftpFileList = observer(function SftpFileList() {
           </button>
         </li>
       )}
-      {sftpBrowserStore.entries.map((entry) => {
+      {fileBrowserStore.entries.map((entry) => {
         const selected =
-          sftpBrowserStore.selectedEntry?.path === entry.path;
+          fileBrowserStore.selectedEntry?.path === entry.path;
         return (
           <li key={entry.path}>
             <button

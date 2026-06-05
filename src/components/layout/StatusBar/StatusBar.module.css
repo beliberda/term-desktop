@@ -1,6 +1,7 @@
 .statusBar {
   display: flex;
   align-items: center;
+  gap: 16px;
   height: var(--statusbar-height);
   padding: 0 12px;
   background: var(--color-sidebar-bg);
@@ -10,10 +11,19 @@
   flex-shrink: 0;
 }
 
+.item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .label {
   margin-right: 6px;
 }
 
 .value {
   color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

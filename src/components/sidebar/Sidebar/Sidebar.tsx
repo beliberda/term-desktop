@@ -4,7 +4,7 @@ import { SidebarTabs } from '@components/sidebar/SidebarTabs/SidebarTabs';
 import { SessionToolbar } from '@components/sidebar/SessionToolbar/SessionToolbar';
 import { SessionList } from '@components/sidebar/SessionList/SessionList';
 import { SessionForm } from '@components/sidebar/SessionForm/SessionForm';
-import { SftpBrowserPanel } from '@components/sidebar/SftpBrowserPanel/SftpBrowserPanel';
+import { FileBrowserPanel } from '@components/sidebar/FileBrowserPanel/FileBrowserPanel';
 import styles from './Sidebar.module.css';
 
 export const Sidebar = observer(function Sidebar() {
@@ -18,7 +18,7 @@ export const Sidebar = observer(function Sidebar() {
         {appStore.sidebarTab === 'sessions' ? (
           <SessionList />
         ) : (
-          <SftpBrowserPanel />
+          <FileBrowserPanel />
         )}
       </div>
       <SessionForm />

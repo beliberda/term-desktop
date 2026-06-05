@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import type { SessionConfig } from '@/types';
 import { useStores } from '@stores/index';
+import { connectSession } from '@utils/connectSession';
 import styles from './SessionContextMenu.module.css';
 
 interface SessionContextMenuProps {
@@ -15,7 +16,8 @@ export const SessionContextMenu = observer(function SessionContextMenu({
   anchor,
   onClose,
 }: SessionContextMenuProps) {
-  const { sessionStore, terminalStore } = useStores();
+  const stores = useStores();
+  const { sessionStore } = stores;
   const menuRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -56,8 +58,7 @@ export const SessionContextMenu = observer(function SessionContextMenu({
   }, [onClose]);
 
   const handleConnect = () => {
-    sessionStore.selectSession(session.id);
-    terminalStore.requestConnect(session.id, session);
+    connectSession(session, stores);
     onClose();
   };
 

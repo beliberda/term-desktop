@@ -6,6 +6,15 @@
   overflow: hidden;
 }
 
+.protocol {
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
 .placeholder {
   display: flex;
   flex-direction: column;

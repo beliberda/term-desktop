@@ -19,6 +19,8 @@ export interface TerminalTab {
   title: string;
   status: ConnectionStatus;
   errorMessage?: string;
+  connectStartedAt?: number;
+  connectLatencyMs?: number;
 }
 
 export type ConnectionStatusPayload = z.infer<typeof connectionStatusPayloadSchema>;

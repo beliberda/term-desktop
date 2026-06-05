@@ -18,3 +18,16 @@
   --color-tab-active: #1e1e1e;
   --color-tab-inactive: #2d2d2d;
 }
+
+:root[data-theme='light'] {
+  --color-bg: #f3f3f3;
+  --color-sidebar-bg: #e8e8e8;
+  --color-panel-bg: #ffffff;
+  --color-border: #c8c8c8;
+  --color-text: #1e1e1e;
+  --color-text-muted: #5a5a5a;
+  --color-accent: #0078d4;
+  --color-accent-hover: #1a86d9;
+  --color-tab-active: #ffffff;
+  --color-tab-inactive: #e0e0e0;
+}

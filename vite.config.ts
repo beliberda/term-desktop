@@ -16,6 +16,8 @@ export default defineConfig({
       "@stores": path.resolve(__dirname, "./src/stores"),
       "@ipc": path.resolve(__dirname, "./src/ipc"),
       "@themes": path.resolve(__dirname, "./src/themes"),
+      "@utils": path.resolve(__dirname, "./src/utils"),
+      "@hooks": path.resolve(__dirname, "./src/hooks"),
     },
   },
   plugins: [react()],

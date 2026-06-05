@@ -1,9 +1,9 @@
 [package]
 name = "app"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
+description = "TermaSSH — SSH terminal and file browser"
+authors = ["TermaSSH"]
+license = "MIT"
 repository = ""
 edition = "2021"
 rust-version = "1.77.2"
@@ -20,9 +20,7 @@ tauri-build = { version = "2.6.2", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-log = "0.4"
 tauri = { version = "2.11.2", features = [] }
-tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
 tokio = { version = "1", features = ["full"] }
 russh = "0.44"
@@ -35,3 +33,7 @@ async-trait = "0.1"
 futures = "0.3"
 russh-sftp = "2.3"
 chrono = "0.4"
+suppaftp = { version = "8", features = ["tokio"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"

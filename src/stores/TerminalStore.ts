@@ -2,7 +2,7 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import type { ConnectionStatusPayload, TerminalOutputPayload, TerminalTab } from '@/types';
 import type { SessionConfig } from '@/types';
 import * as terminalIpc from '@ipc/terminal';
-import { listenConnectionStatus, listenTerminalOutput } from '@ipc/events';
+import { listenTerminalOutput } from '@ipc/events';
 
 type OutputHandler = (payload: TerminalOutputPayload) => void;
 
@@ -31,14 +31,11 @@ export class TerminalStore {
     if (this.listenersInitialized) return;
     this.listenersInitialized = true;
 
-    const unlistenStatus = await listenConnectionStatus((payload) => {
-      this.handleConnectionStatus(payload);
-    });
     const unlistenOutput = await listenTerminalOutput((payload) => {
       this.outputHandlers.forEach((handler) => handler(payload));
     });
 
-    this.unlistenFns.push(unlistenStatus, unlistenOutput);
+    this.unlistenFns.push(unlistenOutput);
   }
 
   registerOutputHandler(handler: OutputHandler) {
@@ -47,10 +44,6 @@ export class TerminalStore {
   }
 
   requestConnect(sessionId: string, session?: SessionConfig) {
-    if (session?.protocol === 'ftp') {
-      window.alert('FTP-сессии не поддерживают терминал');
-      return;
-    }
     if (session?.authType === 'password') {
       this.pendingConnect = { sessionId };
       return;
@@ -73,6 +66,7 @@ export class TerminalStore {
       sessionId,
       title,
       status: 'connecting',
+      connectStartedAt: performance.now(),
     };
 
     runInAction(() => {
@@ -169,6 +163,11 @@ export class TerminalStore {
         tab.errorMessage = payload.message;
       } else if (payload.status === 'connected') {
         tab.errorMessage = undefined;
+        if (tab.connectStartedAt !== undefined) {
+          tab.connectLatencyMs = Math.round(
+            performance.now() - tab.connectStartedAt,
+          );
+        }
       }
     });
   }

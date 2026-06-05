@@ -1,9 +1,10 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { open, save } from '@tauri-apps/plugin-dialog';
-import type { SftpEntry } from '@/types';
+import type { ConnectionStatus, SftpEntry } from '@/types';
 import * as sftpIpc from '@ipc/sftp';
 import type { TerminalStore } from './TerminalStore';
 import type { SessionStore } from './SessionStore';
+import type { FileConnectionStore } from './FileConnectionStore';
 
 function joinRemotePath(parent: string, name: string): string {
   const base = parent === '/' ? '' : parent.replace(/\/$/, '');
@@ -22,15 +23,16 @@ function joinLocalPath(dir: string, name: string): string {
   return `${trimmed}${separator}${name}`;
 }
 
-export class SftpBrowserStore {
+export class FileBrowserStore {
   connectionId: string | null = null;
   sessionId: string | null = null;
+  protocol: 'ssh' | 'sftp' | 'ftp' | null = null;
   cwd = '/';
   entries: SftpEntry[] = [];
   isLoading = false;
   error: string | null = null;
   selectedEntry: SftpEntry | null = null;
-  private terminalStatus: string | null = null;
+  private connectionStatus: ConnectionStatus | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -54,19 +56,35 @@ export class SftpBrowserStore {
   }
 
   get canBrowse(): boolean {
-    return this.connectionId !== null && this.terminalStatus === 'connected';
+    return this.connectionId !== null && this.connectionStatus === 'connected';
   }
 
-  bindToActiveTab(terminalStore: TerminalStore, sessionStore: SessionStore) {
-    const activeTab = terminalStore.activeTab;
+  bind(
+    terminalStore: TerminalStore,
+    sessionStore: SessionStore,
+    fileConnectionStore: FileConnectionStore,
+  ) {
+    const ftpConn = fileConnectionStore.activeConnection;
+    if (
+      fileConnectionStore.activeSessionId &&
+      ftpConn &&
+      (ftpConn.status === 'connected' || ftpConn.status === 'connecting')
+    ) {
+      this.bindFtp(fileConnectionStore.activeSessionId, ftpConn, sessionStore);
+      return;
+    }
 
+    const activeTab = terminalStore.activeTab;
     if (!activeTab) {
       this.reset();
       return;
     }
 
+    const session = sessionStore.sessions.find((s) => s.id === activeTab.sessionId);
+
     runInAction(() => {
-      this.terminalStatus = activeTab.status;
+      this.connectionStatus = activeTab.status;
+      this.protocol = session?.protocol === 'ftp' ? 'ftp' : session?.protocol ?? 'ssh';
     });
 
     if (activeTab.status !== 'connected' || !activeTab.connectionId) {
@@ -82,7 +100,6 @@ export class SftpBrowserStore {
       return;
     }
 
-    const session = sessionStore.sessions.find((s) => s.id === activeTab.sessionId);
     const rawDefault = session?.defaultPath?.trim();
     const defaultPath =
       rawDefault && rawDefault.length > 0
@@ -98,7 +115,8 @@ export class SftpBrowserStore {
     runInAction(() => {
       this.connectionId = activeTab.connectionId!;
       this.sessionId = activeTab.sessionId;
-      this.terminalStatus = activeTab.status;
+      this.connectionStatus = activeTab.status;
+      this.protocol = session?.protocol === 'sftp' ? 'sftp' : 'ssh';
       if (connectionChanged) {
         this.cwd = defaultPath;
         this.selectedEntry = null;
@@ -108,6 +126,42 @@ export class SftpBrowserStore {
     });
 
     void this.loadDir();
+  }
+
+  private bindFtp(
+    sessionId: string,
+    ftpConn: NonNullable<FileConnectionStore['activeConnection']>,
+    sessionStore: SessionStore,
+  ) {
+    const session = sessionStore.sessions.find((s) => s.id === sessionId);
+    const rawDefault = session?.defaultPath?.trim();
+    const defaultPath =
+      rawDefault && rawDefault.length > 0
+        ? rawDefault.startsWith('/')
+          ? rawDefault
+          : `/${rawDefault}`
+        : '/';
+
+    const connectionChanged =
+      this.connectionId !== ftpConn.connectionId ||
+      this.sessionId !== sessionId;
+
+    runInAction(() => {
+      this.sessionId = sessionId;
+      this.protocol = 'ftp';
+      this.connectionStatus = ftpConn.status;
+      this.connectionId = ftpConn.connectionId || null;
+      if (connectionChanged) {
+        this.cwd = defaultPath;
+        this.selectedEntry = null;
+        this.error = ftpConn.errorMessage ?? null;
+        this.entries = [];
+      }
+    });
+
+    if (ftpConn.status === 'connected' && ftpConn.connectionId) {
+      void this.loadDir();
+    }
   }
 
   async loadDir(path?: string) {
@@ -262,7 +316,8 @@ export class SftpBrowserStore {
   reset() {
     this.connectionId = null;
     this.sessionId = null;
-    this.terminalStatus = null;
+    this.protocol = null;
+    this.connectionStatus = null;
     this.cwd = '/';
     this.entries = [];
     this.isLoading = false;

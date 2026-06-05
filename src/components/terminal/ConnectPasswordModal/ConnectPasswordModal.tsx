@@ -4,21 +4,32 @@ import { useStores } from '@stores/index';
 import styles from './ConnectPasswordModal.module.css';
 
 export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
-  const { terminalStore, sessionStore } = useStores();
+  const { terminalStore, fileConnectionStore, sessionStore } = useStores();
   const [password, setPassword] = useState('');
 
-  const pending = terminalStore.pendingConnect;
+  const sshPending = terminalStore.pendingConnect;
+  const ftpPending = fileConnectionStore.pendingConnect;
+  const pending = sshPending ?? ftpPending;
   if (!pending) return null;
 
   const session = sessionStore.sessions.find((s) => s.id === pending.sessionId);
+  const isFtp = session?.protocol === 'ftp';
 
   const handleConnect = () => {
-    void terminalStore.openTab(pending.sessionId, password, session);
+    if (isFtp) {
+      void fileConnectionStore.connect(pending.sessionId, password);
+    } else {
+      void terminalStore.openTab(pending.sessionId, password, session);
+    }
     setPassword('');
   };
 
   const handleCancel = () => {
-    terminalStore.cancelPendingConnect();
+    if (isFtp) {
+      fileConnectionStore.cancelPendingConnect();
+    } else {
+      terminalStore.cancelPendingConnect();
+    }
     setPassword('');
   };
 
@@ -30,7 +41,9 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
         role="dialog"
         aria-modal="true"
       >
-        <h2 className={styles.title}>Подключение</h2>
+        <h2 className={styles.title}>
+          {isFtp ? 'FTP-подключение' : 'Подключение'}
+        </h2>
         <p className={styles.hint}>
           {session
             ? `${session.name} — ${session.username}@${session.host}`

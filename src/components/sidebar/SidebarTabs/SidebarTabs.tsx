@@ -5,7 +5,7 @@ import styles from './SidebarTabs.module.css';
 
 const TABS: { id: SidebarTab; label: string }[] = [
   { id: 'sessions', label: 'Сессии' },
-  { id: 'sftp', label: 'SSH Browser' },
+  { id: 'files', label: 'Файлы' },
 ];
 
 export const SidebarTabs = observer(function SidebarTabs() {

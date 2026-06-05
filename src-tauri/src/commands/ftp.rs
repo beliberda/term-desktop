@@ -7,8 +7,7 @@ use tokio::sync::Mutex as AsyncMutex;
 use crate::connection_pool::ConnectionPool;
 use crate::models::SessionConfig;
 use crate::services::config::ConfigService;
-use crate::services::ssh::test_connect;
-use crate::utils::paths::validate_protocol;
+use crate::utils::paths::validate_ftp_protocol;
 
 type ConfigState = Arc<Mutex<ConfigService>>;
 type PoolState = Arc<AsyncMutex<ConnectionPool>>;
@@ -28,7 +27,7 @@ fn find_session(config: &ConfigService, session_id: &str) -> Result<SessionConfi
 }
 
 #[tauri::command]
-pub async fn terminal_connect(
+pub async fn ftp_connect(
     app: AppHandle,
     pool: State<'_, PoolState>,
     config_state: State<'_, ConfigState>,
@@ -41,56 +40,27 @@ pub async fn terminal_connect(
     };
 
     session.validate()?;
-    validate_protocol(&session.protocol)?;
+    validate_ftp_protocol(&session.protocol)?;
+
+    if session.auth_type != "password" {
+        return Err("FTP supports password authentication only".into());
+    }
 
     let connection_id = {
         let mut pool = pool.lock().await;
-        pool.connect_ssh(app, session, password).await?
+        pool.connect_ftp(app, session, password).await?
     };
 
-    Ok(ConnectResponse { connection_id })
+    Ok(ConnectResponse {
+        connection_id,
+    })
 }
 
 #[tauri::command]
-pub async fn terminal_disconnect(
+pub async fn ftp_disconnect(
     pool: State<'_, PoolState>,
     connection_id: String,
 ) -> Result<(), String> {
     let mut pool = pool.lock().await;
     pool.disconnect(&connection_id).await
-}
-
-#[tauri::command]
-pub async fn terminal_write(
-    pool: State<'_, PoolState>,
-    connection_id: String,
-    data: String,
-) -> Result<(), String> {
-    let bytes = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, &data)
-        .map_err(|e| format!("invalid base64 data: {e}"))?;
-
-    let pool = pool.lock().await;
-    pool.write(&connection_id, bytes)
-}
-
-#[tauri::command]
-pub async fn terminal_resize(
-    pool: State<'_, PoolState>,
-    connection_id: String,
-    cols: u32,
-    rows: u32,
-) -> Result<(), String> {
-    let pool = pool.lock().await;
-    pool.resize(&connection_id, cols, rows)
-}
-
-#[tauri::command]
-pub async fn test_ssh_connect(
-    host: String,
-    port: u16,
-    username: String,
-    private_key_path: Option<String>,
-    password: Option<String>,
-) -> Result<String, String> {
-    test_connect(host, port, username, private_key_path, password).await
 }

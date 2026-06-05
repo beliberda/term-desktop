@@ -6,7 +6,7 @@ import { getDefaultPort, type AuthType, type Protocol, type SessionConfig } from
 import styles from './SessionForm.module.css';
 
 export const SessionForm = observer(function SessionForm() {
-  const { sessionStore } = useStores();
+  const { sessionStore, settingsStore } = useStores();
   const [draft, setDraft] = useState<SessionConfig | null>(null);
 
   useEffect(() => {
@@ -27,9 +27,14 @@ export const SessionForm = observer(function SessionForm() {
   };
 
   const handleProtocolChange = (protocol: Protocol) => {
+    const port =
+      protocol === 'ftp'
+        ? settingsStore.settings.defaultFtpPort
+        : settingsStore.settings.defaultSshPort;
     update({
       protocol,
-      port: getDefaultPort(protocol),
+      port: port || getDefaultPort(protocol),
+      ...(protocol === 'ftp' ? { authType: 'password' as const } : {}),
     });
   };
 
@@ -152,18 +157,23 @@ export const SessionForm = observer(function SessionForm() {
             <select
               id="session-auth"
               className={styles.select}
-              value={session.authType}
+              value={session.protocol === 'ftp' ? 'password' : session.authType}
+              disabled={session.protocol === 'ftp'}
               onChange={(e) =>
                 update({ authType: e.target.value as AuthType })
               }
             >
               <option value="password">Password</option>
-              <option value="privateKey">Private Key</option>
-              <option value="agent">SSH Agent</option>
+              {session.protocol !== 'ftp' && (
+                <>
+                  <option value="privateKey">Private Key</option>
+                  <option value="agent">SSH Agent</option>
+                </>
+              )}
             </select>
           </div>
 
-          {session.authType === 'privateKey' && (
+          {session.authType === 'privateKey' && session.protocol !== 'ftp' && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="session-key">
                 Путь к ключу

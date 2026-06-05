@@ -1,30 +1,69 @@
-# React + TypeScript + Vite
+# TermaSSH
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Desktop-клиент для SSH-терминала и файлового браузера (SFTP/FTP). Аналог ключевых функций MobaXterm для Windows.
 
-Currently, two official plugins are available:
+## Установка
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Скачайте установщик `TermaSSH_*_x64-setup.exe` или `TermaSSH_*_x64_en-US.msi` из релиза.
+2. Запустите установщик и следуйте инструкциям.
+3. Откройте TermaSSH из меню Пуск.
 
-## Expanding the ESLint configuration
+Для сборки из исходников:
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```bash
+npm install
+npm run tauri:build
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Сессии
+
+- Вкладка **Сессии** — список сохранённых подключений.
+- Кнопка **+** — создать сессию (SSH, SFTP или FTP).
+- **Клик** по сессии — подключение (SSH → терминал, FTP → файловый браузер).
+- **ПКМ** — меню: подключиться, редактировать, дублировать, удалить.
+- **✎** — редактирование, **×** — удаление.
+- **Import / Export** — импорт и экспорт `sessions.json`.
+
+FTP-сессии поддерживают только аутентификацию по паролю.
+
+## Терминал
+
+- Несколько вкладок SSH-терминалов одновременно.
+- Сессии с паролем запрашивают его при подключении.
+- Сессии с приватным ключом подключаются без модального окна (путь к ключу в настройках сессии).
+
+## Файловый браузер
+
+Вкладка **Файлы** в sidebar:
+
+- **SSH/SFTP** — работает через активную вкладку терминала (SFTP поверх того же SSH-соединения).
+- **FTP** — отдельное подключение без терминала; открывается автоматически при клике на FTP-сессию.
+
+Доступны: навигация, breadcrumbs, upload, download (файл и папка рекурсивно), создание папки.
+
+## Горячие клавиши
+
+| Сочетание | Действие |
+|-----------|----------|
+| Ctrl+T | Подключить выбранную сессию (или фокус на список сессий) |
+| Ctrl+W | Закрыть активную вкладку терминала |
+| Ctrl+B | Переключить sidebar: Сессии ↔ Файлы |
+
+## Настройки
+
+Кнопка **⚙** в панели сессий:
+
+- тема интерфейса (тёмная / светлая);
+- шрифт и размер терминала;
+- порты SSH и FTP по умолчанию для новых сессий.
+
+Настройки сохраняются в `settings.json` в каталоге данных приложения.
+
+## Разработка
+
+```bash
+npm run tauri:dev
+npm run lint
+```
+
+Техническая документация — в каталоге `docs/`.

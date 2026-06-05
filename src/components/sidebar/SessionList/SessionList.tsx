@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '@stores/index';
+import { connectSession } from '@utils/connectSession';
 import { SessionContextMenu } from './SessionContextMenu';
 import styles from './SessionList.module.css';
 
@@ -11,7 +12,8 @@ interface ContextMenuState {
 }
 
 export const SessionList = observer(function SessionList() {
-  const { sessionStore, terminalStore } = useStores();
+  const stores = useStores();
+  const { sessionStore } = stores;
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
   const contextSession = contextMenu
@@ -43,10 +45,7 @@ export const SessionList = observer(function SessionList() {
           <li
             key={session.id}
             className={`${styles.item} ${sessionStore.selectedId === session.id ? styles.itemSelected : ''}`}
-            onClick={() => {
-              sessionStore.selectSession(session.id);
-              terminalStore.requestConnect(session.id, session);
-            }}
+            onClick={() => connectSession(session, stores)}
             onContextMenu={(e) => {
               e.preventDefault();
               setContextMenu({

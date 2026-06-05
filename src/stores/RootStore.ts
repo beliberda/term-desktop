@@ -1,19 +1,25 @@
 import { AppStore } from './AppStore';
 import { SessionStore } from './SessionStore';
 import { TerminalStore } from './TerminalStore';
-import { SftpBrowserStore } from './SftpBrowserStore';
+import { FileBrowserStore } from './FileBrowserStore';
+import { FileConnectionStore } from './FileConnectionStore';
+import { SettingsStore } from './SettingsStore';
 
 export class RootStore {
   appStore: AppStore;
   sessionStore: SessionStore;
   terminalStore: TerminalStore;
-  sftpBrowserStore: SftpBrowserStore;
+  fileBrowserStore: FileBrowserStore;
+  fileConnectionStore: FileConnectionStore;
+  settingsStore: SettingsStore;
 
   constructor() {
     this.appStore = new AppStore();
     this.sessionStore = new SessionStore();
     this.terminalStore = new TerminalStore();
-    this.sftpBrowserStore = new SftpBrowserStore();
+    this.fileBrowserStore = new FileBrowserStore();
+    this.fileConnectionStore = new FileConnectionStore();
+    this.settingsStore = new SettingsStore();
   }
 }
 

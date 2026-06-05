@@ -16,7 +16,7 @@ function base64ToBytes(base64: string): Uint8Array {
 }
 
 export const TerminalView = observer(function TerminalView() {
-  const { terminalStore } = useStores();
+  const { terminalStore, settingsStore } = useStores();
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -26,14 +26,15 @@ export const TerminalView = observer(function TerminalView() {
   useEffect(() => {
     if (!containerRef.current || !activeTabId) return;
 
+    const isLight = settingsStore.settings.theme === 'light';
     const term = new Terminal({
       cursorBlink: true,
-      fontSize: 14,
-      fontFamily: 'Consolas, "Courier New", monospace',
+      fontSize: settingsStore.settings.terminalFontSize,
+      fontFamily: settingsStore.settings.terminalFontFamily,
       theme: {
-        background: '#1e1e1e',
-        foreground: '#cccccc',
-        cursor: '#cccccc',
+        background: isLight ? '#ffffff' : '#1e1e1e',
+        foreground: isLight ? '#1e1e1e' : '#cccccc',
+        cursor: isLight ? '#1e1e1e' : '#cccccc',
       },
     });
     const fitAddon = new FitAddon();
@@ -73,7 +74,13 @@ export const TerminalView = observer(function TerminalView() {
       terminalRef.current = null;
       fitAddonRef.current = null;
     };
-  }, [activeTabId, terminalStore]);
+  }, [
+    activeTabId,
+    terminalStore,
+    settingsStore.settings.theme,
+    settingsStore.settings.terminalFontSize,
+    settingsStore.settings.terminalFontFamily,
+  ]);
 
   useEffect(() => {
     if (terminalRef.current && fitAddonRef.current && containerRef.current) {

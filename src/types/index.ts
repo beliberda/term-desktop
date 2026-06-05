@@ -1,4 +1,4 @@
-export type SidebarTab = 'sessions' | 'sftp';
+export type SidebarTab = 'sessions' | 'files';
 
 export type ConnectionStatus =
   | 'connecting'
@@ -37,3 +37,7 @@ export type {
 export { sftpEntrySchema } from './sftp';
 
 export type { SftpEntry } from './sftp';
+
+export { appSettingsSchema, defaultAppSettings } from './settings';
+
+export type { AppSettings } from './settings';

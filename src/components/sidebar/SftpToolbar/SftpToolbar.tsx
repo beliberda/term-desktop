@@ -4,14 +4,14 @@ import { useStores } from '@stores/index';
 import styles from './SftpToolbar.module.css';
 
 export const SftpToolbar = observer(function SftpToolbar() {
-  const { sftpBrowserStore } = useStores();
+  const { fileBrowserStore } = useStores();
   const [mkdirOpen, setMkdirOpen] = useState(false);
   const [mkdirName, setMkdirName] = useState('');
 
   const handleMkdirSubmit = () => {
     const name = mkdirName.trim();
     if (!name) return;
-    void sftpBrowserStore.mkdir(name);
+    void fileBrowserStore.mkdir(name);
     setMkdirName('');
     setMkdirOpen(false);
   };
@@ -21,16 +21,16 @@ export const SftpToolbar = observer(function SftpToolbar() {
       <button
         type="button"
         className={styles.button}
-        onClick={() => sftpBrowserStore.refresh()}
-        disabled={sftpBrowserStore.isLoading}
+        onClick={() => fileBrowserStore.refresh()}
+        disabled={fileBrowserStore.isLoading}
       >
         Обновить
       </button>
       <button
         type="button"
         className={styles.button}
-        onClick={() => void sftpBrowserStore.upload()}
-        disabled={sftpBrowserStore.isLoading}
+        onClick={() => void fileBrowserStore.upload()}
+        disabled={fileBrowserStore.isLoading}
       >
         Загрузить
       </button>
@@ -38,7 +38,7 @@ export const SftpToolbar = observer(function SftpToolbar() {
         type="button"
         className={styles.button}
         onClick={() => setMkdirOpen((v) => !v)}
-        disabled={sftpBrowserStore.isLoading}
+        disabled={fileBrowserStore.isLoading}
       >
         Папка
       </button>
