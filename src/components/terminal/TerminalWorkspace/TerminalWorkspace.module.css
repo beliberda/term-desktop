@@ -9,8 +9,24 @@
 .content {
   display: flex;
   flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.empty {
+  display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+.error {
+  padding: 8px 12px;
+  background: #3c1f1f;
+  color: #f48771;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }

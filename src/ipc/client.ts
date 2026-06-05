@@ -1,10 +1,15 @@
+import { invoke } from '@tauri-apps/api/core';
 import * as commands from './commands';
 
-export async function invokePing(): Promise<string> {
+export async function safeInvoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   try {
-    return await commands.ping();
+    return await invoke<T>(command, args);
   } catch (error) {
-    console.error('[IPC] ping failed:', error);
+    console.error(`[IPC] ${command} failed:`, error);
     throw error;
   }
+}
+
+export async function invokePing(): Promise<string> {
+  return commands.ping();
 }

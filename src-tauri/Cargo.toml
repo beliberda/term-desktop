@@ -23,3 +23,15 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.11.2", features = [] }
 tauri-plugin-log = "2"
+tauri-plugin-dialog = "2"
+tokio = { version = "1", features = ["full"] }
+russh = "0.44"
+russh-keys = "0.44"
+uuid = { version = "1", features = ["v4"] }
+anyhow = "1"
+thiserror = "1"
+base64 = "0.22"
+async-trait = "0.1"
+futures = "0.3"
+russh-sftp = "2.3"
+chrono = "0.4"

@@ -1,0 +1,11 @@
+.container {
+  flex: 1;
+  overflow: hidden;
+  padding: 4px;
+  background: var(--color-bg);
+}
+
+.terminal {
+  width: 100%;
+  height: 100%;
+}
