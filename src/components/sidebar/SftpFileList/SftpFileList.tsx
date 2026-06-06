@@ -1,11 +1,11 @@
-import type { MouseEvent } from 'react';
-import { useState } from 'react';
-import { observer } from 'mobx-react-lite';
-import { useTranslation } from 'react-i18next';
-import type { SftpEntry } from '@/types';
-import { useStores } from '@stores/index';
-import { FileEntryContextMenu } from './FileEntryContextMenu';
-import styles from './SftpFileList.module.css';
+import type { MouseEvent } from "react";
+import { useState } from "react";
+import { observer } from "mobx-react-lite";
+import { useTranslation } from "react-i18next";
+import type { SftpEntry } from "@/types";
+import { useStores } from "@stores/index";
+import { FileEntryContextMenu } from "./FileEntryContextMenu";
+import styles from "./SftpFileList.module.css";
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -17,7 +17,7 @@ function formatSize(bytes: number): string {
 }
 
 function formatDate(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return "—";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   return date.toLocaleString();
@@ -31,14 +31,6 @@ export const SftpFileList = observer(function SftpFileList() {
     x: number;
     y: number;
   } | null>(null);
-
-  const handleClick = (entry: SftpEntry) => {
-    if (entry.isDirectory) {
-      fileBrowserStore.navigateTo(entry.path);
-      return;
-    }
-    fileBrowserStore.selectEntry(entry);
-  };
 
   const handleDoubleClick = (entry: SftpEntry) => {
     if (entry.isDirectory) {
@@ -55,17 +47,17 @@ export const SftpFileList = observer(function SftpFileList() {
   };
 
   if (fileBrowserStore.isLoading && fileBrowserStore.entries.length === 0) {
-    return <p className={styles.status}>{t('files.list.loading')}</p>;
+    return <p className={styles.status}>{t("files.list.loading")}</p>;
   }
 
   if (fileBrowserStore.entries.length === 0) {
-    return <p className={styles.status}>{t('files.list.empty')}</p>;
+    return <p className={styles.status}>{t("files.list.empty")}</p>;
   }
 
   return (
     <>
       <ul className={styles.list}>
-        {fileBrowserStore.cwd !== '/' && (
+        {fileBrowserStore.cwd !== "/" && (
           <li>
             <button
               type="button"
@@ -84,15 +76,14 @@ export const SftpFileList = observer(function SftpFileList() {
             <li key={entry.path}>
               <button
                 type="button"
-                className={`${styles.row} ${selected ? styles.selected : ''}`}
-                onClick={() => handleClick(entry)}
+                className={`${styles.row} ${selected ? styles.selected : ""}`}
                 onDoubleClick={() => handleDoubleClick(entry)}
                 onContextMenu={(e) => handleContextMenu(e, entry)}
               >
                 <span
                   className={`${styles.icon} ${entry.isDirectory ? styles.dir : styles.file}`}
                 >
-                  {entry.isDirectory ? '📁' : '📄'}
+                  {entry.isDirectory ? "📁" : "📄"}
                 </span>
                 {fileBrowserStore.renameTargetPath === entry.path ? (
                   <input
@@ -108,11 +99,11 @@ export const SftpFileList = observer(function SftpFileList() {
                     }}
                     onKeyDown={(e) => {
                       e.stopPropagation();
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         e.preventDefault();
                         void fileBrowserStore.commitRename();
                       }
-                      if (e.key === 'Escape') {
+                      if (e.key === "Escape") {
                         e.preventDefault();
                         fileBrowserStore.cancelRename();
                       }
@@ -125,9 +116,11 @@ export const SftpFileList = observer(function SftpFileList() {
                   </span>
                 )}
                 <span className={styles.meta}>
-                  {entry.isDirectory ? '—' : formatSize(entry.size)}
+                  {entry.isDirectory ? "—" : formatSize(entry.size)}
                 </span>
-                <span className={styles.date}>{formatDate(entry.modifiedAt)}</span>
+                <span className={styles.date}>
+                  {formatDate(entry.modifiedAt)}
+                </span>
               </button>
             </li>
           );
