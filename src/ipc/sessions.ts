@@ -28,16 +28,18 @@ export async function sessionsSave(data: SessionsFile): Promise<void> {
   await safeInvoke('sessions_save', { data: validated });
 }
 
-export async function sessionsExport(): Promise<void> {
-  await safeInvoke('sessions_export');
+export async function sessionsExportToPath(path: string): Promise<void> {
+  await safeInvoke('sessions_export_to_path', { path });
 }
 
-export async function sessionsDownloadExample(): Promise<void> {
-  await safeInvoke('sessions_download_example');
+export async function sessionsWriteExampleAtPath(path: string): Promise<void> {
+  await safeInvoke('sessions_write_example_at_path', { path });
 }
 
-export async function sessionsImport(): Promise<SessionsImportResult> {
-  const data = await safeInvoke<unknown>('sessions_import');
+export async function sessionsImportFromPath(
+  path: string,
+): Promise<SessionsImportResult> {
+  const data = await safeInvoke<unknown>('sessions_import_from_path', { path });
   const raw = data as {
     file: unknown;
     imported: number;

@@ -1,8 +1,8 @@
 use std::fs;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use tauri::{AppHandle, State};
-use tauri_plugin_dialog::DialogExt;
+use tauri::State;
 
 use crate::models::{SessionsFile, SessionsImportResult};
 use crate::services::ConfigService;
@@ -22,66 +22,28 @@ pub fn sessions_save(data: SessionsFile, state: State<'_, ConfigState>) -> Resul
 }
 
 #[tauri::command]
-pub fn sessions_export(app: AppHandle, state: State<'_, ConfigState>) -> Result<(), String> {
-    let path = app
-        .dialog()
-        .file()
-        .add_filter("JSON", &["json"])
-        .set_file_name("sessions.json")
-        .blocking_save_file();
-
-    let Some(path) = path else {
-        return Ok(());
-    };
-
+pub fn sessions_export_to_path(
+    path: String,
+    state: State<'_, ConfigState>,
+) -> Result<(), String> {
     let config = state.lock().map_err(|e| e.to_string())?;
-    config.export_to_path(&path.into_path().map_err(|e| e.to_string())?)
+    config.export_to_path(&PathBuf::from(path))
 }
 
 #[tauri::command]
-pub fn sessions_import(
-    app: AppHandle,
+pub fn sessions_import_from_path(
+    path: String,
     state: State<'_, ConfigState>,
 ) -> Result<SessionsImportResult, String> {
-    let path = app
-        .dialog()
-        .file()
-        .add_filter("JSON", &["json"])
-        .blocking_pick_file();
-
     let config = state.lock().map_err(|e| e.to_string())?;
-
-    let Some(path) = path else {
-        let file = config.load()?;
-        return Ok(SessionsImportResult {
-            file,
-            imported: 0,
-            skipped: 0,
-        });
-    };
-
-    config.import_from_path(&path.into_path().map_err(|e| e.to_string())?)
+    config.import_from_path(&PathBuf::from(path))
 }
 
 const SESSIONS_IMPORT_EXAMPLE: &str =
     include_str!("../../../public/sessions-import-example.json");
 
 #[tauri::command]
-pub fn sessions_download_example(app: AppHandle) -> Result<(), String> {
-    let path = app
-        .dialog()
-        .file()
-        .add_filter("JSON", &["json"])
-        .set_file_name("sessions-import-example.json")
-        .blocking_save_file();
-
-    let Some(path) = path else {
-        return Ok(());
-    };
-
-    fs::write(
-        path.into_path().map_err(|e| e.to_string())?,
-        SESSIONS_IMPORT_EXAMPLE,
-    )
-    .map_err(|e| format!("failed to write example file: {e}"))
+pub fn sessions_write_example_at_path(path: String) -> Result<(), String> {
+    fs::write(&path, SESSIONS_IMPORT_EXAMPLE)
+        .map_err(|e| format!("failed to write example file: {e}"))
 }

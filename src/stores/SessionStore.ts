@@ -1,3 +1,4 @@
+import { open, save } from '@tauri-apps/plugin-dialog';
 import { makeAutoObservable, runInAction } from 'mobx';
 import {
   createEmptyFolder,
@@ -413,7 +414,13 @@ export class SessionStore {
 
   async exportSessions() {
     try {
-      await sessionsIpc.sessionsExport();
+      const path = await save({
+        defaultPath: 'sessions.json',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (!path) return;
+
+      await sessionsIpc.sessionsExportToPath(path);
       this.error = null;
     } catch (e) {
       this.error = getIpcErrorPayload(e);
@@ -425,7 +432,13 @@ export class SessionStore {
 
   async downloadImportExample() {
     try {
-      await sessionsIpc.sessionsDownloadExample();
+      const path = await save({
+        defaultPath: 'sessions-import-example.json',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (!path) return;
+
+      await sessionsIpc.sessionsWriteExampleAtPath(path);
       this.error = null;
     } catch (e) {
       this.error = getIpcErrorPayload(e);
@@ -437,7 +450,13 @@ export class SessionStore {
 
   async importSessions() {
     try {
-      const result = await sessionsIpc.sessionsImport();
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (!selected || Array.isArray(selected)) return;
+
+      const result = await sessionsIpc.sessionsImportFromPath(selected);
       const validSessionIds = new Set(result.file.sessions.map((s) => s.id));
 
       runInAction(() => {
