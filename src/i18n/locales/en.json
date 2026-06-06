@@ -1,0 +1,276 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "browse": "Browse",
+    "ok": "OK",
+    "close": "Close",
+    "import": "Import",
+    "export": "Export",
+    "refresh": "Refresh",
+    "upload": "Upload",
+    "folder": "Folder",
+    "loading": "Loading...",
+    "empty": "—",
+    "host": "Host",
+    "connect": "Connect",
+    "status": "Status",
+    "executable": "Executable"
+  },
+  "sidebar": {
+    "tabs": {
+      "sessions": "Sessions",
+      "files": "Files"
+    },
+    "toolbar": {
+      "newSession": "New session",
+      "newFolder": "New folder",
+      "importJson": "Import sessions from JSON",
+      "importSessions": "Import…",
+      "downloadExample": "Download example",
+      "settings": "Settings"
+    },
+    "resize": "Resize sidebar",
+    "sessions": {
+      "loading": "Loading sessions...",
+      "noSessions": "No sessions",
+      "createHint": "Click + to create a connection",
+      "edit": "Edit",
+      "deleteConfirm": "Delete session «{{name}}»?",
+      "connect": "Connect",
+      "duplicate": "Duplicate",
+      "ungroup": "Remove from folder"
+    },
+    "folder": {
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "rename": "Rename",
+      "createSubfolder": "Create subfolder",
+      "delete": "Delete",
+      "deleteConfirm": "Delete folder «{{name}}»? Contents will be moved to root.",
+      "namePrompt": "Folder name"
+    }
+  },
+  "session": {
+    "newSession": "New session",
+    "editSession": "Edit session",
+    "form": {
+      "name": "Name",
+      "protocol": "Protocol",
+      "port": "Port",
+      "host": "Host",
+      "username": "Username",
+      "auth": "Authentication",
+      "authPassword": "Password",
+      "authPrivateKey": "Private Key",
+      "authAgent": "SSH Agent",
+      "keyPath": "Private key path",
+      "defaultPath": "Initial path (optional)",
+      "defaultPathPlaceholder": "/home/user"
+    },
+    "validation": {
+      "nameRequired": "Enter a name",
+      "hostRequired": "Enter host",
+      "usernameRequired": "Enter username",
+      "keyPathRequired": "Enter private key path",
+      "portInvalid": "Invalid port"
+    },
+    "copySuffix": "(copy)",
+    "newFolder": "New folder"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "language": "Language",
+    "fontSize": "Terminal font size",
+    "fontFamily": "Terminal font",
+    "editorPath": "Default editor (optional)",
+    "editorPlaceholder": "Empty — system default application",
+    "sshPort": "Default SSH port",
+    "ftpPort": "Default FTP port"
+  },
+  "terminal": {
+    "status": {
+      "connecting": "Connecting",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "error": "Error"
+    },
+    "workspace": {
+      "connectFailed": "Connection failed",
+      "connecting": "Connecting…",
+      "disconnected": "Connection lost",
+      "reconnect": "Reconnect",
+      "closeTab": "Close tab",
+      "emptyHint": "Double-click a session in the sidebar to open a terminal",
+      "reconnectShortcut": "Ctrl+R — reconnect"
+    },
+    "password": {
+      "title": "Connect",
+      "ftpTitle": "FTP connection",
+      "keyPassphrase": "Key passphrase",
+      "passphrase": "Passphrase",
+      "password": "Password",
+      "connect": "Connect"
+    },
+    "tabs": {
+      "empty": "No open tabs",
+      "close": "Close",
+      "closeTab": "Close {{title}}"
+    }
+  },
+  "files": {
+    "title": "Files",
+    "ftpConnecting": "Connecting via FTP...",
+    "ftpError": "FTP connection error",
+    "noSession": "Connect an SSH or FTP session to browse files",
+    "connecting": "Connecting...",
+    "notConnected": "Session not connected",
+    "updating": "Updating...",
+    "toolbar": {
+      "folderName": "Folder name"
+    },
+    "breadcrumbs": {
+      "root": "Go to root",
+      "path": "Path",
+      "copyPath": "Copy current path"
+    },
+    "list": {
+      "loading": "Loading...",
+      "empty": "Folder is empty"
+    },
+    "units": {
+      "B": "B",
+      "KB": "KB",
+      "MB": "MB",
+      "GB": "GB"
+    },
+    "context": {
+      "copyPath": "Copy path",
+      "open": "Open",
+      "download": "Download",
+      "rename": "Rename"
+    },
+    "confirm": {
+      "deleteDir": "Delete directory «{{name}}»?\nPath: {{path}}\nFiles: {{count}}",
+      "deleteFile": "Delete «{{name}}»?"
+    }
+  },
+  "errors": {
+    "unknown": "Unknown error",
+    "session": {
+      "notFound": "Session not found: {{sessionId}}",
+      "nameRequired": "Session name is required",
+      "hostRequired": "Host is required",
+      "usernameRequired": "Username is required",
+      "portInvalid": "Invalid port",
+      "duplicateIds": "Duplicate session ids",
+      "unsupportedSchema": "Unsupported sessions schema version",
+      "saveFailed": "Failed to save sessions",
+      "loadFailed": "Failed to load sessions",
+      "duplicateFailed": "Failed to duplicate session",
+      "saveFormFailed": "Failed to save session",
+      "deleteFailed": "Failed to delete session",
+      "exportFailed": "Failed to export sessions",
+      "importExampleFailed": "Failed to download import example",
+      "importFailed": "Failed to import sessions",
+      "importNone": "No sessions imported. Skipped: {{skipped}}",
+      "importPartial": "Imported: {{imported}}. Skipped: {{skipped}}",
+      "notFoundInList": "Session not found in connection list.",
+      "notFoundReloaded": "Session not found. Session list refreshed — try connecting again.",
+      "invalidFormat": "Invalid sessions file format"
+    },
+    "connection": {
+      "notFound": "Connection not found: {{connectionId}}",
+      "timeout": "Connection timeout (30s)",
+      "ftpOnlyPassword": "FTP supports password authentication only",
+      "writeNotSupported": "Write is not supported for FTP connections",
+      "resizeNotSupported": "Resize is not supported for FTP connections",
+      "sendDataFailed": "Failed to send data",
+      "resizeFailed": "Failed to resize"
+    },
+    "ssh": {
+      "passwordRequired": "Password is required",
+      "authFailed": "Authentication failed: invalid password",
+      "keyAuthFailed": "Authentication failed: invalid key or username",
+      "keyLoadFailed": "Failed to load private key",
+      "agentNotSupported": "SSH Agent is not supported yet",
+      "unsupportedAuthType": "Unsupported auth type: {{authType}}",
+      "connectFailed": "Failed to connect to host",
+      "channelOpenFailed": "Failed to open SSH channel",
+      "ptyFailed": "Failed to request PTY",
+      "shellFailed": "Failed to request shell",
+      "writeFailed": "Failed to write to channel",
+      "resizeChannelFailed": "Failed to resize PTY",
+      "privateKeyPathRequired": "Private key path is required"
+    },
+    "sftp": {
+      "notInitialized": "SFTP session not initialized",
+      "channelOpenFailed": "Failed to open SFTP channel",
+      "subsystemFailed": "Failed to request sftp subsystem",
+      "initFailed": "Failed to init SFTP session",
+      "listFailed": "Failed to read directory",
+      "uploadFailed": "Failed to upload file",
+      "downloadFailed": "Failed to download file",
+      "readFailed": "Failed to read remote file",
+      "mkdirFailed": "Failed to create directory",
+      "renameFailed": "Failed to rename",
+      "removeDirFailed": "Failed to remove directory",
+      "removeFileFailed": "Failed to remove file",
+      "statFailed": "Failed to stat file",
+      "openDirAsFile": "Cannot open directory as file",
+      "fetchRetryFailed": "Failed to cache file"
+    },
+    "ftp": {
+      "passwordRequired": "Password is required for FTP",
+      "loginFailed": "FTP login failed",
+      "connectFailed": "Failed to connect to FTP server",
+      "listFailed": "Failed to list directory",
+      "uploadFailed": "Failed to upload file",
+      "downloadFailed": "Failed to download file",
+      "readStreamFailed": "Failed to read FTP stream",
+      "finalizeFailed": "Failed to finalize download",
+      "mkdirFailed": "Failed to create directory",
+      "renameFailed": "Failed to rename",
+      "removeDirFailed": "Failed to remove directory",
+      "removeFileFailed": "Failed to remove file",
+      "terminalUnavailable": "Terminal is not available for FTP",
+      "connectFailedFrontend": "Failed to connect via FTP"
+    },
+    "fs": {
+      "localFileNotFound": "Local file not found: {{path}}",
+      "localNotAFile": "Local path is not a file: {{path}}",
+      "openLocalFailed": "Failed to open local file",
+      "createLocalDirFailed": "Failed to create local directory",
+      "writeLocalFailed": "Failed to write local file",
+      "readLocalFailed": "Failed to read local file",
+      "fileNotFound": "File not found",
+      "editorLaunchFailed": "Failed to launch editor",
+      "pathEmpty": "Path is empty",
+      "homeNotFound": "Home directory not found",
+      "keyFileNotFound": "Key file not found: {{path}}"
+    },
+    "settings": {
+      "unsupportedSchema": "Unsupported settings schema version",
+      "invalid": "Invalid settings",
+      "saveFailed": "Failed to save settings"
+    },
+    "protocol": {
+      "unsupported": "Unsupported protocol: {{protocol}}",
+      "mustBeFtp": "Session protocol must be ftp, got: {{protocol}}"
+    },
+    "files": {
+      "listFailed": "Failed to load directory",
+      "renameFailed": "Failed to rename",
+      "openFailed": "Failed to open file",
+      "deleteFailed": "Failed to delete",
+      "uploadFailed": "Failed to upload file",
+      "downloadFailed": "Failed to download",
+      "mkdirFailed": "Failed to create folder",
+      "settingsNotInit": "SettingsStore is not initialized"
+    }
+  }
+}

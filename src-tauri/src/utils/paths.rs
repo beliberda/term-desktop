@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::error::{IpcError, IpcResult};
+
 pub fn home_dir() -> Option<PathBuf> {
     #[cfg(windows)]
     {
@@ -11,23 +13,25 @@ pub fn home_dir() -> Option<PathBuf> {
     }
 }
 
-pub fn expand_path(path: &str) -> Result<PathBuf, String> {
+pub fn expand_path(path: &str) -> IpcResult<PathBuf> {
     let trimmed = path.trim();
     if trimmed.is_empty() {
-        return Err("path is empty".into());
+        return Err(IpcError::new("fs.pathEmpty"));
     }
 
     if trimmed == "~" {
-        return home_dir().ok_or_else(|| "home directory not found".to_string());
+        return home_dir()
+            .ok_or_else(|| IpcError::new("fs.homeNotFound"))
+            .map(Into::into);
     }
 
     if let Some(rest) = trimmed.strip_prefix("~/") {
-        let home = home_dir().ok_or_else(|| "home directory not found".to_string())?;
+        let home = home_dir().ok_or_else(|| IpcError::new("fs.homeNotFound"))?;
         return Ok(home.join(rest));
     }
 
     if trimmed == "~\\" || trimmed.starts_with("~\\") {
-        let home = home_dir().ok_or_else(|| "home directory not found".to_string())?;
+        let home = home_dir().ok_or_else(|| IpcError::new("fs.homeNotFound"))?;
         let rest = trimmed.trim_start_matches('~').trim_start_matches('\\');
         return Ok(home.join(rest));
     }
@@ -35,25 +39,37 @@ pub fn expand_path(path: &str) -> Result<PathBuf, String> {
     Ok(PathBuf::from(trimmed))
 }
 
-pub fn validate_key_path(path: &str) -> Result<PathBuf, String> {
+pub fn validate_key_path(path: &str) -> IpcResult<PathBuf> {
     let expanded = expand_path(path)?;
     if !expanded.exists() {
-        return Err(format!("key file not found: {}", expanded.display()));
+        return Err(IpcError::with_str_detail(
+            "fs.keyFileNotFound",
+            "path",
+            expanded.display().to_string(),
+        ));
     }
     Ok(expanded)
 }
 
-pub fn validate_protocol(protocol: &str) -> Result<(), String> {
+pub fn validate_protocol(protocol: &str) -> IpcResult<()> {
     match protocol {
         "ssh" | "sftp" => Ok(()),
-        "ftp" => Err("Терминал недоступен для FTP".into()),
-        _ => Err(format!("unsupported protocol: {protocol}")),
+        "ftp" => Err(IpcError::new("ftp.terminalUnavailable")),
+        _ => Err(IpcError::with_str_detail(
+            "protocol.unsupported",
+            "protocol",
+            protocol,
+        )),
     }
 }
 
-pub fn validate_ftp_protocol(protocol: &str) -> Result<(), String> {
+pub fn validate_ftp_protocol(protocol: &str) -> IpcResult<()> {
     match protocol {
         "ftp" => Ok(()),
-        _ => Err(format!("session protocol must be ftp, got: {protocol}")),
+        _ => Err(IpcError::with_str_detail(
+            "protocol.mustBeFtp",
+            "protocol",
+            protocol,
+        )),
     }
 }

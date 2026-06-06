@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
+import { LOCALES } from '@i18n/config';
+import { useAppErrorMessage } from '@i18n/useAppErrorMessage';
 import { useStores } from '@stores/index';
 import type { AppSettings } from '@/types';
 import styles from './SettingsModal.module.css';
 
 export const SettingsModal = observer(function SettingsModal() {
+  const { t } = useTranslation();
   const { settingsStore } = useStores();
   const [draft, setDraft] = useState<AppSettings | null>(null);
+  const errorMessage = useAppErrorMessage(settingsStore.error);
 
   if (!settingsStore.isFormOpen) return null;
 
@@ -30,7 +35,7 @@ export const SettingsModal = observer(function SettingsModal() {
   const handleBrowseEditor = async () => {
     const selected = await open({
       multiple: false,
-      filters: [{ name: 'Executable', extensions: ['exe'] }],
+      filters: [{ name: t('common.executable'), extensions: ['exe'] }],
     });
     if (typeof selected === 'string') {
       update('defaultEditorPath', selected);
@@ -45,13 +50,30 @@ export const SettingsModal = observer(function SettingsModal() {
         role="dialog"
         aria-modal="true"
       >
-        <h2 className={styles.title}>Настройки</h2>
-        {settingsStore.error && (
-          <p className={styles.error}>{settingsStore.error}</p>
-        )}
+        <h2 className={styles.title}>{t('settings.title')}</h2>
+        {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="settings-language">
+            {t('settings.language')}
+          </label>
+          <select
+            id="settings-language"
+            className={styles.input}
+            value={values.locale}
+            onChange={(e) =>
+              update('locale', e.target.value as AppSettings['locale'])
+            }
+          >
+            {LOCALES.map((locale) => (
+              <option key={locale.code} value={locale.code}>
+                {locale.nativeLabel}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-theme">
-            Тема
+            {t('settings.theme')}
           </label>
           <select
             id="settings-theme"
@@ -61,13 +83,13 @@ export const SettingsModal = observer(function SettingsModal() {
               update('theme', e.target.value as AppSettings['theme'])
             }
           >
-            <option value="dark">Тёмная</option>
-            <option value="light">Светлая</option>
+            <option value="dark">{t('settings.themeDark')}</option>
+            <option value="light">{t('settings.themeLight')}</option>
           </select>
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-font-size">
-            Размер шрифта терминала
+            {t('settings.fontSize')}
           </label>
           <input
             id="settings-font-size"
@@ -83,7 +105,7 @@ export const SettingsModal = observer(function SettingsModal() {
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-font-family">
-            Шрифт терминала
+            {t('settings.fontFamily')}
           </label>
           <input
             id="settings-font-family"
@@ -95,7 +117,7 @@ export const SettingsModal = observer(function SettingsModal() {
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-editor-path">
-            Редактор по умолчанию (опционально)
+            {t('settings.editorPath')}
           </label>
           <div className={styles.keyRow}>
             <input
@@ -104,20 +126,20 @@ export const SettingsModal = observer(function SettingsModal() {
               className={styles.input}
               value={values.defaultEditorPath}
               onChange={(e) => update('defaultEditorPath', e.target.value)}
-              placeholder="Пусто — системное приложение по умолчанию"
+              placeholder={t('settings.editorPlaceholder')}
             />
             <button
               type="button"
               className={styles.browseBtn}
               onClick={() => void handleBrowseEditor()}
             >
-              Обзор
+              {t('common.browse')}
             </button>
           </div>
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-ssh-port">
-            Порт SSH по умолчанию
+            {t('settings.sshPort')}
           </label>
           <input
             id="settings-ssh-port"
@@ -133,7 +155,7 @@ export const SettingsModal = observer(function SettingsModal() {
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-ftp-port">
-            Порт FTP по умолчанию
+            {t('settings.ftpPort')}
           </label>
           <input
             id="settings-ftp-port"
@@ -153,14 +175,14 @@ export const SettingsModal = observer(function SettingsModal() {
             className={`${styles.btn} ${styles.btnCancel}`}
             onClick={handleClose}
           >
-            Отмена
+            {t('common.cancel')}
           </button>
           <button
             type="button"
             className={`${styles.btn} ${styles.btnSave}`}
             onClick={handleSave}
           >
-            Сохранить
+            {t('common.save')}
           </button>
         </div>
       </div>

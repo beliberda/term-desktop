@@ -1,0 +1,276 @@
+{
+  "common": {
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "browse": "Обзор",
+    "ok": "OK",
+    "close": "Закрыть",
+    "import": "Import",
+    "export": "Export",
+    "refresh": "Обновить",
+    "upload": "Загрузить",
+    "folder": "Папка",
+    "loading": "Загрузка...",
+    "empty": "—",
+    "host": "Host",
+    "connect": "Connect",
+    "status": "Статус",
+    "executable": "Executable"
+  },
+  "sidebar": {
+    "tabs": {
+      "sessions": "Сессии",
+      "files": "Файлы"
+    },
+    "toolbar": {
+      "newSession": "Новая сессия",
+      "newFolder": "Новая папка",
+      "importJson": "Импорт сессий из JSON",
+      "importSessions": "Импортировать…",
+      "downloadExample": "Скачать пример",
+      "settings": "Настройки"
+    },
+    "resize": "Изменить ширину сайдбара",
+    "sessions": {
+      "loading": "Загрузка сессий...",
+      "noSessions": "Нет сессий",
+      "createHint": "Нажмите + чтобы создать подключение",
+      "edit": "Редактировать",
+      "deleteConfirm": "Удалить сессию «{{name}}»?",
+      "connect": "Подключиться",
+      "duplicate": "Дублировать",
+      "ungroup": "Убрать из папки"
+    },
+    "folder": {
+      "expand": "Развернуть",
+      "collapse": "Свернуть",
+      "rename": "Переименовать",
+      "createSubfolder": "Создать подпапку",
+      "delete": "Удалить",
+      "deleteConfirm": "Удалить папку «{{name}}»? Содержимое будет перемещено в корень.",
+      "namePrompt": "Название папки"
+    }
+  },
+  "session": {
+    "newSession": "Новая сессия",
+    "editSession": "Редактирование сессии",
+    "form": {
+      "name": "Название",
+      "protocol": "Протокол",
+      "port": "Порт",
+      "host": "Host",
+      "username": "Username",
+      "auth": "Аутентификация",
+      "authPassword": "Password",
+      "authPrivateKey": "Private Key",
+      "authAgent": "SSH Agent",
+      "keyPath": "Путь к ключу",
+      "defaultPath": "Начальный путь (опционально)",
+      "defaultPathPlaceholder": "/home/user"
+    },
+    "validation": {
+      "nameRequired": "Укажите название",
+      "hostRequired": "Укажите host",
+      "usernameRequired": "Укажите username",
+      "keyPathRequired": "Укажите путь к ключу",
+      "portInvalid": "Некорректный порт"
+    },
+    "copySuffix": "(копия)",
+    "newFolder": "Новая папка"
+  },
+  "settings": {
+    "title": "Настройки",
+    "theme": "Тема",
+    "themeDark": "Тёмная",
+    "themeLight": "Светлая",
+    "language": "Язык",
+    "fontSize": "Размер шрифта терминала",
+    "fontFamily": "Шрифт терминала",
+    "editorPath": "Редактор по умолчанию (опционально)",
+    "editorPlaceholder": "Пусто — системное приложение по умолчанию",
+    "sshPort": "Порт SSH по умолчанию",
+    "ftpPort": "Порт FTP по умолчанию"
+  },
+  "terminal": {
+    "status": {
+      "connecting": "Подключение",
+      "connected": "Подключено",
+      "disconnected": "Отключено",
+      "error": "Ошибка"
+    },
+    "workspace": {
+      "connectFailed": "Не удалось подключиться",
+      "connecting": "Подключение…",
+      "disconnected": "Соединение разорвано",
+      "reconnect": "Переподключить",
+      "closeTab": "Закрыть вкладку",
+      "emptyHint": "Двойной клик по сессии в sidebar, чтобы открыть терминал",
+      "reconnectShortcut": "Ctrl+R — переподключиться"
+    },
+    "password": {
+      "title": "Подключение",
+      "ftpTitle": "FTP-подключение",
+      "keyPassphrase": "Пароль ключа",
+      "passphrase": "Passphrase",
+      "password": "Пароль",
+      "connect": "Подключить"
+    },
+    "tabs": {
+      "empty": "Нет открытых вкладок",
+      "close": "Закрыть",
+      "closeTab": "Закрыть {{title}}"
+    }
+  },
+  "files": {
+    "title": "Файлы",
+    "ftpConnecting": "Подключение по FTP...",
+    "ftpError": "Ошибка FTP-подключения",
+    "noSession": "Подключите SSH или FTP сессию, чтобы просматривать файлы",
+    "connecting": "Подключение...",
+    "notConnected": "Сессия не подключена",
+    "updating": "Обновление...",
+    "toolbar": {
+      "folderName": "Имя папки"
+    },
+    "breadcrumbs": {
+      "root": "В корень",
+      "path": "Путь",
+      "copyPath": "Копировать текущий путь"
+    },
+    "list": {
+      "loading": "Загрузка...",
+      "empty": "Папка пуста"
+    },
+    "units": {
+      "B": "Б",
+      "KB": "КБ",
+      "MB": "МБ",
+      "GB": "ГБ"
+    },
+    "context": {
+      "copyPath": "Копировать путь",
+      "open": "Открыть",
+      "download": "Скачать",
+      "rename": "Переименовать"
+    },
+    "confirm": {
+      "deleteDir": "Удалить каталог «{{name}}»?\nПуть: {{path}}\nФайлов: {{count}}",
+      "deleteFile": "Удалить «{{name}}»?"
+    }
+  },
+  "errors": {
+    "unknown": "Неизвестная ошибка",
+    "session": {
+      "notFound": "Сессия не найдена: {{sessionId}}",
+      "nameRequired": "Укажите название сессии",
+      "hostRequired": "Укажите host",
+      "usernameRequired": "Укажите username",
+      "portInvalid": "Некорректный порт",
+      "duplicateIds": "Дублирующиеся id сессий",
+      "unsupportedSchema": "Неподдерживаемая версия схемы сессий",
+      "saveFailed": "Не удалось сохранить сессии",
+      "loadFailed": "Не удалось загрузить сессии",
+      "duplicateFailed": "Не удалось дублировать сессию",
+      "saveFormFailed": "Не удалось сохранить сессию",
+      "deleteFailed": "Не удалось удалить сессию",
+      "exportFailed": "Не удалось экспортировать сессии",
+      "importExampleFailed": "Не удалось скачать пример файла импорта",
+      "importFailed": "Не удалось импортировать сессии",
+      "importNone": "Не импортировано ни одной сессии. Пропущено: {{skipped}}",
+      "importPartial": "Импортировано: {{imported}}. Пропущено: {{skipped}}",
+      "notFoundInList": "Сессия не найдена в списке подключений.",
+      "notFoundReloaded": "Сессия не найдена. Список сессий обновлён — попробуйте подключиться снова.",
+      "invalidFormat": "Некорректный формат файла сессий"
+    },
+    "connection": {
+      "notFound": "Подключение не найдено: {{connectionId}}",
+      "timeout": "Таймаут подключения (30 с)",
+      "ftpOnlyPassword": "FTP поддерживает только аутентификацию по паролю",
+      "writeNotSupported": "Запись не поддерживается для FTP-подключений",
+      "resizeNotSupported": "Изменение размера не поддерживается для FTP-подключений",
+      "sendDataFailed": "Не удалось отправить данные",
+      "resizeFailed": "Не удалось изменить размер"
+    },
+    "ssh": {
+      "passwordRequired": "Требуется пароль",
+      "authFailed": "Ошибка аутентификации: неверный пароль",
+      "keyAuthFailed": "Ошибка аутентификации: неверный ключ или имя пользователя",
+      "keyLoadFailed": "Не удалось загрузить приватный ключ",
+      "agentNotSupported": "SSH Agent пока не поддерживается",
+      "unsupportedAuthType": "Неподдерживаемый тип аутентификации: {{authType}}",
+      "connectFailed": "Не удалось подключиться к хосту",
+      "channelOpenFailed": "Не удалось открыть SSH-канал",
+      "ptyFailed": "Не удалось запросить PTY",
+      "shellFailed": "Не удалось запросить shell",
+      "writeFailed": "Не удалось записать в канал",
+      "resizeChannelFailed": "Не удалось изменить размер PTY",
+      "privateKeyPathRequired": "Требуется путь к приватному ключу"
+    },
+    "sftp": {
+      "notInitialized": "SFTP-сессия не инициализирована",
+      "channelOpenFailed": "Не удалось открыть SFTP-канал",
+      "subsystemFailed": "Не удалось запросить подсистему sftp",
+      "initFailed": "Не удалось инициализировать SFTP-сессию",
+      "listFailed": "Не удалось прочитать каталог",
+      "uploadFailed": "Не удалось загрузить файл",
+      "downloadFailed": "Не удалось скачать файл",
+      "readFailed": "Не удалось прочитать удалённый файл",
+      "mkdirFailed": "Не удалось создать каталог",
+      "renameFailed": "Не удалось переименовать",
+      "removeDirFailed": "Не удалось удалить каталог",
+      "removeFileFailed": "Не удалось удалить файл",
+      "statFailed": "Не удалось получить информацию о файле",
+      "openDirAsFile": "Нельзя открыть каталог как файл",
+      "fetchRetryFailed": "Ошибка кэширования файла"
+    },
+    "ftp": {
+      "passwordRequired": "Для FTP требуется пароль",
+      "loginFailed": "Ошибка входа FTP",
+      "connectFailed": "Не удалось подключиться к FTP-серверу",
+      "listFailed": "Не удалось получить список каталога",
+      "uploadFailed": "Не удалось загрузить файл",
+      "downloadFailed": "Не удалось скачать файл",
+      "readStreamFailed": "Не удалось прочитать поток FTP",
+      "finalizeFailed": "Не удалось завершить скачивание",
+      "mkdirFailed": "Не удалось создать каталог",
+      "renameFailed": "Не удалось переименовать",
+      "removeDirFailed": "Не удалось удалить каталог",
+      "removeFileFailed": "Не удалось удалить файл",
+      "terminalUnavailable": "Терминал недоступен для FTP",
+      "connectFailedFrontend": "Не удалось подключиться по FTP"
+    },
+    "fs": {
+      "localFileNotFound": "Локальный файл не найден: {{path}}",
+      "localNotAFile": "Локальный путь не является файлом: {{path}}",
+      "openLocalFailed": "Не удалось открыть локальный файл",
+      "createLocalDirFailed": "Не удалось создать локальный каталог",
+      "writeLocalFailed": "Не удалось записать локальный файл",
+      "readLocalFailed": "Не удалось прочитать локальный файл",
+      "fileNotFound": "Файл не найден",
+      "editorLaunchFailed": "Не удалось запустить редактор",
+      "pathEmpty": "Путь пуст",
+      "homeNotFound": "Домашний каталог не найден",
+      "keyFileNotFound": "Файл ключа не найден: {{path}}"
+    },
+    "settings": {
+      "unsupportedSchema": "Неподдерживаемая версия схемы настроек",
+      "invalid": "Некорректные настройки",
+      "saveFailed": "Не удалось сохранить настройки"
+    },
+    "protocol": {
+      "unsupported": "Неподдерживаемый протокол: {{protocol}}",
+      "mustBeFtp": "Протокол сессии должен быть ftp, получено: {{protocol}}"
+    },
+    "files": {
+      "listFailed": "Не удалось загрузить каталог",
+      "renameFailed": "Не удалось переименовать",
+      "openFailed": "Не удалось открыть файл",
+      "deleteFailed": "Не удалось удалить",
+      "uploadFailed": "Не удалось загрузить файл",
+      "downloadFailed": "Не удалось скачать",
+      "mkdirFailed": "Не удалось создать папку",
+      "settingsNotInit": "SettingsStore не инициализирован"
+    }
+  }
+}

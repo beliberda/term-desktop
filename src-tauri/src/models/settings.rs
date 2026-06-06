@@ -13,10 +13,16 @@ pub struct AppSettings {
     pub default_editor_path: String,
     #[serde(default = "default_sidebar_width")]
     pub sidebar_width: u16,
+    #[serde(default = "default_locale")]
+    pub locale: String,
 }
 
 fn default_sidebar_width() -> u16 {
     240
+}
+
+fn default_locale() -> String {
+    "ru".to_string()
 }
 
 impl Default for AppSettings {
@@ -30,6 +36,7 @@ impl Default for AppSettings {
             default_ftp_port: 21,
             default_editor_path: String::new(),
             sidebar_width: default_sidebar_width(),
+            locale: default_locale(),
         }
     }
 }

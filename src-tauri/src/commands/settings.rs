@@ -2,14 +2,17 @@ use std::sync::{Arc, Mutex};
 
 use tauri::State;
 
+use crate::error::{IpcError, IpcResult};
 use crate::models::settings::AppSettings;
 use crate::services::settings::SettingsService;
 
 type SettingsState = Arc<Mutex<SettingsService>>;
 
 #[tauri::command]
-pub fn settings_load(state: State<'_, SettingsState>) -> Result<AppSettings, String> {
-    let service = state.lock().map_err(|e| e.to_string())?;
+pub fn settings_load(state: State<'_, SettingsState>) -> IpcResult<AppSettings> {
+    let service = state
+        .lock()
+        .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
     service.load()
 }
 
@@ -17,7 +20,9 @@ pub fn settings_load(state: State<'_, SettingsState>) -> Result<AppSettings, Str
 pub fn settings_save(
     state: State<'_, SettingsState>,
     settings: AppSettings,
-) -> Result<(), String> {
-    let service = state.lock().map_err(|e| e.to_string())?;
+) -> IpcResult<()> {
+    let service = state
+        .lock()
+        .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
     service.save(&settings)
 }

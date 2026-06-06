@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
+import { useAppErrorMessage } from '@i18n/useAppErrorMessage';
 import { useStores } from '@stores/index';
 import styles from './ConnectPasswordModal.module.css';
 
 export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
+  const { t } = useTranslation();
   const { terminalStore, fileConnectionStore, sessionStore } = useStores();
   const [password, setPassword] = useState('');
 
@@ -20,9 +23,15 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
     if (pendingKey) setPassword('');
   }, [pendingKey]);
 
+  const session = pending
+    ? sessionStore.sessions.find((s) => s.id === pending.sessionId)
+    : undefined;
+  const sessionError = useAppErrorMessage(
+    pending && !session ? { code: 'session.notFoundInList' } : null,
+  );
+
   if (!pending) return null;
 
-  const session = sessionStore.sessions.find((s) => s.id === pending.sessionId);
   const isFtp = session?.protocol === 'ftp';
   const isPassphraseRetry =
     !isFtp && sshPending?.passphraseRetry === true;
@@ -53,6 +62,18 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
     setPassword('');
   };
 
+  const title = isFtp
+    ? t('terminal.password.ftpTitle')
+    : isPassphraseRetry
+      ? t('terminal.password.keyPassphrase')
+      : t('terminal.password.title');
+
+  const hint = !session
+    ? sessionError
+    : isPassphraseRetry
+      ? `${session.name} — ${session.username}@${session.host}`
+      : `${session.name} — ${session.username}@${session.host}`;
+
   return (
     <div className={styles.overlay} onClick={handleCancel}>
       <div
@@ -61,23 +82,13 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
         role="dialog"
         aria-modal="true"
       >
-        <h2 className={styles.title}>
-          {isFtp
-            ? 'FTP-подключение'
-            : isPassphraseRetry
-              ? 'Пароль ключа'
-              : 'Подключение'}
-        </h2>
-        <p className={styles.hint}>
-          {!session
-            ? 'Сессия не найдена. Возможно, она была удалена или изменена после импорта.'
-            : isPassphraseRetry
-              ? `${session.name} — ${session.username}@${session.host}. Ключ зашифрован, введите passphrase.`
-              : `${session.name} — ${session.username}@${session.host}`}
-        </p>
+        <h2 className={styles.title}>{title}</h2>
+        <p className={styles.hint}>{hint}</p>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="connect-password">
-            {isPassphraseRetry ? 'Passphrase' : 'Пароль'}
+            {isPassphraseRetry
+              ? t('terminal.password.passphrase')
+              : t('terminal.password.password')}
           </label>
           <input
             id="connect-password"
@@ -97,7 +108,7 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
             className={`${styles.btn} ${styles.btnCancel}`}
             onClick={handleCancel}
           >
-            Отмена
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -105,7 +116,7 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
             onClick={handleConnect}
             disabled={!canConnect}
           >
-            Подключить
+            {t('terminal.password.connect')}
           </button>
         </div>
       </div>

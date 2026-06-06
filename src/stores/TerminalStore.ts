@@ -1,8 +1,9 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import type { ConnectionStatusPayload, TerminalTab } from '@/types';
 import type { SessionConfig } from '@/types';
+import type { AppError } from '@i18n/types';
+import { getIpcErrorPayload } from '@ipc/client';
 import * as terminalIpc from '@ipc/terminal';
-import { getIpcErrorMessage } from '@ipc/client';
 import { listenTerminalOutput } from '@ipc/events';
 import type { SessionStore } from './SessionStore';
 
@@ -28,24 +29,19 @@ function base64ToBytes(base64: string): Uint8Array {
   return bytes;
 }
 
-function isSessionNotFoundError(message: string): boolean {
-  return message.toLowerCase().includes('session not found');
+function isSessionNotFoundError(error: AppError): boolean {
+  return error.code === 'session.notFound';
 }
 
 function shouldPromptPassphrase(
   authType: string | undefined,
   password: string | undefined,
-  message: string,
+  error: AppError,
 ): boolean {
   if (authType !== 'privateKey') return false;
-  const lower = message.toLowerCase();
-  if (!password) {
-    return (
-      lower.includes('encrypted') ||
-      lower.includes('failed to load private key')
-    );
-  }
-  return lower.includes('failed to load private key');
+  if (error.code === 'ssh.keyLoadFailed') return true;
+  if (!password && error.code === 'ssh.passwordRequired') return true;
+  return false;
 }
 
 export class TerminalStore {
@@ -156,7 +152,7 @@ export class TerminalStore {
       runInAction(() => {
         this.pendingConnect = null;
         if (this.sessionStore) {
-          this.sessionStore.error = 'Сессия не найдена в списке подключений.';
+          this.sessionStore.error = { code: 'session.notFoundInList' };
         }
       });
       return;
@@ -183,7 +179,7 @@ export class TerminalStore {
       runInAction(() => {
         this.pendingConnect = null;
         if (this.sessionStore) {
-          this.sessionStore.error = 'Сессия не найдена в списке подключений.';
+          this.sessionStore.error = { code: 'session.notFoundInList' };
         }
       });
       return;
@@ -220,7 +216,7 @@ export class TerminalStore {
       runInAction(() => {
         this.pendingConnect = null;
         if (this.sessionStore) {
-          this.sessionStore.error = 'Сессия не найдена в списке подключений.';
+          this.sessionStore.error = { code: 'session.notFoundInList' };
         }
       });
       return;
@@ -245,7 +241,7 @@ export class TerminalStore {
     runInAction(() => {
       tab.status = 'connecting';
       tab.connectionId = undefined;
-      tab.errorMessage = undefined;
+      tab.error = undefined;
       tab.connectStartedAt = performance.now();
       tab.reconnecting = true;
       this.pendingConnect = null;
@@ -283,9 +279,9 @@ export class TerminalStore {
         }
       });
     } catch (e) {
-      const message = getIpcErrorMessage(e);
+      const error = getIpcErrorPayload(e);
 
-      if (shouldPromptPassphrase(resolved.authType, password, message)) {
+      if (shouldPromptPassphrase(resolved.authType, password, error)) {
         runInAction(() => {
           if (isReconnect) {
             this.schedulePassphrasePromptReconnect(sessionId, tabId);
@@ -296,7 +292,7 @@ export class TerminalStore {
         return;
       }
 
-      if (isSessionNotFoundError(message)) {
+      if (isSessionNotFoundError(error)) {
         await this.sessionStore?.load();
         runInAction(() => {
           if (isReconnect) {
@@ -304,7 +300,7 @@ export class TerminalStore {
             if (t) {
               t.connectionId = undefined;
               t.status = 'error';
-              t.errorMessage = message;
+              t.error = error;
               t.reconnecting = false;
             }
           } else {
@@ -315,8 +311,7 @@ export class TerminalStore {
           }
           this.pendingConnect = null;
           if (this.sessionStore) {
-            this.sessionStore.error =
-              'Сессия не найдена. Список сессий обновлён — попробуйте подключиться снова.';
+            this.sessionStore.error = { code: 'session.notFoundReloaded' };
           }
         });
         return;
@@ -327,7 +322,7 @@ export class TerminalStore {
         if (t) {
           t.connectionId = undefined;
           t.status = 'error';
-          t.errorMessage = message;
+          t.error = error;
           t.reconnecting = false;
         }
       });
@@ -405,7 +400,7 @@ export class TerminalStore {
 
   handleConnectionStatus(payload: ConnectionStatusPayload) {
     runInAction(() => {
-      if (payload.status === 'error' && payload.message) {
+      if (payload.status === 'error' && payload.error) {
         const connectingTab =
           this.tabs.find(
             (t) =>
@@ -419,7 +414,7 @@ export class TerminalStore {
           const session = this.resolveSession(connectingTab.sessionId);
           if (
             session &&
-            shouldPromptPassphrase(session.authType, undefined, payload.message)
+            shouldPromptPassphrase(session.authType, undefined, payload.error)
           ) {
             if (connectingTab.reconnecting) {
               this.schedulePassphrasePromptReconnect(
@@ -457,10 +452,10 @@ export class TerminalStore {
       }
 
       tab.status = payload.status;
-      if (payload.message) {
-        tab.errorMessage = payload.message;
+      if (payload.error) {
+        tab.error = payload.error;
       } else if (payload.status === 'connected') {
-        tab.errorMessage = undefined;
+        tab.error = undefined;
         if (tab.connectStartedAt !== undefined) {
           tab.connectLatencyMs = Math.round(
             performance.now() - tab.connectStartedAt,

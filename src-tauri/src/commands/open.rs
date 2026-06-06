@@ -1,16 +1,26 @@
 use std::path::Path;
 
+use crate::error::{IpcError, IpcResult};
+
 #[tauri::command]
 pub async fn open_in_editor(
     local_path: String,
     editor_path: Option<String>,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let local = Path::new(&local_path);
     if !local.exists() {
-        return Err(format!("local file not found: {local_path}"));
+        return Err(IpcError::with_str_detail(
+            "fs.localFileNotFound",
+            "path",
+            local_path,
+        ));
     }
     if !local.is_file() {
-        return Err(format!("local path is not a file: {local_path}"));
+        return Err(IpcError::with_str_detail(
+            "fs.localNotAFile",
+            "path",
+            local_path,
+        ));
     }
 
     let editor = editor_path
@@ -21,9 +31,10 @@ pub async fn open_in_editor(
         std::process::Command::new(&exe)
             .arg(local)
             .spawn()
-            .map_err(|e| format!("failed to launch editor: {e}"))?;
+            .map_err(|e| IpcError::with_str_detail("fs.editorLaunchFailed", "raw", e.to_string()))?;
         return Ok(());
     }
 
-    open::that(local).map_err(|e| format!("failed to open file with default application: {e}"))
+    open::that(local)
+        .map_err(|e| IpcError::with_str_detail("fs.editorLaunchFailed", "raw", e.to_string()))
 }

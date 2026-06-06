@@ -7,6 +7,7 @@ use suppaftp::tokio::AsyncFtpStream;
 use tokio::io::AsyncReadExt;
 use tokio::sync::Mutex;
 
+use crate::error::{IpcError, IpcResult};
 use crate::models::sftp::SftpEntry;
 use crate::models::SessionConfig;
 use crate::services::ssh::CONNECT_TIMEOUT_SECS;
@@ -18,8 +19,8 @@ pub type SharedFtpClient = Arc<Mutex<AsyncFtpStream>>;
 pub async fn connect(
     session: &SessionConfig,
     password: Option<String>,
-) -> Result<AsyncFtpStream, String> {
-    let pwd = password.ok_or_else(|| "password is required for FTP".to_string())?;
+) -> IpcResult<AsyncFtpStream> {
+    let pwd = password.ok_or_else(|| IpcError::new("ftp.passwordRequired"))?;
     let addr = format!("{}:{}", session.host, session.port);
 
     let ftp = tokio::time::timeout(
@@ -27,13 +28,13 @@ pub async fn connect(
         AsyncFtpStream::connect(&addr),
     )
     .await
-    .map_err(|_| "Connection timeout (30s)".to_string())?
-    .map_err(|e| format!("failed to connect to FTP server: {e}"))?;
+    .map_err(|_| IpcError::new("connection.timeout"))?
+    .map_err(|e| IpcError::with_str_detail("ftp.connectFailed", "raw", e.to_string()))?;
 
     let mut ftp = ftp;
     ftp.login(&session.username, &pwd)
         .await
-        .map_err(|e| format!("FTP login failed: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("ftp.loginFailed", "raw", e.to_string()))?;
 
     Ok(ftp)
 }
@@ -59,7 +60,7 @@ fn parse_list_line(line: &str) -> Option<suppaftp::list::File> {
         .or_else(|| ListParser::parse_dos(line).ok())
 }
 
-pub async fn list_dir(client: &SharedFtpClient, path: &str) -> Result<Vec<SftpEntry>, String> {
+pub async fn list_dir(client: &SharedFtpClient, path: &str) -> IpcResult<Vec<SftpEntry>> {
     let path = normalize_remote_path(path);
     let mut ftp = client.lock().await;
 
@@ -67,7 +68,7 @@ pub async fn list_dir(client: &SharedFtpClient, path: &str) -> Result<Vec<SftpEn
     let lines = ftp
         .list(list_path)
         .await
-        .map_err(|e| format!("failed to list directory: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("ftp.listFailed", "raw", e.to_string()))?;
 
     let mut entries: Vec<SftpEntry> = lines
         .iter()
@@ -102,24 +103,32 @@ pub async fn upload_file(
     client: &SharedFtpClient,
     local_path: &str,
     remote_path: &str,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let local = Path::new(local_path);
     if !local.exists() {
-        return Err(format!("local file not found: {local_path}"));
+        return Err(IpcError::with_str_detail(
+            "fs.localFileNotFound",
+            "path",
+            local_path,
+        ));
     }
     if !local.is_file() {
-        return Err(format!("local path is not a file: {local_path}"));
+        return Err(IpcError::with_str_detail(
+            "fs.localNotAFile",
+            "path",
+            local_path,
+        ));
     }
 
     let remote_path = normalize_remote_path(remote_path);
     let mut file = tokio::fs::File::open(local)
         .await
-        .map_err(|e| format!("failed to open local file: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("fs.openLocalFailed", "raw", e.to_string()))?;
 
     let mut ftp = client.lock().await;
     ftp.put_file(&remote_path, &mut file)
         .await
-        .map_err(|e| format!("failed to upload file: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("ftp.uploadFailed", "raw", e.to_string()))?;
 
     Ok(())
 }
@@ -128,45 +137,47 @@ pub async fn download_file(
     client: &SharedFtpClient,
     remote_path: &str,
     local_path: &str,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let remote_path = normalize_remote_path(remote_path);
     let mut ftp = client.lock().await;
 
     let mut stream = ftp
         .retr_as_stream(&remote_path)
         .await
-        .map_err(|e| format!("failed to download file: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("ftp.downloadFailed", "raw", e.to_string()))?;
 
     let mut data = Vec::new();
     stream
         .read_to_end(&mut data)
         .await
-        .map_err(|e| format!("failed to read FTP stream: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("ftp.readStreamFailed", "raw", e.to_string()))?;
 
     ftp.finalize_retr_stream(stream)
         .await
-        .map_err(|e| format!("failed to finalize download: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("ftp.finalizeFailed", "raw", e.to_string()))?;
 
     if let Some(parent) = Path::new(local_path).parent() {
         if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| format!("failed to create local directory: {e}"))?;
+            std::fs::create_dir_all(parent).map_err(|e| {
+                IpcError::with_str_detail("fs.createLocalDirFailed", "raw", e.to_string())
+            })?;
         }
     }
 
-    std::fs::write(local_path, data).map_err(|e| format!("failed to write local file: {e}"))
+    std::fs::write(local_path, data)
+        .map_err(|e| IpcError::with_str_detail("fs.writeLocalFailed", "raw", e.to_string()))
 }
 
 pub async fn download_dir(
     client: &SharedFtpClient,
     remote_path: &str,
     local_dir: &str,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let remote_path = normalize_remote_path(remote_path);
     let local_base = Path::new(local_dir);
 
     std::fs::create_dir_all(local_base)
-        .map_err(|e| format!("failed to create local directory: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("fs.createLocalDirFailed", "raw", e.to_string()))?;
 
     let entries = list_dir(client, &remote_path).await?;
 
@@ -192,32 +203,32 @@ pub async fn download_dir(
     Ok(())
 }
 
-pub async fn mkdir(client: &SharedFtpClient, remote_path: &str) -> Result<(), String> {
+pub async fn mkdir(client: &SharedFtpClient, remote_path: &str) -> IpcResult<()> {
     let remote_path = normalize_remote_path(remote_path);
     let mut ftp = client.lock().await;
     ftp.mkdir(&remote_path)
         .await
-        .map_err(|e| format!("failed to create directory: {e}"))
+        .map_err(|e| IpcError::with_str_detail("ftp.mkdirFailed", "raw", e.to_string()))
 }
 
 pub async fn rename(
     client: &SharedFtpClient,
     old_path: &str,
     new_path: &str,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let old_path = normalize_remote_path(old_path);
     let new_path = normalize_remote_path(new_path);
     let mut ftp = client.lock().await;
     ftp.rename(&old_path, &new_path)
         .await
-        .map_err(|e| format!("failed to rename: {e}"))
+        .map_err(|e| IpcError::with_str_detail("ftp.renameFailed", "raw", e.to_string()))
 }
 
 async fn delete_inner(
     client: &SharedFtpClient,
     remote_path: &str,
     is_directory: bool,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let remote_path = normalize_remote_path(remote_path);
     if is_directory {
         let entries = list_dir(client, &remote_path).await?;
@@ -227,12 +238,12 @@ async fn delete_inner(
         let mut ftp = client.lock().await;
         ftp.rmdir(&remote_path)
             .await
-            .map_err(|e| format!("failed to remove directory: {e}"))
+            .map_err(|e| IpcError::with_str_detail("ftp.removeDirFailed", "raw", e.to_string()))
     } else {
         let mut ftp = client.lock().await;
         ftp.rm(&remote_path)
             .await
-            .map_err(|e| format!("failed to remove file: {e}"))
+            .map_err(|e| IpcError::with_str_detail("ftp.removeFileFailed", "raw", e.to_string()))
     }
 }
 
@@ -240,17 +251,15 @@ pub async fn delete(
     client: &SharedFtpClient,
     remote_path: &str,
     is_directory: bool,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     delete_inner(client, remote_path, is_directory).await
 }
 
 async fn count_files_inner(
     client: &SharedFtpClient,
     remote_path: &str,
-) -> Result<u64, String> {
+) -> IpcResult<u64> {
     let remote_path = normalize_remote_path(remote_path);
-    // Ожидаем, что `remote_path` передаётся именно каталогом (как в UX для удаления).
-    // Для корректности: если это окажется файлом, `list_dir` упадёт и вернём ошибку наружу.
     let entries = list_dir(client, &remote_path).await?;
     let mut total_files = 0u64;
 
@@ -265,11 +274,10 @@ async fn count_files_inner(
     Ok(total_files)
 }
 
-/// Рекурсивный подсчёт файлов внутри пути (каталоги не считаются).
 pub async fn count_files(
     client: &SharedFtpClient,
     remote_path: &str,
-) -> Result<u64, String> {
+) -> IpcResult<u64> {
     count_files_inner(client, remote_path).await
 }
 
@@ -277,7 +285,7 @@ pub async fn fetch_to_cache(
     app: &tauri::AppHandle,
     client: &SharedFtpClient,
     remote_path: &str,
-) -> Result<String, String> {
+) -> IpcResult<String> {
     let remote_path = normalize_remote_path(remote_path);
     let local_path = open_cache_path(app, &remote_path)?;
     let local_path_str = local_path.to_string_lossy().to_string();

@@ -1,0 +1,263 @@
+{
+  "common": {
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "browse": "Durchsuchen",
+    "ok": "OK",
+    "close": "Schließen",
+    "import": "Importieren",
+    "export": "Exportieren",
+    "refresh": "Aktualisieren",
+    "upload": "Hochladen",
+    "folder": "Ordner",
+    "loading": "Laden...",
+    "empty": "—",
+    "host": "Host",
+    "connect": "Verbindung",
+    "status": "Status",
+    "executable": "Ausführbare Datei"
+  },
+  "sidebar": {
+    "tabs": { "sessions": "Sitzungen", "files": "Dateien" },
+    "toolbar": {
+      "newSession": "Neue Sitzung",
+      "newFolder": "Neuer Ordner",
+      "importJson": "Sitzungen aus JSON importieren",
+      "importSessions": "Importieren…",
+      "downloadExample": "Beispiel herunterladen",
+      "settings": "Einstellungen"
+    },
+    "resize": "Seitenleiste vergrößern",
+    "sessions": {
+      "loading": "Sitzungen werden geladen...",
+      "noSessions": "Keine Sitzungen",
+      "createHint": "Klicken Sie +, um eine Verbindung zu erstellen",
+      "edit": "Bearbeiten",
+      "deleteConfirm": "Sitzung «{{name}}» löschen?",
+      "connect": "Verbinden",
+      "duplicate": "Duplizieren",
+      "ungroup": "Aus Ordner entfernen"
+    },
+    "folder": {
+      "expand": "Erweitern",
+      "collapse": "Einklappen",
+      "rename": "Umbenennen",
+      "createSubfolder": "Unterordner erstellen",
+      "delete": "Löschen",
+      "deleteConfirm": "Ordner «{{name}}» löschen? Inhalt wird in die Wurzel verschoben.",
+      "namePrompt": "Ordnername"
+    }
+  },
+  "session": {
+    "newSession": "Neue Sitzung",
+    "editSession": "Sitzung bearbeiten",
+    "form": {
+      "name": "Name",
+      "protocol": "Protokoll",
+      "port": "Port",
+      "host": "Host",
+      "username": "Benutzername",
+      "auth": "Authentifizierung",
+      "authPassword": "Passwort",
+      "authPrivateKey": "Privater Schlüssel",
+      "authAgent": "SSH Agent",
+      "keyPath": "Pfad zum privaten Schlüssel",
+      "defaultPath": "Anfangspfad (optional)",
+      "defaultPathPlaceholder": "/home/user"
+    },
+    "validation": {
+      "nameRequired": "Name eingeben",
+      "hostRequired": "Host eingeben",
+      "usernameRequired": "Benutzername eingeben",
+      "keyPathRequired": "Pfad zum privaten Schlüssel eingeben",
+      "portInvalid": "Ungültiger Port"
+    },
+    "copySuffix": "(Kopie)",
+    "newFolder": "Neuer Ordner"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "theme": "Design",
+    "themeDark": "Dunkel",
+    "themeLight": "Hell",
+    "language": "Sprache",
+    "fontSize": "Terminal-Schriftgröße",
+    "fontFamily": "Terminal-Schriftart",
+    "editorPath": "Standard-Editor (optional)",
+    "editorPlaceholder": "Leer — Systemstandard-Anwendung",
+    "sshPort": "Standard-SSH-Port",
+    "ftpPort": "Standard-FTP-Port"
+  },
+  "terminal": {
+    "status": {
+      "connecting": "Verbinden",
+      "connected": "Verbunden",
+      "disconnected": "Getrennt",
+      "error": "Fehler"
+    },
+    "workspace": {
+      "connectFailed": "Verbindung fehlgeschlagen",
+      "connecting": "Verbinden…",
+      "disconnected": "Verbindung unterbrochen",
+      "reconnect": "Erneut verbinden",
+      "closeTab": "Tab schließen",
+      "emptyHint": "Doppelklick auf eine Sitzung in der Seitenleiste, um ein Terminal zu öffnen",
+      "reconnectShortcut": "Strg+R — erneut verbinden"
+    },
+    "password": {
+      "title": "Verbinden",
+      "ftpTitle": "FTP-Verbindung",
+      "keyPassphrase": "Schlüssel-Passphrase",
+      "passphrase": "Passphrase",
+      "password": "Passwort",
+      "connect": "Verbinden"
+    },
+    "tabs": {
+      "empty": "Keine offenen Tabs",
+      "close": "Schließen",
+      "closeTab": "{{title}} schließen"
+    }
+  },
+  "files": {
+    "title": "Dateien",
+    "ftpConnecting": "FTP-Verbindung wird hergestellt...",
+    "ftpError": "FTP-Verbindungsfehler",
+    "noSession": "Verbinden Sie eine SSH- oder FTP-Sitzung, um Dateien zu durchsuchen",
+    "connecting": "Verbinden...",
+    "notConnected": "Sitzung nicht verbunden",
+    "updating": "Aktualisieren...",
+    "toolbar": { "folderName": "Ordnername" },
+    "breadcrumbs": {
+      "root": "Zur Wurzel",
+      "path": "Pfad",
+      "copyPath": "Aktuellen Pfad kopieren"
+    },
+    "list": { "loading": "Laden...", "empty": "Ordner ist leer" },
+    "units": { "B": "B", "KB": "KB", "MB": "MB", "GB": "GB" },
+    "context": {
+      "copyPath": "Pfad kopieren",
+      "open": "Öffnen",
+      "download": "Herunterladen",
+      "rename": "Umbenennen"
+    },
+    "confirm": {
+      "deleteDir": "Verzeichnis «{{name}}» löschen?\nPfad: {{path}}\nDateien: {{count}}",
+      "deleteFile": "«{{name}}» löschen?"
+    }
+  },
+  "errors": {
+    "unknown": "Unbekannter Fehler",
+    "session": {
+      "notFound": "Sitzung nicht gefunden: {{sessionId}}",
+      "nameRequired": "Sitzungsname ist erforderlich",
+      "hostRequired": "Host ist erforderlich",
+      "usernameRequired": "Benutzername ist erforderlich",
+      "portInvalid": "Ungültiger Port",
+      "duplicateIds": "Doppelte Sitzungs-IDs",
+      "unsupportedSchema": "Nicht unterstützte Sitzungsschema-Version",
+      "saveFailed": "Sitzungen konnten nicht gespeichert werden",
+      "loadFailed": "Sitzungen konnten nicht geladen werden",
+      "duplicateFailed": "Sitzung konnte nicht dupliziert werden",
+      "saveFormFailed": "Sitzung konnte nicht gespeichert werden",
+      "deleteFailed": "Sitzung konnte nicht gelöscht werden",
+      "exportFailed": "Sitzungen konnten nicht exportiert werden",
+      "importExampleFailed": "Importbeispiel konnte nicht heruntergeladen werden",
+      "importFailed": "Sitzungen konnten nicht importiert werden",
+      "importNone": "Keine Sitzungen importiert. Übersprungen: {{skipped}}",
+      "importPartial": "Importiert: {{imported}}. Übersprungen: {{skipped}}",
+      "notFoundInList": "Sitzung nicht in der Verbindungsliste gefunden.",
+      "notFoundReloaded": "Sitzung nicht gefunden. Liste aktualisiert — erneut verbinden.",
+      "invalidFormat": "Ungültiges Sitzungsdateiformat"
+    },
+    "connection": {
+      "notFound": "Verbindung nicht gefunden: {{connectionId}}",
+      "timeout": "Verbindungszeitüberschreitung (30s)",
+      "ftpOnlyPassword": "FTP unterstützt nur Passwort-Authentifizierung",
+      "writeNotSupported": "Schreiben wird für FTP-Verbindungen nicht unterstützt",
+      "resizeNotSupported": "Größenänderung wird für FTP-Verbindungen nicht unterstützt",
+      "sendDataFailed": "Daten konnten nicht gesendet werden",
+      "resizeFailed": "Größenänderung fehlgeschlagen"
+    },
+    "ssh": {
+      "passwordRequired": "Passwort erforderlich",
+      "authFailed": "Authentifizierung fehlgeschlagen: ungültiges Passwort",
+      "keyAuthFailed": "Authentifizierung fehlgeschlagen: ungültiger Schlüssel oder Benutzername",
+      "keyLoadFailed": "Privater Schlüssel konnte nicht geladen werden",
+      "agentNotSupported": "SSH Agent wird noch nicht unterstützt",
+      "unsupportedAuthType": "Nicht unterstützter Authentifizierungstyp: {{authType}}",
+      "connectFailed": "Verbindung zum Host fehlgeschlagen",
+      "channelOpenFailed": "SSH-Kanal konnte nicht geöffnet werden",
+      "ptyFailed": "PTY konnte nicht angefordert werden",
+      "shellFailed": "Shell konnte nicht angefordert werden",
+      "writeFailed": "Schreiben in Kanal fehlgeschlagen",
+      "resizeChannelFailed": "PTY-Größenänderung fehlgeschlagen",
+      "privateKeyPathRequired": "Pfad zum privaten Schlüssel erforderlich"
+    },
+    "sftp": {
+      "notInitialized": "SFTP-Sitzung nicht initialisiert",
+      "channelOpenFailed": "SFTP-Kanal konnte nicht geöffnet werden",
+      "subsystemFailed": "sftp-Subsystem konnte nicht angefordert werden",
+      "initFailed": "SFTP-Sitzung konnte nicht initialisiert werden",
+      "listFailed": "Verzeichnis konnte nicht gelesen werden",
+      "uploadFailed": "Datei konnte nicht hochgeladen werden",
+      "downloadFailed": "Datei konnte nicht heruntergeladen werden",
+      "readFailed": "Remote-Datei konnte nicht gelesen werden",
+      "mkdirFailed": "Verzeichnis konnte nicht erstellt werden",
+      "renameFailed": "Umbenennen fehlgeschlagen",
+      "removeDirFailed": "Verzeichnis konnte nicht entfernt werden",
+      "removeFileFailed": "Datei konnte nicht entfernt werden",
+      "statFailed": "Dateiinformationen konnten nicht abgerufen werden",
+      "openDirAsFile": "Verzeichnis kann nicht als Datei geöffnet werden",
+      "fetchRetryFailed": "Datei konnte nicht zwischengespeichert werden"
+    },
+    "ftp": {
+      "passwordRequired": "Passwort für FTP erforderlich",
+      "loginFailed": "FTP-Anmeldung fehlgeschlagen",
+      "connectFailed": "Verbindung zum FTP-Server fehlgeschlagen",
+      "listFailed": "Verzeichnis konnte nicht aufgelistet werden",
+      "uploadFailed": "Datei konnte nicht hochgeladen werden",
+      "downloadFailed": "Datei konnte nicht heruntergeladen werden",
+      "readStreamFailed": "FTP-Stream konnte nicht gelesen werden",
+      "finalizeFailed": "Download konnte nicht abgeschlossen werden",
+      "mkdirFailed": "Verzeichnis konnte nicht erstellt werden",
+      "renameFailed": "Umbenennen fehlgeschlagen",
+      "removeDirFailed": "Verzeichnis konnte nicht entfernt werden",
+      "removeFileFailed": "Datei konnte nicht entfernt werden",
+      "terminalUnavailable": "Terminal für FTP nicht verfügbar",
+      "connectFailedFrontend": "FTP-Verbindung fehlgeschlagen"
+    },
+    "fs": {
+      "localFileNotFound": "Lokale Datei nicht gefunden: {{path}}",
+      "localNotAFile": "Lokaler Pfad ist keine Datei: {{path}}",
+      "openLocalFailed": "Lokale Datei konnte nicht geöffnet werden",
+      "createLocalDirFailed": "Lokales Verzeichnis konnte nicht erstellt werden",
+      "writeLocalFailed": "Lokale Datei konnte nicht geschrieben werden",
+      "readLocalFailed": "Lokale Datei konnte nicht gelesen werden",
+      "fileNotFound": "Datei nicht gefunden",
+      "editorLaunchFailed": "Editor konnte nicht gestartet werden",
+      "pathEmpty": "Pfad ist leer",
+      "homeNotFound": "Home-Verzeichnis nicht gefunden",
+      "keyFileNotFound": "Schlüsseldatei nicht gefunden: {{path}}"
+    },
+    "settings": {
+      "unsupportedSchema": "Nicht unterstützte Einstellungsschema-Version",
+      "invalid": "Ungültige Einstellungen",
+      "saveFailed": "Einstellungen konnten nicht gespeichert werden"
+    },
+    "protocol": {
+      "unsupported": "Nicht unterstütztes Protokoll: {{protocol}}",
+      "mustBeFtp": "Sitzungsprotokoll muss ftp sein, erhalten: {{protocol}}"
+    },
+    "files": {
+      "listFailed": "Verzeichnis konnte nicht geladen werden",
+      "renameFailed": "Umbenennen fehlgeschlagen",
+      "openFailed": "Datei konnte nicht geöffnet werden",
+      "deleteFailed": "Löschen fehlgeschlagen",
+      "uploadFailed": "Datei konnte nicht hochgeladen werden",
+      "downloadFailed": "Herunterladen fehlgeschlagen",
+      "mkdirFailed": "Ordner konnte nicht erstellt werden",
+      "settingsNotInit": "SettingsStore nicht initialisiert"
+    }
+  }
+}

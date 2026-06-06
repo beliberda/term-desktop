@@ -7,18 +7,23 @@ import {
   SIDEBAR_WIDTH_MIN,
   type AppSettings,
 } from '@/types/settings';
+import { detectLocale, isAppLocale } from '@i18n/config';
+import { changeLocale, initI18n } from '@i18n/index';
+import type { AppError } from '@i18n/types';
 import * as settingsIpc from '@ipc/settings';
 
 export class SettingsStore {
   settings: AppSettings = { ...defaultAppSettings };
   isLoading = false;
   isFormOpen = false;
-  error: string | null = null;
+  error: AppError | null = null;
 
   private saveSidebarTimer: ReturnType<typeof setTimeout> | null = null;
+  private localeInitialized = false;
 
   constructor() {
     makeAutoObservable(this);
+    initI18n(defaultAppSettings.locale);
   }
 
   async load() {
@@ -26,20 +31,36 @@ export class SettingsStore {
     try {
       const data = await settingsIpc.settingsLoad();
       const parsed = appSettingsSchema.safeParse(data);
+      const merged = parsed.success
+        ? { ...defaultAppSettings, ...parsed.data }
+        : { ...defaultAppSettings };
+
+      const needsDetect =
+        !parsed.success ||
+        !data ||
+        typeof data !== 'object' ||
+        !('locale' in data);
+
+      if (needsDetect && !this.localeInitialized) {
+        merged.locale = detectLocale();
+        this.localeInitialized = true;
+        void this.save(merged);
+      }
+
       runInAction(() => {
-        this.settings = parsed.success
-          ? { ...defaultAppSettings, ...parsed.data }
-          : { ...defaultAppSettings };
+        this.settings = merged;
         this.isLoading = false;
         this.applyTheme();
         this.applySidebarWidth();
+        void this.applyLocale();
       });
     } catch (e) {
       runInAction(() => {
-        this.settings = { ...defaultAppSettings };
+        this.settings = { ...defaultAppSettings, locale: detectLocale() };
         this.isLoading = false;
         this.applyTheme();
         this.applySidebarWidth();
+        void this.applyLocale();
       });
       console.error('[SettingsStore] load failed:', e);
     }
@@ -58,7 +79,7 @@ export class SettingsStore {
   async save(next: AppSettings) {
     const parsed = appSettingsSchema.safeParse(next);
     if (!parsed.success) {
-      this.error = 'Некорректные настройки';
+      this.error = { code: 'settings.invalid' };
       return;
     }
 
@@ -70,13 +91,21 @@ export class SettingsStore {
         this.error = null;
         this.applyTheme();
         this.applySidebarWidth();
+        void this.applyLocale();
       });
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось сохранить настройки';
+        this.error = { code: 'settings.saveFailed' };
       });
+      console.error('[SettingsStore] save failed:', e);
     }
+  }
+
+  async applyLocale() {
+    const locale = isAppLocale(this.settings.locale)
+      ? this.settings.locale
+      : defaultAppSettings.locale;
+    await changeLocale(locale);
   }
 
   applyTheme() {

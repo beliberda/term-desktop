@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
+import { useTranslation } from "react-i18next";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useStores } from "@stores/index";
 import {
   getDefaultPort,
+  translateSessionValidationMessage,
   type AuthType,
   type Protocol,
   type SessionConfig,
@@ -11,6 +13,7 @@ import {
 import styles from "./SessionForm.module.css";
 
 export const SessionForm = observer(function SessionForm() {
+  const { t } = useTranslation();
   const { sessionStore, settingsStore } = useStores();
   const [draft, setDraft] = useState<SessionConfig | null>(null);
 
@@ -75,12 +78,12 @@ export const SessionForm = observer(function SessionForm() {
         aria-modal="true"
       >
         <h2 className={styles.title}>
-          {isNew ? "Новая сессия" : "Редактирование сессии"}
+          {isNew ? t("session.newSession") : t("session.editSession")}
         </h2>
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="session-name">
-              Название
+              {t("session.form.name")}
             </label>
             <input
               id="session-name"
@@ -88,13 +91,17 @@ export const SessionForm = observer(function SessionForm() {
               value={session.name}
               onChange={(e) => update({ name: e.target.value })}
             />
-            {errors.name && <span className={styles.error}>{errors.name}</span>}
+            {errors.name && (
+              <span className={styles.error}>
+                {translateSessionValidationMessage("name", errors.name)}
+              </span>
+            )}
           </div>
 
           <div className={styles.row}>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="session-protocol">
-                Протокол
+                {t("session.form.protocol")}
               </label>
               <select
                 id="session-protocol"
@@ -111,7 +118,7 @@ export const SessionForm = observer(function SessionForm() {
             </div>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="session-port">
-                Порт
+                {t("session.form.port")}
               </label>
               <input
                 id="session-port"
@@ -123,14 +130,16 @@ export const SessionForm = observer(function SessionForm() {
                 onChange={(e) => update({ port: Number(e.target.value) })}
               />
               {errors.port && (
-                <span className={styles.error}>{errors.port}</span>
+                <span className={styles.error}>
+                  {translateSessionValidationMessage("port", errors.port)}
+                </span>
               )}
             </div>
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="session-host">
-              Host
+              {t("session.form.host")}
             </label>
             <input
               id="session-host"
@@ -138,12 +147,16 @@ export const SessionForm = observer(function SessionForm() {
               value={session.host}
               onChange={(e) => update({ host: e.target.value })}
             />
-            {errors.host && <span className={styles.error}>{errors.host}</span>}
+            {errors.host && (
+              <span className={styles.error}>
+                {translateSessionValidationMessage("host", errors.host)}
+              </span>
+            )}
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="session-username">
-              Username
+              {t("session.form.username")}
             </label>
             <input
               id="session-username"
@@ -152,13 +165,15 @@ export const SessionForm = observer(function SessionForm() {
               onChange={(e) => update({ username: e.target.value })}
             />
             {errors.username && (
-              <span className={styles.error}>{errors.username}</span>
+              <span className={styles.error}>
+                {translateSessionValidationMessage("username", errors.username)}
+              </span>
             )}
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="session-auth">
-              Аутентификация
+              {t("session.form.auth")}
             </label>
             <select
               id="session-auth"
@@ -167,11 +182,11 @@ export const SessionForm = observer(function SessionForm() {
               disabled={session.protocol === "ftp"}
               onChange={(e) => update({ authType: e.target.value as AuthType })}
             >
-              <option value="password">Password</option>
+              <option value="password">{t("session.form.authPassword")}</option>
               {session.protocol !== "ftp" && (
                 <>
-                  <option value="privateKey">Private Key</option>
-                  <option value="agent">SSH Agent</option>
+                  <option value="privateKey">{t("session.form.authPrivateKey")}</option>
+                  <option value="agent">{t("session.form.authAgent")}</option>
                 </>
               )}
             </select>
@@ -180,7 +195,7 @@ export const SessionForm = observer(function SessionForm() {
           {session.authType === "privateKey" && session.protocol !== "ftp" && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="session-key">
-                Путь к ключу
+                {t("session.form.keyPath")}
               </label>
               <div className={styles.keyRow}>
                 <input
@@ -194,25 +209,30 @@ export const SessionForm = observer(function SessionForm() {
                   className={styles.browseBtn}
                   onClick={handleBrowseKey}
                 >
-                  Обзор
+                  {t("common.browse")}
                 </button>
               </div>
               {errors.privateKeyPath && (
-                <span className={styles.error}>{errors.privateKeyPath}</span>
+                <span className={styles.error}>
+                  {translateSessionValidationMessage(
+                    "privateKeyPath",
+                    errors.privateKeyPath,
+                  )}
+                </span>
               )}
             </div>
           )}
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="session-default-path">
-              Начальный путь (опционально)
+              {t("session.form.defaultPath")}
             </label>
             <input
               id="session-default-path"
               className={styles.input}
               value={session.defaultPath ?? ""}
               onChange={(e) => update({ defaultPath: e.target.value })}
-              placeholder="/home/user"
+              placeholder={t("session.form.defaultPathPlaceholder")}
             />
           </div>
 
@@ -222,10 +242,10 @@ export const SessionForm = observer(function SessionForm() {
               className={`${styles.btn} ${styles.btnCancel}`}
               onClick={handleClose}
             >
-              Отмена
+              {t("common.cancel")}
             </button>
             <button type="submit" className={`${styles.btn} ${styles.btnSave}`}>
-              Сохранить
+              {t("common.save")}
             </button>
           </div>
         </form>

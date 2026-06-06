@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import type { SessionFolder } from '@/types';
 import { useStores } from '@stores/index';
 import styles from './SessionContextMenu.module.css';
@@ -15,6 +16,7 @@ export const FolderContextMenu = observer(function FolderContextMenu({
   anchor,
   onClose,
 }: FolderContextMenuProps) {
+  const { t } = useTranslation();
   const { sessionStore } = useStores();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +58,9 @@ export const FolderContextMenu = observer(function FolderContextMenu({
   }, [onClose]);
 
   const handleRename = () => {
-    const nextName = window.prompt('Название папки', folder.name)?.trim();
+    const nextName = window
+      .prompt(t('sidebar.folder.namePrompt'), folder.name)
+      ?.trim();
     if (nextName) {
       sessionStore.renameFolder(folder.id, nextName);
     }
@@ -66,7 +70,7 @@ export const FolderContextMenu = observer(function FolderContextMenu({
   const handleDelete = () => {
     if (
       window.confirm(
-        `Удалить папку «${folder.name}»? Содержимое будет перемещено в корень.`,
+        t('sidebar.folder.deleteConfirm', { name: folder.name }),
       )
     ) {
       sessionStore.deleteFolder(folder.id);
@@ -89,10 +93,12 @@ export const FolderContextMenu = observer(function FolderContextMenu({
           onClose();
         }}
       >
-        {folder.collapsed ? 'Развернуть' : 'Свернуть'}
+        {folder.collapsed
+          ? t('sidebar.folder.expand')
+          : t('sidebar.folder.collapse')}
       </button>
       <button type="button" className={styles.menuItem} onClick={handleRename}>
-        Переименовать
+        {t('sidebar.folder.rename')}
       </button>
       <button
         type="button"
@@ -102,14 +108,14 @@ export const FolderContextMenu = observer(function FolderContextMenu({
           onClose();
         }}
       >
-        Создать подпапку
+        {t('sidebar.folder.createSubfolder')}
       </button>
       <button
         type="button"
         className={`${styles.menuItem} ${styles.menuItemDanger}`}
         onClick={handleDelete}
       >
-        Удалить
+        {t('common.delete')}
       </button>
     </div>
   );

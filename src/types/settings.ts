@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LOCALE_CODES } from '@i18n/config';
 
 export const SIDEBAR_WIDTH_MIN = 180;
 export const SIDEBAR_WIDTH_MAX = 520;
@@ -18,6 +19,7 @@ export const appSettingsSchema = z.object({
     .min(SIDEBAR_WIDTH_MIN)
     .max(SIDEBAR_WIDTH_MAX)
     .default(SIDEBAR_WIDTH_DEFAULT),
+  locale: z.enum(LOCALE_CODES).default('ru'),
 });
 
 export type AppSettings = z.infer<typeof appSettingsSchema>;
@@ -31,4 +33,5 @@ export const defaultAppSettings: AppSettings = {
   defaultFtpPort: 21,
   defaultEditorPath: '',
   sidebarWidth: SIDEBAR_WIDTH_DEFAULT,
+  locale: 'ru',
 };

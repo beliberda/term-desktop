@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { i18n } from '@i18n/index';
 
 export const protocolSchema = z.enum(['ssh', 'sftp', 'ftp']);
 export const authTypeSchema = z.enum(['password', 'privateKey', 'agent']);
@@ -6,11 +7,11 @@ export const authTypeSchema = z.enum(['password', 'privateKey', 'agent']);
 export const sessionSchema = z
   .object({
     id: z.string().uuid(),
-    name: z.string().min(1, 'Укажите название'),
+    name: z.string().min(1, { message: 'name' }),
     protocol: protocolSchema,
-    host: z.string().min(1, 'Укажите host'),
+    host: z.string().min(1, { message: 'host' }),
     port: z.number().int().min(1).max(65535),
-    username: z.string().min(1, 'Укажите username'),
+    username: z.string().min(1, { message: 'username' }),
     authType: authTypeSchema,
     privateKeyPath: z.string().optional(),
     defaultPath: z.string().optional(),
@@ -21,7 +22,7 @@ export const sessionSchema = z
     if (data.authType === 'privateKey' && !data.privateKeyPath?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Укажите путь к ключу',
+        message: 'keyPathRequired',
         path: ['privateKeyPath'],
       });
     }
@@ -59,6 +60,23 @@ export type SessionFolder = z.infer<typeof sessionFolderSchema>;
 export type SessionsFileV2 = z.infer<typeof sessionsFileV2Schema>;
 export type SessionsFile = SessionsFileV2;
 
+const SESSION_VALIDATION_KEYS: Record<string, string> = {
+  name: 'session.validation.nameRequired',
+  host: 'session.validation.hostRequired',
+  username: 'session.validation.usernameRequired',
+  port: 'session.validation.portInvalid',
+  privateKeyPath: 'session.validation.keyPathRequired',
+  keyPathRequired: 'session.validation.keyPathRequired',
+};
+
+export function translateSessionValidationMessage(
+  field: string,
+  message: string,
+): string {
+  const key = SESSION_VALIDATION_KEYS[field] ?? SESSION_VALIDATION_KEYS[message];
+  return key ? i18n.t(key) : message;
+}
+
 export function getDefaultPort(protocol: Protocol): number {
   return protocol === 'ftp' ? 21 : 22;
 }
@@ -87,12 +105,12 @@ export function createEmptySession(): SessionConfig {
 }
 
 export function createEmptyFolder(
-  name = 'Новая папка',
+  name?: string,
   parentId: string | null = null,
 ): SessionFolder {
   return {
     id: newId(),
-    name,
+    name: name ?? i18n.t('session.newFolder'),
     parentId,
     collapsed: false,
     childOrder: [],

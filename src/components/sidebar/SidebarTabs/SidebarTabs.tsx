@@ -1,19 +1,25 @@
+import { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import { useStores } from '@stores/index';
 import type { SidebarTab } from '@/types';
 import styles from './SidebarTabs.module.css';
 
-const TABS: { id: SidebarTab; label: string }[] = [
-  { id: 'sessions', label: 'Сессии' },
-  { id: 'files', label: 'Файлы' },
-];
-
 export const SidebarTabs = observer(function SidebarTabs() {
+  const { t } = useTranslation();
   const { appStore } = useStores();
+
+  const tabs = useMemo(
+    (): { id: SidebarTab; label: string }[] => [
+      { id: 'sessions', label: t('sidebar.tabs.sessions') },
+      { id: 'files', label: t('sidebar.tabs.files') },
+    ],
+    [t],
+  );
 
   return (
     <div className={styles.tabs}>
-      {TABS.map((tab) => (
+      {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"

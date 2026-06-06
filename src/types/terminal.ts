@@ -1,10 +1,16 @@
 import { z } from 'zod';
+import type { AppError } from '@i18n/types';
 import type { ConnectionStatus } from './index';
+
+export const ipcErrorSchema = z.object({
+  code: z.string(),
+  details: z.record(z.string(), z.unknown()).optional(),
+});
 
 export const connectionStatusPayloadSchema = z.object({
   connectionId: z.string(),
   status: z.enum(['connecting', 'connected', 'disconnected', 'error']),
-  message: z.string().optional(),
+  error: ipcErrorSchema.optional(),
 });
 
 export const terminalOutputPayloadSchema = z.object({
@@ -18,7 +24,7 @@ export interface TerminalTab {
   connectionId?: string;
   title: string;
   status: ConnectionStatus;
-  errorMessage?: string;
+  error?: AppError;
   connectStartedAt?: number;
   connectLatencyMs?: number;
   reconnecting?: boolean;

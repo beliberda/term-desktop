@@ -1,6 +1,9 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import type { ConnectionStatus, SftpEntry } from '@/types';
+import type { AppError } from '@i18n/types';
+import { i18n } from '@i18n/index';
+import { getIpcErrorPayload } from '@ipc/client';
 import * as sftpIpc from '@ipc/sftp';
 import { openInEditor } from '@utils/openInEditor';
 import type { TerminalStore } from './TerminalStore';
@@ -25,6 +28,11 @@ function joinLocalPath(dir: string, name: string): string {
   return `${trimmed}${separator}${name}`;
 }
 
+function mapFileError(e: unknown, fallbackCode: string): AppError {
+  const payload = getIpcErrorPayload(e);
+  return payload.code === 'unknown' ? { code: fallbackCode } : payload;
+}
+
 export class FileBrowserStore {
   connectionId: string | null = null;
   sessionId: string | null = null;
@@ -32,7 +40,7 @@ export class FileBrowserStore {
   cwd = '/';
   entries: SftpEntry[] = [];
   isLoading = false;
-  error: string | null = null;
+  error: AppError | null = null;
   selectedEntry: SftpEntry | null = null;
   renameTargetPath: string | null = null;
   renameDraft = '';
@@ -163,7 +171,7 @@ export class FileBrowserStore {
       if (connectionChanged) {
         this.cwd = defaultPath;
         this.selectedEntry = null;
-        this.error = ftpConn.errorMessage ?? null;
+        this.error = ftpConn.error ?? null;
         this.entries = [];
       }
     });
@@ -193,8 +201,9 @@ export class FileBrowserStore {
       });
     } catch (e) {
       runInAction(() => {
+        const payload = getIpcErrorPayload(e);
         this.error =
-          e instanceof Error ? e.message : 'Не удалось загрузить каталог';
+          payload.code === 'unknown' ? { code: 'files.listFailed' } : payload;
         this.isLoading = false;
       });
     }
@@ -258,8 +267,7 @@ export class FileBrowserStore {
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось переименовать';
+        this.error = mapFileError(e, 'files.renameFailed');
         this.isLoading = false;
       });
     } finally {
@@ -283,7 +291,7 @@ export class FileBrowserStore {
 
     if (!this.connectionId) return;
     if (!this.settingsStore) {
-      this.error = 'SettingsStore не инициализирован';
+      this.error = { code: 'files.settingsNotInit' };
       return;
     }
 
@@ -299,7 +307,7 @@ export class FileBrowserStore {
       await openInEditor(localPath, this.settingsStore.settings.defaultEditorPath);
     } catch (e) {
       runInAction(() => {
-        this.error = e instanceof Error ? e.message : 'Не удалось открыть файл';
+        this.error = mapFileError(e, 'files.openFailed');
       });
     }
   }
@@ -324,7 +332,11 @@ export class FileBrowserStore {
         );
 
         const ok = window.confirm(
-          `Удалить каталог «${entry.name}»?\nПуть: ${entry.path}\nФайлов: ${count}`,
+          i18n.t('files.confirm.deleteDir', {
+            name: entry.name,
+            path: entry.path,
+            count,
+          }),
         );
         if (!ok) {
           runInAction(() => {
@@ -337,7 +349,7 @@ export class FileBrowserStore {
         await this.loadDir(this.cwd);
       } catch (e) {
         runInAction(() => {
-          this.error = e instanceof Error ? e.message : 'Не удалось удалить';
+          this.error = mapFileError(e, 'files.deleteFailed');
           this.isLoading = false;
         });
       }
@@ -345,7 +357,9 @@ export class FileBrowserStore {
       return;
     }
 
-    if (!window.confirm(`Удалить «${entry.name}»?`)) return;
+    if (!window.confirm(i18n.t('files.confirm.deleteFile', { name: entry.name }))) {
+      return;
+    }
 
     runInAction(() => {
       this.isLoading = true;
@@ -357,7 +371,7 @@ export class FileBrowserStore {
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
-        this.error = e instanceof Error ? e.message : 'Не удалось удалить';
+        this.error = mapFileError(e, 'files.deleteFailed');
         this.isLoading = false;
       });
     }
@@ -383,8 +397,7 @@ export class FileBrowserStore {
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось переименовать';
+        this.error = mapFileError(e, 'files.renameFailed');
         this.isLoading = false;
       });
     }
@@ -408,8 +421,7 @@ export class FileBrowserStore {
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось загрузить файл';
+        this.error = mapFileError(e, 'files.uploadFailed');
         this.isLoading = false;
       });
     }
@@ -462,8 +474,7 @@ export class FileBrowserStore {
       });
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось скачать';
+        this.error = mapFileError(e, 'files.downloadFailed');
         this.isLoading = false;
       });
     }
@@ -484,8 +495,7 @@ export class FileBrowserStore {
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось создать папку';
+        this.error = mapFileError(e, 'files.mkdirFailed');
         this.isLoading = false;
       });
     }

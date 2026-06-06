@@ -6,10 +6,11 @@ use tokio::sync::Mutex as AsyncMutex;
 use uuid::Uuid;
 
 use crate::connection_pool::ConnectionPool;
+use crate::error::{IpcError, IpcResult};
 use crate::events::emit_connection_status;
 use crate::models::SessionConfig;
 use crate::services::config::ConfigService;
-use crate::services::ssh::{connect_and_authenticate, test_connect, CONNECT_TIMEOUT_SECS};
+use crate::services::ssh::{connect_and_authenticate, map_ssh_connect_error, test_connect, CONNECT_TIMEOUT_SECS};
 use crate::utils::paths::validate_protocol;
 
 type ConfigState = Arc<std::sync::Mutex<ConfigService>>;
@@ -21,12 +22,16 @@ pub struct ConnectResponse {
     pub connection_id: String,
 }
 
-fn find_session(config: &ConfigService, session_id: &str) -> Result<SessionConfig, String> {
-    let file = config.load()?;
+fn find_session(config: &ConfigService, session_id: &str) -> IpcResult<SessionConfig> {
+    let file = config
+        .load()
+        .map_err(|e| IpcError::with_str_detail("unknown", "raw", e))?;
     file.sessions
         .into_iter()
         .find(|s| s.id == session_id)
-        .ok_or_else(|| format!("session not found: {session_id}"))
+        .ok_or_else(|| {
+            IpcError::with_str_detail("session.notFound", "sessionId", session_id)
+        })
 }
 
 #[tauri::command]
@@ -36,9 +41,11 @@ pub async fn terminal_connect(
     config_state: State<'_, ConfigState>,
     session_id: String,
     password: Option<String>,
-) -> Result<ConnectResponse, String> {
+) -> IpcResult<ConnectResponse> {
     let session = {
-        let config = config_state.lock().map_err(|e| e.to_string())?;
+        let config = config_state
+            .lock()
+            .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
         find_session(&config, &session_id)?
     };
 
@@ -61,14 +68,13 @@ pub async fn terminal_connect(
     {
         Ok(Ok(handle)) => handle,
         Ok(Err(e)) => {
-            let message = e.to_string();
-            emit_connection_status(&app, &connection_id, "error", Some(message.clone()));
-            return Err(message);
+            emit_connection_status(&app, &connection_id, "error", Some(e.clone()));
+            return Err(e);
         }
         Err(_) => {
-            let message = "Connection timeout (30s)".to_string();
-            emit_connection_status(&app, &connection_id, "error", Some(message.clone()));
-            return Err(message);
+            let err = IpcError::new("connection.timeout");
+            emit_connection_status(&app, &connection_id, "error", Some(err.clone()));
+            return Err(err);
         }
     };
 
@@ -85,7 +91,7 @@ pub async fn terminal_connect(
 pub async fn terminal_disconnect(
     pool: State<'_, PoolState>,
     connection_id: String,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let mut pool = pool.lock().await;
     pool.disconnect(&connection_id).await
 }
@@ -95,9 +101,9 @@ pub async fn terminal_write(
     pool: State<'_, PoolState>,
     connection_id: String,
     data: String,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let bytes = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, &data)
-        .map_err(|e| format!("invalid base64 data: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
 
     let pool = pool.lock().await;
     pool.write(&connection_id, bytes)
@@ -109,7 +115,7 @@ pub async fn terminal_resize(
     connection_id: String,
     cols: u32,
     rows: u32,
-) -> Result<(), String> {
+) -> IpcResult<()> {
     let pool = pool.lock().await;
     pool.resize(&connection_id, cols, rows)
 }
@@ -121,6 +127,8 @@ pub async fn test_ssh_connect(
     username: String,
     private_key_path: Option<String>,
     password: Option<String>,
-) -> Result<String, String> {
-    test_connect(host, port, username, private_key_path, password).await
+) -> IpcResult<String> {
+    test_connect(host, port, username, private_key_path, password)
+        .await
+        .map_err(map_ssh_connect_error)
 }

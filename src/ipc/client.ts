@@ -1,19 +1,40 @@
 import { invoke } from '@tauri-apps/api/core';
+import { parseIpcError } from '@i18n/ipcErrors';
+import type { IpcErrorPayload } from '@i18n/types';
 import * as commands from './commands';
 
-export function getIpcErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return 'Неизвестная ошибка';
+export class IpcInvokeError extends Error {
+  readonly payload: IpcErrorPayload;
+
+  constructor(payload: IpcErrorPayload) {
+    super(JSON.stringify(payload));
+    this.name = 'IpcInvokeError';
+    this.payload = payload;
+  }
 }
 
-export async function safeInvoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
+export function getIpcErrorPayload(error: unknown): IpcErrorPayload {
+  if (error instanceof IpcInvokeError) {
+    return error.payload;
+  }
+  return parseIpcError(error);
+}
+
+export function getIpcErrorMessage(error: unknown): string {
+  const payload = getIpcErrorPayload(error);
+  return JSON.stringify(payload);
+}
+
+export async function safeInvoke<T>(
+  command: string,
+  args?: Record<string, unknown>,
+): Promise<T> {
   try {
     return await invoke<T>(command, args);
   } catch (error) {
-    const message = getIpcErrorMessage(error);
-    console.error(`[IPC] ${command} failed:`, message);
-    throw new Error(message);
+    const payload = getIpcErrorPayload(error);
+    console.error(`[IPC] ${command} failed:`, payload);
+    throw new IpcInvokeError(payload);
   }
 }
 

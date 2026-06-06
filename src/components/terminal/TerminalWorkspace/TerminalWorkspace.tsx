@@ -1,30 +1,51 @@
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import { TerminalTabBar } from '@components/terminal/TerminalTabBar/TerminalTabBar';
 import { TerminalTabPanels } from '@components/terminal/TerminalTabPanels/TerminalTabPanels';
 import { useStores } from '@stores/index';
+import type { AppError } from '@i18n/types';
 import styles from './TerminalWorkspace.module.css';
 
 function statusBannerMessage(
+  t: (key: string) => string,
   status: string,
-  errorMessage?: string,
+  error?: AppError,
+  translateError?: (error: AppError) => string,
 ): string | null {
   if (status === 'error') {
-    return errorMessage ?? 'Не удалось подключиться';
+    return error && translateError
+      ? translateError(error)
+      : t('terminal.workspace.connectFailed');
   }
   if (status === 'connecting') {
-    return 'Подключение…';
+    return t('terminal.workspace.connecting');
   }
   if (status === 'disconnected') {
-    return 'Соединение разорвано';
+    return t('terminal.workspace.disconnected');
   }
   return null;
 }
 
 export const TerminalWorkspace = observer(function TerminalWorkspace() {
+  const { t } = useTranslation();
   const { terminalStore } = useStores();
   const activeTab = terminalStore.activeTab;
+
+  const translateTabError = (error: AppError) => {
+    const key = `errors.${error.code}`;
+    const translated = t(key, { ...(error.details ?? {}), defaultValue: '' });
+    if (translated) return translated;
+    const raw = error.details?.raw;
+    return typeof raw === 'string' ? raw : t('errors.unknown');
+  };
+
   const bannerMessage = activeTab
-    ? statusBannerMessage(activeTab.status, activeTab.errorMessage)
+    ? statusBannerMessage(
+        t,
+        activeTab.status,
+        activeTab.error,
+        translateTabError,
+      )
     : null;
   const showReconnect =
     activeTab !== null && terminalStore.canReconnect(activeTab);
@@ -45,7 +66,7 @@ export const TerminalWorkspace = observer(function TerminalWorkspace() {
                   className={styles.bannerReconnect}
                   onClick={() => void terminalStore.reconnectTab(activeTab.id)}
                 >
-                  Переподключить
+                  {t('terminal.workspace.reconnect')}
                 </button>
               )}
               <button
@@ -53,7 +74,7 @@ export const TerminalWorkspace = observer(function TerminalWorkspace() {
                 className={styles.bannerClose}
                 onClick={() => terminalStore.closeTab(activeTab.id)}
               >
-                Закрыть вкладку
+                {t('terminal.workspace.closeTab')}
               </button>
             </div>
           </div>
@@ -61,12 +82,12 @@ export const TerminalWorkspace = observer(function TerminalWorkspace() {
         {terminalStore.tabs.length > 0 ? (
           <TerminalTabPanels />
         ) : (
-          <div className={styles.empty}>
-            Двойной клик по сессии в sidebar для подключения
-          </div>
+          <div className={styles.empty}>{t('terminal.workspace.emptyHint')}</div>
         )}
         {showReconnect && (
-          <div className={styles.hintFooter}>Ctrl+R — переподключиться</div>
+          <div className={styles.hintFooter}>
+            {t('terminal.workspace.reconnectShortcut')}
+          </div>
         )}
       </div>
     </div>

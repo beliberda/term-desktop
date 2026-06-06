@@ -1,13 +1,15 @@
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
+use crate::error::IpcError;
+
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConnectionStatusPayload {
     pub connection_id: String,
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub message: Option<String>,
+    pub error: Option<IpcError>,
 }
 
 #[derive(Clone, Serialize)]
@@ -21,14 +23,14 @@ pub fn emit_connection_status(
     app: &AppHandle,
     connection_id: &str,
     status: &str,
-    message: Option<String>,
+    error: Option<IpcError>,
 ) {
     let _ = app.emit(
         "connection-status",
         ConnectionStatusPayload {
             connection_id: connection_id.to_string(),
             status: status.to_string(),
-            message,
+            error,
         },
     );
 }

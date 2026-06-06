@@ -1,11 +1,13 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import type { ConnectionStatus, ConnectionStatusPayload } from '@/types';
+import type { AppError } from '@i18n/types';
+import { getIpcErrorPayload } from '@ipc/client';
 import * as ftpIpc from '@ipc/ftp';
 
 export interface FtpConnectionState {
   connectionId: string;
   status: ConnectionStatus;
-  errorMessage?: string;
+  error?: AppError;
   connectLatencyMs?: number;
 }
 
@@ -54,12 +56,15 @@ export class FileConnectionStore {
         });
       });
     } catch (e) {
+      const error = getIpcErrorPayload(e);
       runInAction(() => {
         this.connections.set(sessionId, {
           connectionId: '',
           status: 'error',
-          errorMessage:
-            e instanceof Error ? e.message : 'Не удалось подключиться по FTP',
+          error:
+            error.code === 'unknown'
+              ? { code: 'ftp.connectFailedFrontend' }
+              : error,
         });
       });
     }
@@ -72,7 +77,7 @@ export class FileConnectionStore {
           this.connections.set(sessionId, {
             ...conn,
             status: payload.status,
-            errorMessage: payload.message,
+            error: payload.error,
           });
         });
         return;

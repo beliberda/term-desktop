@@ -1,6 +1,7 @@
 import type { MouseEvent } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import type { SftpEntry } from '@/types';
 import { useStores } from '@stores/index';
 import { FileEntryContextMenu } from './FileEntryContextMenu';
@@ -23,6 +24,7 @@ function formatDate(iso?: string): string {
 }
 
 export const SftpFileList = observer(function SftpFileList() {
+  const { t } = useTranslation();
   const { fileBrowserStore } = useStores();
   const [contextMenu, setContextMenu] = useState<{
     entry: SftpEntry;
@@ -53,11 +55,11 @@ export const SftpFileList = observer(function SftpFileList() {
   };
 
   if (fileBrowserStore.isLoading && fileBrowserStore.entries.length === 0) {
-    return <p className={styles.status}>Загрузка...</p>;
+    return <p className={styles.status}>{t('files.list.loading')}</p>;
   }
 
   if (fileBrowserStore.entries.length === 0) {
-    return <p className={styles.status}>Папка пуста</p>;
+    return <p className={styles.status}>{t('files.list.empty')}</p>;
   }
 
   return (

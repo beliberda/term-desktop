@@ -5,6 +5,7 @@ use tauri::AppHandle;
 use tokio::sync::{mpsc, Mutex};
 use uuid::Uuid;
 
+use crate::error::{IpcError, IpcResult};
 use crate::events::emit_connection_status;
 use crate::models::sftp::SftpEntry;
 use crate::models::SessionConfig;
@@ -77,12 +78,18 @@ impl ConnectionPool {
         app: AppHandle,
         session: SessionConfig,
         password: Option<String>,
-    ) -> Result<String, String> {
+    ) -> IpcResult<String> {
         let connection_id = Uuid::new_v4().to_string();
         tracing::info!(connection_id = %connection_id, session_id = %session.id, "FTP connect started");
         emit_connection_status(&app, &connection_id, "connecting", None);
 
-        let ftp = ftp::connect(&session, password).await?;
+        let ftp = match ftp::connect(&session, password).await {
+            Ok(client) => client,
+            Err(err) => {
+                emit_connection_status(&app, &connection_id, "error", Some(err.clone()));
+                return Err(err);
+            }
+        };
         let client: SharedFtpClient = Arc::new(Mutex::new(ftp));
 
         emit_connection_status(&app, &connection_id, "connected", None);
@@ -98,7 +105,7 @@ impl ConnectionPool {
         Ok(connection_id)
     }
 
-    pub async fn disconnect(&mut self, connection_id: &str) -> Result<(), String> {
+    pub async fn disconnect(&mut self, connection_id: &str) -> IpcResult<()> {
         let Some(handle) = self.connections.remove(connection_id) else {
             return Ok(());
         };
@@ -126,25 +133,23 @@ impl ConnectionPool {
         Ok(())
     }
 
-    pub fn write(&self, connection_id: &str, data: Vec<u8>) -> Result<(), String> {
+    pub fn write(&self, connection_id: &str, data: Vec<u8>) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh { input_tx, .. } => input_tx
                 .send(ChannelCommand::Data(data))
-                .map_err(|e| format!("failed to send data: {e}")),
-            ConnectionKind::Ftp { .. } => Err("write is not supported for FTP connections".into()),
+                .map_err(|e| IpcError::with_str_detail("connection.sendDataFailed", "raw", e.to_string())),
+            ConnectionKind::Ftp { .. } => Err(IpcError::new("connection.writeNotSupported")),
         }
     }
 
-    pub fn resize(&self, connection_id: &str, cols: u32, rows: u32) -> Result<(), String> {
+    pub fn resize(&self, connection_id: &str, cols: u32, rows: u32) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh { input_tx, .. } => input_tx
                 .send(ChannelCommand::Resize { cols, rows })
-                .map_err(|e| format!("failed to resize: {e}")),
-            ConnectionKind::Ftp { .. } => {
-                Err("resize is not supported for FTP connections".into())
-            }
+                .map_err(|e| IpcError::with_str_detail("connection.resizeFailed", "raw", e.to_string())),
+            ConnectionKind::Ftp { .. } => Err(IpcError::new("connection.resizeNotSupported")),
         }
     }
 
@@ -152,7 +157,7 @@ impl ConnectionPool {
         &self,
         connection_id: &str,
         path: &str,
-    ) -> Result<Vec<SftpEntry>, String> {
+    ) -> IpcResult<Vec<SftpEntry>> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
@@ -168,7 +173,7 @@ impl ConnectionPool {
         &self,
         connection_id: &str,
         remote_path: &str,
-    ) -> Result<u64, String> {
+    ) -> IpcResult<u64> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
@@ -185,7 +190,7 @@ impl ConnectionPool {
         connection_id: &str,
         local_path: &str,
         remote_path: &str,
-    ) -> Result<(), String> {
+    ) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
@@ -208,7 +213,7 @@ impl ConnectionPool {
         remote_path: &str,
         local_path: &str,
         is_directory: bool,
-    ) -> Result<(), String> {
+    ) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
@@ -244,7 +249,7 @@ impl ConnectionPool {
         }
     }
 
-    pub async fn mkdir(&self, connection_id: &str, remote_path: &str) -> Result<(), String> {
+    pub async fn mkdir(&self, connection_id: &str, remote_path: &str) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
@@ -261,7 +266,7 @@ impl ConnectionPool {
         connection_id: &str,
         remote_path: &str,
         is_directory: bool,
-    ) -> Result<(), String> {
+    ) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
@@ -278,7 +283,7 @@ impl ConnectionPool {
         connection_id: &str,
         old_path: &str,
         new_path: &str,
-    ) -> Result<(), String> {
+    ) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
@@ -295,7 +300,7 @@ impl ConnectionPool {
         app: &tauri::AppHandle,
         connection_id: &str,
         remote_path: &str,
-    ) -> Result<String, String> {
+    ) -> IpcResult<String> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
@@ -307,9 +312,11 @@ impl ConnectionPool {
         }
     }
 
-    fn get(&self, connection_id: &str) -> Result<&ConnectionHandle, String> {
+    fn get(&self, connection_id: &str) -> IpcResult<&ConnectionHandle> {
         self.connections
             .get(connection_id)
-            .ok_or_else(|| format!("connection not found: {connection_id}"))
+            .ok_or_else(|| {
+                IpcError::with_str_detail("connection.notFound", "connectionId", connection_id)
+            })
     }
 }

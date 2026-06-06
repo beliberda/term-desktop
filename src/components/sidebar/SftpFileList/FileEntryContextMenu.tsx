@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import type { SftpEntry } from '@/types';
 import { useStores } from '@stores/index';
 import styles from './FileEntryContextMenu.module.css';
@@ -15,6 +16,7 @@ export const FileEntryContextMenu = observer(function FileEntryContextMenu({
   anchor,
   onClose,
 }: FileEntryContextMenuProps) {
+  const { t } = useTranslation();
   const { fileBrowserStore } = useStores();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -70,7 +72,7 @@ export const FileEntryContextMenu = observer(function FileEntryContextMenu({
           onClose();
         }}
       >
-        Копировать путь
+        {t('files.context.copyPath')}
       </button>
       <button
         type="button"
@@ -80,7 +82,7 @@ export const FileEntryContextMenu = observer(function FileEntryContextMenu({
           onClose();
         }}
       >
-        Открыть
+        {t('files.context.open')}
       </button>
       <button
         type="button"
@@ -90,7 +92,7 @@ export const FileEntryContextMenu = observer(function FileEntryContextMenu({
           onClose();
         }}
       >
-        Скачать
+        {t('files.context.download')}
       </button>
       <button
         type="button"
@@ -100,7 +102,7 @@ export const FileEntryContextMenu = observer(function FileEntryContextMenu({
           onClose();
         }}
       >
-        Переименовать
+        {t('files.context.rename')}
       </button>
       <button
         type="button"
@@ -110,9 +112,8 @@ export const FileEntryContextMenu = observer(function FileEntryContextMenu({
           onClose();
         }}
       >
-        Удалить
+        {t('common.delete')}
       </button>
     </div>
   );
 });
-

@@ -8,6 +8,8 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { observer } from "mobx-react-lite";
+import { useTranslation } from "react-i18next";
+import { useAppErrorMessage } from "@i18n/useAppErrorMessage";
 import type { SessionConfig, SessionFolder } from "@/types";
 import { useStores } from "@stores/index";
 import { connectSession } from "@utils/connectSession";
@@ -34,8 +36,10 @@ interface FolderContextMenuState {
 }
 
 export const SessionList = observer(function SessionList() {
+  const { t } = useTranslation();
   const stores = useStores();
   const { sessionStore } = stores;
+  const errorMessage = useAppErrorMessage(sessionStore.error);
   const [sessionMenu, setSessionMenu] =
     useState<SessionContextMenuState | null>(null);
   const [folderMenu, setFolderMenu] = useState<FolderContextMenuState | null>(
@@ -128,14 +132,16 @@ export const SessionList = observer(function SessionList() {
   };
 
   if (sessionStore.isLoading) {
-    return <div className={styles.stateMessage}>Загрузка сессий...</div>;
+    return (
+      <div className={styles.stateMessage}>{t("sidebar.sessions.loading")}</div>
+    );
   }
 
   if (!sessionStore.hasItems) {
     return (
       <div className={styles.empty}>
-        <p className={styles.emptyTitle}>Нет сессий</p>
-        <p className={styles.emptyHint}>Нажмите + чтобы создать подключение</p>
+        <p className={styles.emptyTitle}>{t("sidebar.sessions.noSessions")}</p>
+        <p className={styles.emptyHint}>{t("sidebar.sessions.createHint")}</p>
       </div>
     );
   }
@@ -149,9 +155,7 @@ export const SessionList = observer(function SessionList() {
 
   return (
     <div className={styles.container}>
-      {sessionStore.error && (
-        <div className={styles.error}>{sessionStore.error}</div>
-      )}
+      {errorMessage && <div className={styles.error}>{errorMessage}</div>}
       <DndContext
         sensors={sensors}
         collisionDetection={sessionListCollisionDetection}

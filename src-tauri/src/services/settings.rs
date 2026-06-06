@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use tauri::Manager;
 
+use crate::error::{IpcError, IpcResult};
 use crate::models::settings::AppSettings;
 
 pub struct SettingsService {
@@ -21,39 +22,36 @@ impl SettingsService {
         })
     }
 
-    pub fn load(&self) -> Result<AppSettings, String> {
+    pub fn load(&self) -> IpcResult<AppSettings> {
         if !self.file_path.exists() {
             return Ok(AppSettings::default());
         }
 
         let content = fs::read_to_string(&self.file_path)
-            .map_err(|e| format!("failed to read settings file: {e}"))?;
+            .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
         let data: AppSettings = serde_json::from_str(&content)
-            .map_err(|e| format!("failed to parse settings file: {e}"))?;
+            .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
 
         if data.schema_version != 1 {
-            return Err(format!(
-                "unsupported settings schema version: {}",
-                data.schema_version
-            ));
+            return Err(IpcError::new("settings.unsupportedSchema"));
         }
 
         Ok(data)
     }
 
-    pub fn save(&self, settings: &AppSettings) -> Result<(), String> {
+    pub fn save(&self, settings: &AppSettings) -> IpcResult<()> {
         if settings.schema_version != 1 {
-            return Err("unsupported settings schema version".into());
+            return Err(IpcError::new("settings.unsupportedSchema"));
         }
 
         let content = serde_json::to_string_pretty(settings)
-            .map_err(|e| format!("failed to serialize settings: {e}"))?;
+            .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
 
         let temp_path = self.file_path.with_extension("json.tmp");
         fs::write(&temp_path, content)
-            .map_err(|e| format!("failed to write temp settings file: {e}"))?;
+            .map_err(|e| IpcError::with_str_detail("settings.saveFailed", "raw", e.to_string()))?;
         fs::rename(&temp_path, &self.file_path)
-            .map_err(|e| format!("failed to rename settings file: {e}"))?;
+            .map_err(|e| IpcError::with_str_detail("settings.saveFailed", "raw", e.to_string()))?;
 
         Ok(())
     }

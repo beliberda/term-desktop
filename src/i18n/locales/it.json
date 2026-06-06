@@ -1,0 +1,263 @@
+{
+  "common": {
+    "cancel": "Annulla",
+    "save": "Salva",
+    "delete": "Elimina",
+    "browse": "Sfoglia",
+    "ok": "OK",
+    "close": "Chiudi",
+    "import": "Importa",
+    "export": "Esporta",
+    "refresh": "Aggiorna",
+    "upload": "Carica",
+    "folder": "Cartella",
+    "loading": "Caricamento...",
+    "empty": "—",
+    "host": "Host",
+    "connect": "Connessione",
+    "status": "Stato",
+    "executable": "Eseguibile"
+  },
+  "sidebar": {
+    "tabs": { "sessions": "Sessioni", "files": "File" },
+    "toolbar": {
+      "newSession": "Nuova sessione",
+      "newFolder": "Nuova cartella",
+      "importJson": "Importa sessioni da JSON",
+      "importSessions": "Importa…",
+      "downloadExample": "Scarica esempio",
+      "settings": "Impostazioni"
+    },
+    "resize": "Ridimensiona barra laterale",
+    "sessions": {
+      "loading": "Caricamento sessioni...",
+      "noSessions": "Nessuna sessione",
+      "createHint": "Clicca + per creare una connessione",
+      "edit": "Modifica",
+      "deleteConfirm": "Eliminare la sessione «{{name}}»?",
+      "connect": "Connetti",
+      "duplicate": "Duplica",
+      "ungroup": "Rimuovi dalla cartella"
+    },
+    "folder": {
+      "expand": "Espandi",
+      "collapse": "Comprimi",
+      "rename": "Rinomina",
+      "createSubfolder": "Crea sottocartella",
+      "delete": "Elimina",
+      "deleteConfirm": "Eliminare la cartella «{{name}}»? Il contenuto verrà spostato nella radice.",
+      "namePrompt": "Nome cartella"
+    }
+  },
+  "session": {
+    "newSession": "Nuova sessione",
+    "editSession": "Modifica sessione",
+    "form": {
+      "name": "Nome",
+      "protocol": "Protocollo",
+      "port": "Porta",
+      "host": "Host",
+      "username": "Username",
+      "auth": "Autenticazione",
+      "authPassword": "Password",
+      "authPrivateKey": "Chiave privata",
+      "authAgent": "SSH Agent",
+      "keyPath": "Percorso chiave privata",
+      "defaultPath": "Percorso iniziale (opzionale)",
+      "defaultPathPlaceholder": "/home/user"
+    },
+    "validation": {
+      "nameRequired": "Inserisci un nome",
+      "hostRequired": "Inserisci host",
+      "usernameRequired": "Inserisci username",
+      "keyPathRequired": "Inserisci percorso chiave privata",
+      "portInvalid": "Porta non valida"
+    },
+    "copySuffix": "(copia)",
+    "newFolder": "Nuova cartella"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "theme": "Tema",
+    "themeDark": "Scuro",
+    "themeLight": "Chiaro",
+    "language": "Lingua",
+    "fontSize": "Dimensione font terminale",
+    "fontFamily": "Font terminale",
+    "editorPath": "Editor predefinito (opzionale)",
+    "editorPlaceholder": "Vuoto — applicazione di sistema predefinita",
+    "sshPort": "Porta SSH predefinita",
+    "ftpPort": "Porta FTP predefinita"
+  },
+  "terminal": {
+    "status": {
+      "connecting": "Connessione",
+      "connected": "Connesso",
+      "disconnected": "Disconnesso",
+      "error": "Errore"
+    },
+    "workspace": {
+      "connectFailed": "Connessione fallita",
+      "connecting": "Connessione…",
+      "disconnected": "Connessione interrotta",
+      "reconnect": "Riconnetti",
+      "closeTab": "Chiudi scheda",
+      "emptyHint": "Doppio clic su una sessione nella barra laterale per aprire il terminale",
+      "reconnectShortcut": "Ctrl+R — riconnetti"
+    },
+    "password": {
+      "title": "Connetti",
+      "ftpTitle": "Connessione FTP",
+      "keyPassphrase": "Passphrase chiave",
+      "passphrase": "Passphrase",
+      "password": "Password",
+      "connect": "Connetti"
+    },
+    "tabs": {
+      "empty": "Nessuna scheda aperta",
+      "close": "Chiudi",
+      "closeTab": "Chiudi {{title}}"
+    }
+  },
+  "files": {
+    "title": "File",
+    "ftpConnecting": "Connessione FTP in corso...",
+    "ftpError": "Errore connessione FTP",
+    "noSession": "Connetti una sessione SSH o FTP per sfogliare i file",
+    "connecting": "Connessione...",
+    "notConnected": "Sessione non connessa",
+    "updating": "Aggiornamento...",
+    "toolbar": { "folderName": "Nome cartella" },
+    "breadcrumbs": {
+      "root": "Vai alla radice",
+      "path": "Percorso",
+      "copyPath": "Copia percorso corrente"
+    },
+    "list": { "loading": "Caricamento...", "empty": "Cartella vuota" },
+    "units": { "B": "B", "KB": "KB", "MB": "MB", "GB": "GB" },
+    "context": {
+      "copyPath": "Copia percorso",
+      "open": "Apri",
+      "download": "Scarica",
+      "rename": "Rinomina"
+    },
+    "confirm": {
+      "deleteDir": "Eliminare la directory «{{name}}»?\nPercorso: {{path}}\nFile: {{count}}",
+      "deleteFile": "Eliminare «{{name}}»?"
+    }
+  },
+  "errors": {
+    "unknown": "Errore sconosciuto",
+    "session": {
+      "notFound": "Sessione non trovata: {{sessionId}}",
+      "nameRequired": "Il nome della sessione è obbligatorio",
+      "hostRequired": "Host obbligatorio",
+      "usernameRequired": "Username obbligatorio",
+      "portInvalid": "Porta non valida",
+      "duplicateIds": "ID sessione duplicati",
+      "unsupportedSchema": "Versione schema sessioni non supportata",
+      "saveFailed": "Impossibile salvare le sessioni",
+      "loadFailed": "Impossibile caricare le sessioni",
+      "duplicateFailed": "Impossibile duplicare la sessione",
+      "saveFormFailed": "Impossibile salvare la sessione",
+      "deleteFailed": "Impossibile eliminare la sessione",
+      "exportFailed": "Impossibile esportare le sessioni",
+      "importExampleFailed": "Impossibile scaricare l'esempio di importazione",
+      "importFailed": "Impossibile importare le sessioni",
+      "importNone": "Nessuna sessione importata. Saltate: {{skipped}}",
+      "importPartial": "Importate: {{imported}}. Saltate: {{skipped}}",
+      "notFoundInList": "Sessione non trovata nell'elenco connessioni.",
+      "notFoundReloaded": "Sessione non trovata. Elenco aggiornato — riprova a connetterti.",
+      "invalidFormat": "Formato file sessioni non valido"
+    },
+    "connection": {
+      "notFound": "Connessione non trovata: {{connectionId}}",
+      "timeout": "Timeout connessione (30s)",
+      "ftpOnlyPassword": "FTP supporta solo autenticazione con password",
+      "writeNotSupported": "Scrittura non supportata per connessioni FTP",
+      "resizeNotSupported": "Ridimensionamento non supportato per connessioni FTP",
+      "sendDataFailed": "Invio dati fallito",
+      "resizeFailed": "Ridimensionamento fallito"
+    },
+    "ssh": {
+      "passwordRequired": "Password richiesta",
+      "authFailed": "Autenticazione fallita: password non valida",
+      "keyAuthFailed": "Autenticazione fallita: chiave o username non validi",
+      "keyLoadFailed": "Impossibile caricare la chiave privata",
+      "agentNotSupported": "SSH Agent non ancora supportato",
+      "unsupportedAuthType": "Tipo di autenticazione non supportato: {{authType}}",
+      "connectFailed": "Impossibile connettersi all'host",
+      "channelOpenFailed": "Impossibile aprire il canale SSH",
+      "ptyFailed": "Impossibile richiedere PTY",
+      "shellFailed": "Impossibile richiedere shell",
+      "writeFailed": "Scrittura sul canale fallita",
+      "resizeChannelFailed": "Ridimensionamento PTY fallito",
+      "privateKeyPathRequired": "Percorso chiave privata richiesto"
+    },
+    "sftp": {
+      "notInitialized": "Sessione SFTP non inizializzata",
+      "channelOpenFailed": "Impossibile aprire il canale SFTP",
+      "subsystemFailed": "Impossibile richiedere sottosistema sftp",
+      "initFailed": "Impossibile inizializzare sessione SFTP",
+      "listFailed": "Impossibile leggere la directory",
+      "uploadFailed": "Impossibile caricare il file",
+      "downloadFailed": "Impossibile scaricare il file",
+      "readFailed": "Impossibile leggere il file remoto",
+      "mkdirFailed": "Impossibile creare la directory",
+      "renameFailed": "Impossibile rinominare",
+      "removeDirFailed": "Impossibile rimuovere la directory",
+      "removeFileFailed": "Impossibile rimuovere il file",
+      "statFailed": "Impossibile ottenere info file",
+      "openDirAsFile": "Impossibile aprire una directory come file",
+      "fetchRetryFailed": "Impossibile memorizzare il file in cache"
+    },
+    "ftp": {
+      "passwordRequired": "Password richiesta per FTP",
+      "loginFailed": "Login FTP fallito",
+      "connectFailed": "Impossibile connettersi al server FTP",
+      "listFailed": "Impossibile elencare la directory",
+      "uploadFailed": "Impossibile caricare il file",
+      "downloadFailed": "Impossibile scaricare il file",
+      "readStreamFailed": "Impossibile leggere lo stream FTP",
+      "finalizeFailed": "Impossibile completare il download",
+      "mkdirFailed": "Impossibile creare la directory",
+      "renameFailed": "Impossibile rinominare",
+      "removeDirFailed": "Impossibile rimuovere la directory",
+      "removeFileFailed": "Impossibile rimuovere il file",
+      "terminalUnavailable": "Terminale non disponibile per FTP",
+      "connectFailedFrontend": "Connessione FTP fallita"
+    },
+    "fs": {
+      "localFileNotFound": "File locale non trovato: {{path}}",
+      "localNotAFile": "Il percorso locale non è un file: {{path}}",
+      "openLocalFailed": "Impossibile aprire il file locale",
+      "createLocalDirFailed": "Impossibile creare la directory locale",
+      "writeLocalFailed": "Impossibile scrivere il file locale",
+      "readLocalFailed": "Impossibile leggere il file locale",
+      "fileNotFound": "File non trovato",
+      "editorLaunchFailed": "Impossibile avviare l'editor",
+      "pathEmpty": "Percorso vuoto",
+      "homeNotFound": "Directory home non trovata",
+      "keyFileNotFound": "File chiave non trovato: {{path}}"
+    },
+    "settings": {
+      "unsupportedSchema": "Versione schema impostazioni non supportata",
+      "invalid": "Impostazioni non valide",
+      "saveFailed": "Impossibile salvare le impostazioni"
+    },
+    "protocol": {
+      "unsupported": "Protocollo non supportato: {{protocol}}",
+      "mustBeFtp": "Il protocollo della sessione deve essere ftp, ricevuto: {{protocol}}"
+    },
+    "files": {
+      "listFailed": "Impossibile caricare la directory",
+      "renameFailed": "Impossibile rinominare",
+      "openFailed": "Impossibile aprire il file",
+      "deleteFailed": "Impossibile eliminare",
+      "uploadFailed": "Impossibile caricare il file",
+      "downloadFailed": "Impossibile scaricare",
+      "mkdirFailed": "Impossibile creare la cartella",
+      "settingsNotInit": "SettingsStore non inizializzato"
+    }
+  }
+}

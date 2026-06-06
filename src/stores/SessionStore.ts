@@ -8,6 +8,9 @@ import {
   type SessionFolder,
   type SessionsFile,
 } from '@/types';
+import type { AppError } from '@i18n/types';
+import { i18n } from '@i18n/index';
+import { getIpcErrorPayload } from '@ipc/client';
 import * as sessionsIpc from '@ipc/sessions';
 import type { TerminalStore } from './TerminalStore';
 import {
@@ -31,7 +34,7 @@ export class SessionStore {
   rootOrder: string[] = [];
   selectedId: string | null = null;
   isLoading = false;
-  error: string | null = null;
+  error: AppError | null = null;
   isFormOpen = false;
   editingSession: SessionConfig | null = null;
   formErrors: Record<string, string> = {};
@@ -115,8 +118,10 @@ export class SessionStore {
       });
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось сохранить сессии';
+        this.error = getIpcErrorPayload(e);
+        if (this.error.code === 'unknown') {
+          this.error = { code: 'session.saveFailed' };
+        }
       });
     }
   }
@@ -132,8 +137,10 @@ export class SessionStore {
       });
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось загрузить сессии';
+        this.error = getIpcErrorPayload(e);
+        if (this.error.code === 'unknown') {
+          this.error = { code: 'session.loadFailed' };
+        }
         this.isLoading = false;
       });
     }
@@ -283,7 +290,7 @@ export class SessionStore {
       {
         ...source,
         id: crypto.randomUUID(),
-        name: `${source.name} (копия)`,
+        name: `${source.name} ${i18n.t('session.copySuffix')}`,
       },
       true,
     );
@@ -306,8 +313,10 @@ export class SessionStore {
       });
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось дублировать сессию';
+        this.error = getIpcErrorPayload(e);
+        if (this.error.code === 'unknown') {
+          this.error = { code: 'session.duplicateFailed' };
+        }
       });
     }
   }
@@ -355,8 +364,10 @@ export class SessionStore {
       });
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось сохранить сессию';
+        this.error = getIpcErrorPayload(e);
+        if (this.error.code === 'unknown') {
+          this.error = { code: 'session.saveFormFailed' };
+        }
       });
     }
   }
@@ -384,8 +395,10 @@ export class SessionStore {
       );
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось удалить сессию';
+        this.error = getIpcErrorPayload(e);
+        if (this.error.code === 'unknown') {
+          this.error = { code: 'session.deleteFailed' };
+        }
       });
     }
   }
@@ -395,8 +408,10 @@ export class SessionStore {
       await sessionsIpc.sessionsExport();
       this.error = null;
     } catch (e) {
-      this.error =
-        e instanceof Error ? e.message : 'Не удалось экспортировать сессии';
+      this.error = getIpcErrorPayload(e);
+      if (this.error.code === 'unknown') {
+        this.error = { code: 'session.exportFailed' };
+      }
     }
   }
 
@@ -405,10 +420,10 @@ export class SessionStore {
       await sessionsIpc.sessionsDownloadExample();
       this.error = null;
     } catch (e) {
-      this.error =
-        e instanceof Error
-          ? e.message
-          : 'Не удалось скачать пример файла импорта';
+      this.error = getIpcErrorPayload(e);
+      if (this.error.code === 'unknown') {
+        this.error = { code: 'session.importExampleFailed' };
+      }
     }
   }
 
@@ -423,9 +438,15 @@ export class SessionStore {
         if (result.imported === 0 && result.skipped === 0) {
           this.error = null;
         } else if (result.imported === 0) {
-          this.error = `Не импортировано ни одной сессии. Пропущено: ${result.skipped}`;
+          this.error = {
+            code: 'session.importNone',
+            details: { skipped: result.skipped },
+          };
         } else if (result.skipped > 0) {
-          this.error = `Импортировано: ${result.imported}. Пропущено: ${result.skipped}`;
+          this.error = {
+            code: 'session.importPartial',
+            details: { imported: result.imported, skipped: result.skipped },
+          };
         } else {
           this.error = null;
         }
@@ -435,8 +456,10 @@ export class SessionStore {
       this.terminalStore?.clearStalePendingConnect(validSessionIds);
     } catch (e) {
       runInAction(() => {
-        this.error =
-          e instanceof Error ? e.message : 'Не удалось импортировать сессии';
+        this.error = getIpcErrorPayload(e);
+        if (this.error.code === 'unknown') {
+          this.error = { code: 'session.importFailed' };
+        }
       });
     }
   }

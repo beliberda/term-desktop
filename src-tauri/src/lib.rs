@@ -1,5 +1,6 @@
 mod commands;
 mod connection_pool;
+mod error;
 mod events;
 mod models;
 mod services;

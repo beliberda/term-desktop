@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import { useStores } from '@stores/index';
 import styles from './SftpToolbar.module.css';
 
 export const SftpToolbar = observer(function SftpToolbar() {
+  const { t } = useTranslation();
   const { fileBrowserStore } = useStores();
   const [mkdirOpen, setMkdirOpen] = useState(false);
   const [mkdirName, setMkdirName] = useState('');
@@ -24,7 +26,7 @@ export const SftpToolbar = observer(function SftpToolbar() {
         onClick={() => fileBrowserStore.refresh()}
         disabled={fileBrowserStore.isLoading}
       >
-        Обновить
+        {t('common.refresh')}
       </button>
       <button
         type="button"
@@ -32,7 +34,7 @@ export const SftpToolbar = observer(function SftpToolbar() {
         onClick={() => void fileBrowserStore.upload()}
         disabled={fileBrowserStore.isLoading}
       >
-        Загрузить
+        {t('common.upload')}
       </button>
       <button
         type="button"
@@ -40,14 +42,14 @@ export const SftpToolbar = observer(function SftpToolbar() {
         onClick={() => setMkdirOpen((v) => !v)}
         disabled={fileBrowserStore.isLoading}
       >
-        Папка
+        {t('common.folder')}
       </button>
       {mkdirOpen && (
         <div className={styles.mkdirRow}>
           <input
             className={styles.mkdirInput}
             type="text"
-            placeholder="Имя папки"
+            placeholder={t('files.toolbar.folderName')}
             value={mkdirName}
             onChange={(e) => setMkdirName(e.target.value)}
             onKeyDown={(e) => {
@@ -60,7 +62,7 @@ export const SftpToolbar = observer(function SftpToolbar() {
             className={styles.mkdirSubmit}
             onClick={handleMkdirSubmit}
           >
-            OK
+            {t('common.ok')}
           </button>
         </div>
       )}

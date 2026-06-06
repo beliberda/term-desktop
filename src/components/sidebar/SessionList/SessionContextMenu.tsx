@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import type { SessionConfig } from '@/types';
 import { useStores } from '@stores/index';
 import { connectSession } from '@utils/connectSession';
@@ -16,6 +17,7 @@ export const SessionContextMenu = observer(function SessionContextMenu({
   anchor,
   onClose,
 }: SessionContextMenuProps) {
+  const { t } = useTranslation();
   const stores = useStores();
   const { sessionStore } = stores;
   const menuRef = useRef<HTMLDivElement>(null);
@@ -73,7 +75,7 @@ export const SessionContextMenu = observer(function SessionContextMenu({
   };
 
   const handleDelete = () => {
-    if (window.confirm(`Удалить сессию «${session.name}»?`)) {
+    if (window.confirm(t('sidebar.sessions.deleteConfirm', { name: session.name }))) {
       void sessionStore.deleteSession(session.id);
     }
     onClose();
@@ -94,17 +96,17 @@ export const SessionContextMenu = observer(function SessionContextMenu({
       role="menu"
     >
       <button type="button" className={styles.menuItem} onClick={handleConnect}>
-        Подключиться
+        {t('sidebar.sessions.connect')}
       </button>
       <button type="button" className={styles.menuItem} onClick={handleEdit}>
-        Редактировать
+        {t('sidebar.sessions.edit')}
       </button>
       <button type="button" className={styles.menuItem} onClick={handleDuplicate}>
-        Дублировать
+        {t('sidebar.sessions.duplicate')}
       </button>
       {isInFolder && (
         <button type="button" className={styles.menuItem} onClick={handleUngroup}>
-          Убрать из папки
+          {t('sidebar.sessions.ungroup')}
         </button>
       )}
       <button
@@ -112,7 +114,7 @@ export const SessionContextMenu = observer(function SessionContextMenu({
         className={`${styles.menuItem} ${styles.menuItemDanger}`}
         onClick={handleDelete}
       >
-        Удалить
+        {t('common.delete')}
       </button>
     </div>
   );

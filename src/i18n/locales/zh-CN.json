@@ -1,0 +1,263 @@
+{
+  "common": {
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "browse": "浏览",
+    "ok": "确定",
+    "close": "关闭",
+    "import": "导入",
+    "export": "导出",
+    "refresh": "刷新",
+    "upload": "上传",
+    "folder": "文件夹",
+    "loading": "加载中...",
+    "empty": "—",
+    "host": "主机",
+    "connect": "连接",
+    "status": "状态",
+    "executable": "可执行文件"
+  },
+  "sidebar": {
+    "tabs": { "sessions": "会话", "files": "文件" },
+    "toolbar": {
+      "newSession": "新建会话",
+      "newFolder": "新建文件夹",
+      "importJson": "从 JSON 导入会话",
+      "importSessions": "导入…",
+      "downloadExample": "下载示例",
+      "settings": "设置"
+    },
+    "resize": "调整侧边栏宽度",
+    "sessions": {
+      "loading": "正在加载会话...",
+      "noSessions": "暂无会话",
+      "createHint": "点击 + 创建连接",
+      "edit": "编辑",
+      "deleteConfirm": "删除会话「{{name}}」？",
+      "connect": "连接",
+      "duplicate": "复制",
+      "ungroup": "移出文件夹"
+    },
+    "folder": {
+      "expand": "展开",
+      "collapse": "折叠",
+      "rename": "重命名",
+      "createSubfolder": "创建子文件夹",
+      "delete": "删除",
+      "deleteConfirm": "删除文件夹「{{name}}」？内容将移至根目录。",
+      "namePrompt": "文件夹名称"
+    }
+  },
+  "session": {
+    "newSession": "新建会话",
+    "editSession": "编辑会话",
+    "form": {
+      "name": "名称",
+      "protocol": "协议",
+      "port": "端口",
+      "host": "主机",
+      "username": "用户名",
+      "auth": "认证",
+      "authPassword": "密码",
+      "authPrivateKey": "私钥",
+      "authAgent": "SSH Agent",
+      "keyPath": "私钥路径",
+      "defaultPath": "初始路径（可选）",
+      "defaultPathPlaceholder": "/home/user"
+    },
+    "validation": {
+      "nameRequired": "请输入名称",
+      "hostRequired": "请输入主机",
+      "usernameRequired": "请输入用户名",
+      "keyPathRequired": "请输入私钥路径",
+      "portInvalid": "端口无效"
+    },
+    "copySuffix": "（副本）",
+    "newFolder": "新建文件夹"
+  },
+  "settings": {
+    "title": "设置",
+    "theme": "主题",
+    "themeDark": "深色",
+    "themeLight": "浅色",
+    "language": "语言",
+    "fontSize": "终端字体大小",
+    "fontFamily": "终端字体",
+    "editorPath": "默认编辑器（可选）",
+    "editorPlaceholder": "留空 — 使用系统默认应用",
+    "sshPort": "默认 SSH 端口",
+    "ftpPort": "默认 FTP 端口"
+  },
+  "terminal": {
+    "status": {
+      "connecting": "连接中",
+      "connected": "已连接",
+      "disconnected": "已断开",
+      "error": "错误"
+    },
+    "workspace": {
+      "connectFailed": "连接失败",
+      "connecting": "连接中…",
+      "disconnected": "连接已断开",
+      "reconnect": "重新连接",
+      "closeTab": "关闭标签页",
+      "emptyHint": "在侧边栏双击会话以打开终端",
+      "reconnectShortcut": "Ctrl+R — 重新连接"
+    },
+    "password": {
+      "title": "连接",
+      "ftpTitle": "FTP 连接",
+      "keyPassphrase": "密钥密码",
+      "passphrase": "密码短语",
+      "password": "密码",
+      "connect": "连接"
+    },
+    "tabs": {
+      "empty": "没有打开的标签页",
+      "close": "关闭",
+      "closeTab": "关闭 {{title}}"
+    }
+  },
+  "files": {
+    "title": "文件",
+    "ftpConnecting": "正在通过 FTP 连接...",
+    "ftpError": "FTP 连接错误",
+    "noSession": "连接 SSH 或 FTP 会话以浏览文件",
+    "connecting": "连接中...",
+    "notConnected": "会话未连接",
+    "updating": "更新中...",
+    "toolbar": { "folderName": "文件夹名称" },
+    "breadcrumbs": {
+      "root": "返回根目录",
+      "path": "路径",
+      "copyPath": "复制当前路径"
+    },
+    "list": { "loading": "加载中...", "empty": "文件夹为空" },
+    "units": { "B": "B", "KB": "KB", "MB": "MB", "GB": "GB" },
+    "context": {
+      "copyPath": "复制路径",
+      "open": "打开",
+      "download": "下载",
+      "rename": "重命名"
+    },
+    "confirm": {
+      "deleteDir": "删除目录「{{name}}」？\n路径：{{path}}\n文件数：{{count}}",
+      "deleteFile": "删除「{{name}}」？"
+    }
+  },
+  "errors": {
+    "unknown": "未知错误",
+    "session": {
+      "notFound": "未找到会话：{{sessionId}}",
+      "nameRequired": "会话名称必填",
+      "hostRequired": "请输入主机",
+      "usernameRequired": "请输入用户名",
+      "portInvalid": "端口无效",
+      "duplicateIds": "会话 ID 重复",
+      "unsupportedSchema": "不支持的会话架构版本",
+      "saveFailed": "无法保存会话",
+      "loadFailed": "无法加载会话",
+      "duplicateFailed": "无法复制会话",
+      "saveFormFailed": "无法保存会话",
+      "deleteFailed": "无法删除会话",
+      "exportFailed": "无法导出会话",
+      "importExampleFailed": "无法下载导入示例",
+      "importFailed": "无法导入会话",
+      "importNone": "未导入任何会话。跳过：{{skipped}}",
+      "importPartial": "已导入：{{imported}}。跳过：{{skipped}}",
+      "notFoundInList": "连接列表中未找到会话。",
+      "notFoundReloaded": "未找到会话。会话列表已刷新 — 请重试连接。",
+      "invalidFormat": "会话文件格式无效"
+    },
+    "connection": {
+      "notFound": "未找到连接：{{connectionId}}",
+      "timeout": "连接超时（30 秒）",
+      "ftpOnlyPassword": "FTP 仅支持密码认证",
+      "writeNotSupported": "FTP 连接不支持写入",
+      "resizeNotSupported": "FTP 连接不支持调整大小",
+      "sendDataFailed": "发送数据失败",
+      "resizeFailed": "调整大小失败"
+    },
+    "ssh": {
+      "passwordRequired": "需要密码",
+      "authFailed": "认证失败：密码无效",
+      "keyAuthFailed": "认证失败：密钥或用户名无效",
+      "keyLoadFailed": "无法加载私钥",
+      "agentNotSupported": "暂不支持 SSH Agent",
+      "unsupportedAuthType": "不支持的认证类型：{{authType}}",
+      "connectFailed": "无法连接到主机",
+      "channelOpenFailed": "无法打开 SSH 通道",
+      "ptyFailed": "无法请求 PTY",
+      "shellFailed": "无法请求 shell",
+      "writeFailed": "写入通道失败",
+      "resizeChannelFailed": "调整 PTY 大小失败",
+      "privateKeyPathRequired": "需要私钥路径"
+    },
+    "sftp": {
+      "notInitialized": "SFTP 会话未初始化",
+      "channelOpenFailed": "无法打开 SFTP 通道",
+      "subsystemFailed": "无法请求 sftp 子系统",
+      "initFailed": "无法初始化 SFTP 会话",
+      "listFailed": "无法读取目录",
+      "uploadFailed": "无法上传文件",
+      "downloadFailed": "无法下载文件",
+      "readFailed": "无法读取远程文件",
+      "mkdirFailed": "无法创建目录",
+      "renameFailed": "无法重命名",
+      "removeDirFailed": "无法删除目录",
+      "removeFileFailed": "无法删除文件",
+      "statFailed": "无法获取文件信息",
+      "openDirAsFile": "无法将目录作为文件打开",
+      "fetchRetryFailed": "缓存文件失败"
+    },
+    "ftp": {
+      "passwordRequired": "FTP 需要密码",
+      "loginFailed": "FTP 登录失败",
+      "connectFailed": "无法连接到 FTP 服务器",
+      "listFailed": "无法列出目录",
+      "uploadFailed": "无法上传文件",
+      "downloadFailed": "无法下载文件",
+      "readStreamFailed": "无法读取 FTP 流",
+      "finalizeFailed": "无法完成下载",
+      "mkdirFailed": "无法创建目录",
+      "renameFailed": "无法重命名",
+      "removeDirFailed": "无法删除目录",
+      "removeFileFailed": "无法删除文件",
+      "terminalUnavailable": "FTP 不可用终端",
+      "connectFailedFrontend": "FTP 连接失败"
+    },
+    "fs": {
+      "localFileNotFound": "本地文件未找到：{{path}}",
+      "localNotAFile": "本地路径不是文件：{{path}}",
+      "openLocalFailed": "无法打开本地文件",
+      "createLocalDirFailed": "无法创建本地目录",
+      "writeLocalFailed": "无法写入本地文件",
+      "readLocalFailed": "无法读取本地文件",
+      "fileNotFound": "文件未找到",
+      "editorLaunchFailed": "无法启动编辑器",
+      "pathEmpty": "路径为空",
+      "homeNotFound": "未找到主目录",
+      "keyFileNotFound": "密钥文件未找到：{{path}}"
+    },
+    "settings": {
+      "unsupportedSchema": "不支持的设置架构版本",
+      "invalid": "设置无效",
+      "saveFailed": "无法保存设置"
+    },
+    "protocol": {
+      "unsupported": "不支持的协议：{{protocol}}",
+      "mustBeFtp": "会话协议必须为 ftp，实际为：{{protocol}}"
+    },
+    "files": {
+      "listFailed": "无法加载目录",
+      "renameFailed": "无法重命名",
+      "openFailed": "无法打开文件",
+      "deleteFailed": "无法删除",
+      "uploadFailed": "无法上传文件",
+      "downloadFailed": "无法下载",
+      "mkdirFailed": "无法创建文件夹",
+      "settingsNotInit": "SettingsStore 未初始化"
+    }
+  }
+}

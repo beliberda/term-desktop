@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import { useStores } from '@stores/index';
 import type { ConnectionStatus } from '@/types';
 import styles from './TerminalTabBar.module.css';
@@ -17,12 +19,23 @@ function statusClass(status: ConnectionStatus): string {
 }
 
 export const TerminalTabBar = observer(function TerminalTabBar() {
+  const { t } = useTranslation();
   const { terminalStore } = useStores();
+
+  const statusLabels = useMemo(
+    (): Record<ConnectionStatus, string> => ({
+      connecting: t('terminal.status.connecting'),
+      connected: t('terminal.status.connected'),
+      disconnected: t('terminal.status.disconnected'),
+      error: t('terminal.status.error'),
+    }),
+    [t],
+  );
 
   if (terminalStore.tabs.length === 0) {
     return (
       <div className={styles.tabBar}>
-        <span className={styles.empty}>Нет открытых вкладок</span>
+        <span className={styles.empty}>{t('terminal.tabs.empty')}</span>
       </div>
     );
   }
@@ -41,15 +54,15 @@ export const TerminalTabBar = observer(function TerminalTabBar() {
           >
             <span
               className={`${styles.statusDot} ${statusClass(tab.status)}`}
-              title={tab.status}
+              title={statusLabels[tab.status]}
             />
             <span className={styles.tabTitle}>{tab.title}</span>
           </button>
           <button
             type="button"
             className={styles.closeBtn}
-            title="Закрыть"
-            aria-label={`Закрыть ${tab.title}`}
+            title={t('terminal.tabs.close')}
+            aria-label={t('terminal.tabs.closeTab', { title: tab.title })}
             onClick={() => terminalStore.closeTab(tab.id)}
           >
             ×

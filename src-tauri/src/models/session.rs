@@ -443,23 +443,25 @@ impl SessionConfigImport {
 }
 
 impl SessionConfig {
-    pub fn validate(&self) -> Result<(), String> {
+    pub fn validate(&self) -> crate::error::IpcResult<()> {
+        use crate::error::IpcError;
+
         if self.name.trim().is_empty() {
-            return Err("name is required".into());
+            return Err(IpcError::new("session.nameRequired"));
         }
         if self.host.trim().is_empty() {
-            return Err("host is required".into());
+            return Err(IpcError::new("session.hostRequired"));
         }
         if self.username.trim().is_empty() {
-            return Err("username is required".into());
+            return Err(IpcError::new("session.usernameRequired"));
         }
         if self.port == 0 {
-            return Err("port must be greater than 0".into());
+            return Err(IpcError::new("session.portInvalid"));
         }
         if self.auth_type == "privateKey" {
             match &self.private_key_path {
                 Some(path) if !path.trim().is_empty() => {}
-                _ => return Err("privateKeyPath is required for privateKey auth".into()),
+                _ => return Err(IpcError::new("ssh.privateKeyPathRequired")),
             }
         }
         Ok(())

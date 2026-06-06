@@ -1,8 +1,10 @@
-import { observer } from "mobx-react-lite";
-import { useStores } from "@stores/index";
-import styles from "./SftpBreadcrumbs.module.css";
+import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
+import { useStores } from '@stores/index';
+import styles from './SftpBreadcrumbs.module.css';
 
 export const SftpBreadcrumbs = observer(function SftpBreadcrumbs() {
+  const { t } = useTranslation();
   const { fileBrowserStore } = useStores();
 
   return (
@@ -10,13 +12,13 @@ export const SftpBreadcrumbs = observer(function SftpBreadcrumbs() {
       <button
         type="button"
         className={styles.rootBtn}
-        title="В корень"
-        aria-label="В корень"
-        onClick={() => fileBrowserStore.navigateTo("/")}
+        title={t('files.breadcrumbs.root')}
+        aria-label={t('files.breadcrumbs.root')}
+        onClick={() => fileBrowserStore.navigateTo('/')}
       >
         /
       </button>
-      <nav className={styles.breadcrumbs} aria-label="Путь">
+      <nav className={styles.breadcrumbs} aria-label={t('files.breadcrumbs.path')}>
         {fileBrowserStore.breadcrumbs.map((crumb, index) => {
           const isLast = index === fileBrowserStore.breadcrumbs.length - 1;
           return (
@@ -26,7 +28,7 @@ export const SftpBreadcrumbs = observer(function SftpBreadcrumbs() {
                 <span className={styles.current}>{crumb.label}</span>
               ) : (
                 <>
-                  {crumb.label !== "/" && (
+                  {crumb.label !== '/' && (
                     <button
                       type="button"
                       className={styles.link}
@@ -44,8 +46,8 @@ export const SftpBreadcrumbs = observer(function SftpBreadcrumbs() {
       <button
         type="button"
         className={styles.copyBtn}
-        title="Копировать текущий путь"
-        aria-label="Копировать текущий путь"
+        title={t('files.breadcrumbs.copyPath')}
+        aria-label={t('files.breadcrumbs.copyPath')}
         onClick={() => void fileBrowserStore.copyPath(fileBrowserStore.cwd)}
       >
         ⧉

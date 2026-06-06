@@ -5,12 +5,14 @@ use std::path::PathBuf;
 use tauri::AppHandle;
 use tauri::Manager;
 
-pub fn open_cache_path(app: &AppHandle, remote_path: &str) -> Result<PathBuf, String> {
+use crate::error::{IpcError, IpcResult};
+
+pub fn open_cache_path(app: &AppHandle, remote_path: &str) -> IpcResult<PathBuf> {
     let filename = remote_path
         .split('/')
         .filter(|p| !p.is_empty())
         .last()
-        .ok_or_else(|| "invalid remote path".to_string())?;
+        .ok_or_else(|| IpcError::new("fs.pathEmpty"))?;
 
     let mut hasher = DefaultHasher::new();
     remote_path.hash(&mut hasher);
@@ -19,12 +21,12 @@ pub fn open_cache_path(app: &AppHandle, remote_path: &str) -> Result<PathBuf, St
     let cache_dir = app
         .path()
         .app_cache_dir()
-        .map_err(|e| format!("failed to resolve app cache dir: {e}"))?
+        .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?
         .join("termassh")
         .join("open");
 
     std::fs::create_dir_all(&cache_dir)
-        .map_err(|e| format!("failed to create cache dir: {e}"))?;
+        .map_err(|e| IpcError::with_str_detail("fs.createLocalDirFailed", "raw", e.to_string()))?;
 
     Ok(cache_dir.join(safe_name))
 }

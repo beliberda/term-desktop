@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
 import {
   SIDEBAR_WIDTH_MAX,
   SIDEBAR_WIDTH_MIN,
@@ -8,6 +9,7 @@ import { useStores } from '@stores/index';
 import styles from './SidebarResizeHandle.module.css';
 
 export const SidebarResizeHandle = observer(function SidebarResizeHandle() {
+  const { t } = useTranslation();
   const { settingsStore } = useStores();
   const draggingRef = useRef(false);
 
@@ -50,7 +52,7 @@ export const SidebarResizeHandle = observer(function SidebarResizeHandle() {
       className={styles.handle}
       role="separator"
       aria-orientation="vertical"
-      aria-label="Изменить ширину сайдбара"
+      aria-label={t('sidebar.resize')}
       onPointerDown={handlePointerDown}
     />
   );

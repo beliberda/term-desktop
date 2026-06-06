@@ -18,6 +18,7 @@ export default defineConfig({
       "@themes": path.resolve(__dirname, "./src/themes"),
       "@utils": path.resolve(__dirname, "./src/utils"),
       "@hooks": path.resolve(__dirname, "./src/hooks"),
+      "@i18n": path.resolve(__dirname, "./src/i18n"),
     },
   },
   plugins: [react()],

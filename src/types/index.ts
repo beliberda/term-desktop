@@ -19,6 +19,7 @@ export {
   createEmptySessionsFile,
   migrateSessionsFile,
   prepareSessionForSave,
+  translateSessionValidationMessage,
 } from './session';
 
 export type {
