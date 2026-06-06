@@ -29,6 +29,7 @@
       "settings": "Impostazioni"
     },
     "resize": "Ridimensiona barra laterale",
+    "dropToRoot": "Sposta nella radice",
     "sessions": {
       "loading": "Caricamento sessioni...",
       "noSessions": "Nessuna sessione",

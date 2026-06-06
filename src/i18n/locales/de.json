@@ -29,6 +29,7 @@
       "settings": "Einstellungen"
     },
     "resize": "Seitenleiste vergrößern",
+    "dropToRoot": "In Wurzel verschieben",
     "sessions": {
       "loading": "Sitzungen werden geladen...",
       "noSessions": "Keine Sitzungen",

@@ -78,6 +78,13 @@ export const FolderContextMenu = observer(function FolderContextMenu({
     onClose();
   };
 
+  const handleUngroup = () => {
+    sessionStore.ungroupFolder(folder.id);
+    onClose();
+  };
+
+  const isInFolder = sessionStore.getParentId(folder.id) !== null;
+
   return (
     <div
       ref={menuRef}
@@ -110,6 +117,11 @@ export const FolderContextMenu = observer(function FolderContextMenu({
       >
         {t('sidebar.folder.createSubfolder')}
       </button>
+      {isInFolder && (
+        <button type="button" className={styles.menuItem} onClick={handleUngroup}>
+          {t('sidebar.sessions.ungroup')}
+        </button>
+      )}
       <button
         type="button"
         className={`${styles.menuItem} ${styles.menuItemDanger}`}

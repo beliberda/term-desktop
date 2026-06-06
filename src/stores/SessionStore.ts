@@ -265,14 +265,22 @@ export class SessionStore {
   }
 
   ungroupSession(sessionId: string) {
-    const parentId = this.getParentId(sessionId);
+    this.ungroupItem(sessionId);
+  }
+
+  ungroupFolder(folderId: string) {
+    this.ungroupItem(folderId);
+  }
+
+  ungroupItem(itemId: string) {
+    const parentId = this.getParentId(itemId);
     if (parentId === null) {
       return;
     }
 
     const file = insertIntoParent(
       this.toFile(),
-      sessionId,
+      itemId,
       null,
       this.rootOrder.length,
     );

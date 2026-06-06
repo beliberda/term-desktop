@@ -29,6 +29,7 @@
       "settings": "设置"
     },
     "resize": "调整侧边栏宽度",
+    "dropToRoot": "移至根目录",
     "sessions": {
       "loading": "正在加载会话...",
       "noSessions": "暂无会话",

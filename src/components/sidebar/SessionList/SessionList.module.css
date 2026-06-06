@@ -221,3 +221,20 @@
   font-size: var(--font-size-sm);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
+
+.rootDropZone {
+  margin: 4px 8px 8px;
+  padding: 8px 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: 4px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.rootDropZoneOver {
+  background: rgba(0, 120, 212, 0.12);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}

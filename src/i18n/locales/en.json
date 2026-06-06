@@ -32,6 +32,7 @@
       "settings": "Settings"
     },
     "resize": "Resize sidebar",
+    "dropToRoot": "Move to root",
     "sessions": {
       "loading": "Loading sessions...",
       "noSessions": "No sessions",
