@@ -1,7 +1,8 @@
-import { observer } from 'mobx-react-lite';
-import { useTranslation } from 'react-i18next';
-import { useStores } from '@stores/index';
-import styles from './SessionToolbar.module.css';
+import { observer } from "mobx-react-lite";
+import { useTranslation } from "react-i18next";
+import { useStores } from "@stores/index";
+import styles from "./SessionToolbar.module.css";
+import { IconFolder } from "@/assets/icons/iconFolder";
 
 export const SessionToolbar = observer(function SessionToolbar() {
   const { t } = useTranslation();
@@ -12,7 +13,7 @@ export const SessionToolbar = observer(function SessionToolbar() {
       <button
         type="button"
         className={`${styles.button} ${styles.buttonPrimary}`}
-        title={t('sidebar.toolbar.newSession')}
+        title={t("sidebar.toolbar.newSession")}
         onClick={() => sessionStore.openCreateForm()}
       >
         +
@@ -20,20 +21,20 @@ export const SessionToolbar = observer(function SessionToolbar() {
       <button
         type="button"
         className={styles.button}
-        title={t('sidebar.toolbar.newFolder')}
+        title={t("sidebar.toolbar.newFolder")}
         onClick={() => sessionStore.createFolder(null)}
       >
-        📁
+        <IconFolder width={12} height={12} />
       </button>
       <div className={styles.importDropdown}>
         <button
           type="button"
           className={styles.button}
-          title={t('sidebar.toolbar.importJson')}
+          title={t("sidebar.toolbar.importJson")}
           aria-haspopup="menu"
           aria-expanded={false}
         >
-          {t('common.import')}
+          {t("common.import")}
         </button>
         <div className={styles.importMenu} role="menu">
           <div className={styles.importMenuInner}>
@@ -43,7 +44,7 @@ export const SessionToolbar = observer(function SessionToolbar() {
               role="menuitem"
               onClick={() => sessionStore.importSessions()}
             >
-              {t('sidebar.toolbar.importSessions')}
+              {t("sidebar.toolbar.importSessions")}
             </button>
             <button
               type="button"
@@ -51,7 +52,7 @@ export const SessionToolbar = observer(function SessionToolbar() {
               role="menuitem"
               onClick={() => sessionStore.downloadImportExample()}
             >
-              {t('sidebar.toolbar.downloadExample')}
+              {t("sidebar.toolbar.downloadExample")}
             </button>
           </div>
         </div>
@@ -61,12 +62,12 @@ export const SessionToolbar = observer(function SessionToolbar() {
         className={styles.button}
         onClick={() => sessionStore.exportSessions()}
       >
-        {t('common.export')}
+        {t("common.export")}
       </button>
       <button
         type="button"
         className={styles.button}
-        title={t('sidebar.toolbar.settings')}
+        title={t("sidebar.toolbar.settings")}
         onClick={() => settingsStore.openForm()}
       >
         ⚙

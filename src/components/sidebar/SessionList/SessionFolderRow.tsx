@@ -8,6 +8,7 @@ import type { SessionConfig, SessionFolder } from "@/types";
 import { useStores } from "@stores/index";
 import { SessionTreeList } from "./SessionTreeList";
 import styles from "./SessionList.module.css";
+import { IconFolder } from "@/assets/icons/iconFolder";
 
 const TOGGLE_DELAY_MS = 250;
 
@@ -104,13 +105,12 @@ export const SessionFolderRow = observer(function SessionFolderRow({
         {...attributes}
         {...listeners}
       >
-        <span
-          className={styles.collapseBtn}
-          aria-hidden="true"
-        >
+        <span className={styles.collapseBtn} aria-hidden="true">
           {folder.collapsed ? "▸" : "▾"}
         </span>
-        <span className={styles.folderIcon}>📁</span>
+        <span className={styles.folderIcon}>
+          <IconFolder width={24} height={24} />
+        </span>
         {isRenaming ? (
           <input
             type="text"
