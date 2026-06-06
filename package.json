@@ -2,6 +2,16 @@
   "name": "termassh",
   "private": true,
   "version": "0.1.0",
+  "description": "Open-source SSH terminal and SFTP/FTP file browser — a lightweight MobaXterm alternative",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beliberda/term-desktop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/beliberda/term-desktop/issues"
+  },
+  "homepage": "https://github.com/beliberda/term-desktop#readme",
   "type": "module",
   "scripts": {
     "dev": "vite",
