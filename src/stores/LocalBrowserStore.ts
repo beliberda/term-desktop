@@ -9,7 +9,8 @@ import {
   isSyncBrowseEnabled,
   isSyncBrowseGuarded,
   mapLocalToRemote,
-  withSyncBrowseGuard,
+  pathsEqual,
+  runSyncBrowseAction,
 } from "@utils/syncBrowse";
 import type { RemoteBrowserStore } from "./RemoteBrowserStore";
 import type { SettingsStore } from "./SettingsStore";
@@ -115,16 +116,19 @@ export class LocalBrowserStore {
   }
 
   syncRemoteBrowse(localPath: string) {
+    void runSyncBrowseAction(() => this.doSyncRemoteBrowse(localPath));
+  }
+
+  async doSyncRemoteBrowse(localPath: string): Promise<void> {
     const remote = this.remoteBrowserStore;
     if (!remote?.session || !isSyncBrowseEnabled(remote.session)) return;
     if (!remote.canBrowse) return;
 
     const mapped = mapLocalToRemote(localPath, remote.session);
     if (!mapped) return;
+    if (pathsEqual(remote.cwd, mapped)) return;
 
-    withSyncBrowseGuard(() => {
-      void remote.loadDir(mapped);
-    });
+    await remote.loadDir(mapped);
   }
 
   navigateTo(path: string) {

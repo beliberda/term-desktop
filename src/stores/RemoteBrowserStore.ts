@@ -12,7 +12,8 @@ import {
   isSyncBrowseEnabled,
   isSyncBrowseGuarded,
   mapRemoteToLocal,
-  withSyncBrowseGuard,
+  pathsEqual,
+  runSyncBrowseAction,
 } from "@utils/syncBrowse";
 import type { LocalBrowserStore } from "./LocalBrowserStore";
 import type { SettingsStore } from "./SettingsStore";
@@ -155,20 +156,21 @@ export class RemoteBrowserStore {
   }
 
   syncLocalBrowse(remotePath: string) {
+    void runSyncBrowseAction(() => this.doSyncLocalBrowse(remotePath));
+  }
+
+  private async doSyncLocalBrowse(remotePath: string): Promise<void> {
     if (!this.session || !isSyncBrowseEnabled(this.session)) return;
     if (!this.localBrowserStore) return;
 
     const mapped = mapRemoteToLocal(remotePath, this.session);
     if (!mapped) return;
+    if (pathsEqual(this.localBrowserStore.cwd, mapped)) return;
 
-    void (async () => {
-      const exists = await localIpc.localExists(mapped);
-      if (exists) {
-        withSyncBrowseGuard(() => {
-          void this.localBrowserStore!.loadDir(mapped);
-        });
-      }
-    })();
+    const exists = await localIpc.localExists(mapped);
+    if (exists) {
+      await this.localBrowserStore.loadDir(mapped);
+    }
   }
 
   navigateTo(path: string) {
@@ -393,10 +395,12 @@ export class RemoteBrowserStore {
   }
 
   manualSyncBrowse() {
-    withSyncBrowseGuard(() => {
-      this.syncLocalBrowse(this.cwd);
+    void runSyncBrowseAction(async () => {
+      await this.doSyncLocalBrowse(this.cwd);
       if (this.localBrowserStore?.cwd) {
-        this.localBrowserStore.syncRemoteBrowse(this.localBrowserStore.cwd);
+        await this.localBrowserStore.doSyncRemoteBrowse(
+          this.localBrowserStore.cwd,
+        );
       }
     });
   }

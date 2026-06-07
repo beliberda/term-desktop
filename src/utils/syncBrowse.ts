@@ -13,8 +13,33 @@ export function withSyncBrowseGuard<T>(fn: () => T): T {
   }
 }
 
+export async function withSyncBrowseGuardAsync<T>(
+  fn: () => Promise<T>,
+): Promise<T> {
+  syncGuardDepth += 1;
+  try {
+    return await fn();
+  } finally {
+    syncGuardDepth -= 1;
+  }
+}
+
+export async function runSyncBrowseAction(
+  fn: () => Promise<void>,
+): Promise<void> {
+  if (isSyncBrowseGuarded()) {
+    await fn();
+    return;
+  }
+  await withSyncBrowseGuardAsync(fn);
+}
+
 export function isSyncBrowseGuarded(): boolean {
   return syncGuardDepth > 0;
+}
+
+export function pathsEqual(a: string, b: string): boolean {
+  return normalizePath(a).toLowerCase() === normalizePath(b).toLowerCase();
 }
 
 export function isSyncBrowseEnabled(
