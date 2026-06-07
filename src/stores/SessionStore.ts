@@ -14,6 +14,7 @@ import { i18n } from '@i18n/index';
 import { getIpcErrorPayload } from '@ipc/client';
 import * as sessionsIpc from '@ipc/sessions';
 import type { TerminalStore } from './TerminalStore';
+import type { VaultStore } from './VaultStore';
 import {
   canMoveIntoFolder,
   deleteFolderFromTree,
@@ -42,6 +43,7 @@ export class SessionStore {
 
   private persistTimer: ReturnType<typeof setTimeout> | null = null;
   private terminalStore: TerminalStore | null = null;
+  private vaultStore: VaultStore | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -49,6 +51,10 @@ export class SessionStore {
 
   setTerminalStore(terminalStore: TerminalStore) {
     this.terminalStore = terminalStore;
+  }
+
+  setVaultStore(vaultStore: VaultStore) {
+    this.vaultStore = vaultStore;
   }
 
   get hasItems(): boolean {
@@ -409,6 +415,7 @@ export class SessionStore {
         this.error = null;
       });
       this.clearPendingConnectForSession(id);
+      await this.vaultStore?.deleteCredential(id);
       await this.terminalStore?.closeTabsForMissingSessions(
         new Set(file.sessions.map((s) => s.id)),
       );

@@ -7,8 +7,10 @@ import styles from './ConnectPasswordModal.module.css';
 
 export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
   const { t } = useTranslation();
-  const { terminalStore, fileConnectionStore, sessionStore } = useStores();
+  const { terminalStore, fileConnectionStore, sessionStore, vaultStore } =
+    useStores();
   const [password, setPassword] = useState('');
+  const [rememberPassword, setRememberPassword] = useState(false);
 
   const sshPending = terminalStore.pendingConnect;
   const ftpPending = fileConnectionStore.pendingConnect;
@@ -20,7 +22,10 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
       : null;
 
   useEffect(() => {
-    if (pendingKey) setPassword('');
+    if (pendingKey) {
+      setPassword('');
+      setRememberPassword(false);
+    }
   }, [pendingKey]);
 
   const session = pending
@@ -35,11 +40,27 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
   const isFtp = session?.protocol === 'ftp';
   const isPassphraseRetry =
     !isFtp && sshPending?.passphraseRetry === true;
+  const canRemember =
+    !isPassphraseRetry &&
+    session?.authType === 'password';
+  const rememberDisabled = canRemember && vaultStore.exists && !vaultStore.isUnlocked;
   const canConnect = Boolean(session) && Boolean(password);
+
+  const persistPasswordIfNeeded = async () => {
+    if (!rememberPassword || !canRemember || !session) return;
+    if (!vaultStore.exists) {
+      vaultStore.openSetup({ sessionId: session.id, password });
+      return;
+    }
+    if (vaultStore.isUnlocked) {
+      await vaultStore.saveCredential(session.id, password);
+    }
+  };
 
   const handleConnect = () => {
     if (isFtp) {
       void fileConnectionStore.openTab(pending.sessionId, password);
+      void persistPasswordIfNeeded();
     } else if (session) {
       const reconnectTabId = sshPending?.reconnectTabId;
       if (reconnectTabId) {
@@ -47,10 +68,12 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
       } else {
         void terminalStore.openTab(pending.sessionId, password, session);
       }
+      void persistPasswordIfNeeded();
     } else {
       terminalStore.cancelPendingConnect();
     }
     setPassword('');
+    setRememberPassword(false);
   };
 
   const handleCancel = () => {
@@ -60,6 +83,7 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
       terminalStore.cancelPendingConnect();
     }
     setPassword('');
+    setRememberPassword(false);
   };
 
   const title = isFtp
@@ -70,9 +94,7 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
 
   const hint = !session
     ? sessionError
-    : isPassphraseRetry
-      ? `${session.name} — ${session.username}@${session.host}`
-      : `${session.name} — ${session.username}@${session.host}`;
+    : `${session.name} — ${session.username}@${session.host}`;
 
   return (
     <div className={styles.overlay} onClick={handleCancel}>
@@ -102,6 +124,25 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
             autoFocus
           />
         </div>
+        {canRemember && (
+          <div className={styles.rememberRow}>
+            <input
+              id="connect-remember"
+              type="checkbox"
+              checked={rememberPassword}
+              disabled={rememberDisabled}
+              onChange={(e) => setRememberPassword(e.target.checked)}
+            />
+            <label htmlFor="connect-remember" className={styles.rememberLabel}>
+              {t('vault.rememberPassword')}
+              {rememberDisabled && (
+                <div className={styles.rememberHint}>
+                  {t('vault.rememberLockedHint')}
+                </div>
+              )}
+            </label>
+          </div>
+        )}
         <div className={styles.actions}>
           <button
             type="button"

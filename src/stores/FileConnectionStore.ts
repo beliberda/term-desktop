@@ -4,6 +4,7 @@ import type { AppError } from '@i18n/types';
 import { getIpcErrorPayload } from '@ipc/client';
 import * as ftpIpc from '@ipc/ftp';
 import type { SessionStore } from './SessionStore';
+import type { VaultStore } from './VaultStore';
 import type { WorkspaceStore } from './WorkspaceStore';
 
 export interface FtpConnectionState {
@@ -30,6 +31,7 @@ export class FileConnectionStore {
   activeSessionId: string | null = null;
   pendingConnect: { sessionId: string } | null = null;
   private sessionStore: SessionStore | null = null;
+  private vaultStore: VaultStore | null = null;
   private workspaceStore: WorkspaceStore | null = null;
 
   constructor() {
@@ -38,6 +40,10 @@ export class FileConnectionStore {
 
   setSessionStore(sessionStore: SessionStore) {
     this.sessionStore = sessionStore;
+  }
+
+  setVaultStore(vaultStore: VaultStore) {
+    this.vaultStore = vaultStore;
   }
 
   setWorkspaceStore(workspaceStore: WorkspaceStore) {
@@ -55,6 +61,10 @@ export class FileConnectionStore {
   }
 
   requestConnect(sessionId: string) {
+    if (this.vaultStore?.isUnlocked) {
+      void this.openTab(sessionId);
+      return;
+    }
     this.pendingConnect = { sessionId };
   }
 
@@ -142,6 +152,17 @@ export class FileConnectionStore {
       });
     } catch (e) {
       const error = getIpcErrorPayload(e);
+      if (error.code === 'ftp.passwordRequired') {
+        runInAction(() => {
+          this.pendingConnect = { sessionId };
+          if (tab) {
+            tab.status = 'error';
+            tab.error = undefined;
+          }
+          this.connections.delete(sessionId);
+        });
+        return;
+      }
       runInAction(() => {
         const err =
           error.code === 'unknown'

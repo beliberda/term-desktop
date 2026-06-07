@@ -1,4 +1,5 @@
 pub mod config;
+pub mod credentials;
 pub mod ftp;
 pub mod local_fs;
 pub mod open;

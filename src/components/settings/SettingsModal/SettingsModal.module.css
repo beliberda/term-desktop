@@ -100,3 +100,37 @@
   border-color: var(--color-accent);
   color: #fff;
 }
+
+.sectionTitle {
+  margin: 16px 0 8px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.vaultActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vaultBtn {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-tab-inactive);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-align: left;
+}
+
+.vaultBtn:hover {
+  border-color: var(--color-accent);
+}
+
+.vaultHint {
+  font-size: var(--font-size-sm);
+  margin-bottom: 12px;
+  color: var(--color-text-muted);
+}

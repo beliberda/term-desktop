@@ -9,7 +9,7 @@ mod utils;
 use std::sync::{Arc, Mutex};
 
 use connection_pool::ConnectionPool;
-use services::{ConfigService, SettingsService};
+use services::{ConfigService, CredentialVaultService, SettingsService};
 use tauri::Manager;
 use tokio::sync::Mutex as AsyncMutex;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -50,14 +50,25 @@ pub fn run() {
 
             let config = ConfigService::new(&app.handle())?;
             let settings = SettingsService::new(&app.handle())?;
+            let vault = CredentialVaultService::new(&app.handle())?;
             app.manage(Arc::new(Mutex::new(config)));
             app.manage(Arc::new(Mutex::new(settings)));
+            app.manage(Arc::new(Mutex::new(vault)));
             app.manage(Arc::new(AsyncMutex::new(ConnectionPool::new())));
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::ping::ping,
+            commands::credentials::vault_exists,
+            commands::credentials::vault_is_unlocked,
+            commands::credentials::vault_setup,
+            commands::credentials::vault_unlock,
+            commands::credentials::vault_lock,
+            commands::credentials::vault_change_master,
+            commands::credentials::credentials_set,
+            commands::credentials::credentials_delete,
+            commands::credentials::credentials_has,
             commands::config::sessions_list,
             commands::config::sessions_save,
             commands::config::sessions_export_to_path,

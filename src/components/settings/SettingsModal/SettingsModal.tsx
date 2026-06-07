@@ -10,7 +10,7 @@ import styles from './SettingsModal.module.css';
 
 export const SettingsModal = observer(function SettingsModal() {
   const { t } = useTranslation();
-  const { settingsStore } = useStores();
+  const { settingsStore, vaultStore } = useStores();
   const [draft, setDraft] = useState<AppSettings | null>(null);
   const errorMessage = useAppErrorMessage(settingsStore.error);
 
@@ -169,6 +169,34 @@ export const SettingsModal = observer(function SettingsModal() {
             }
           />
         </div>
+        {vaultStore.exists && (
+          <>
+            <h3 className={styles.sectionTitle}>{t('vault.settings.title')}</h3>
+            <p className={styles.vaultHint}>
+              {vaultStore.isUnlocked
+                ? t('vault.settings.unlocked')
+                : t('vault.settings.locked')}
+            </p>
+            <div className={styles.vaultActions}>
+              {vaultStore.isUnlocked && (
+                <button
+                  type="button"
+                  className={styles.vaultBtn}
+                  onClick={() => void vaultStore.lock()}
+                >
+                  {t('vault.lock')}
+                </button>
+              )}
+              <button
+                type="button"
+                className={styles.vaultBtn}
+                onClick={() => vaultStore.openChangeMaster()}
+              >
+                {t('vault.changeMaster.action')}
+              </button>
+            </div>
+          </>
+        )}
         <div className={styles.actions}>
           <button
             type="button"

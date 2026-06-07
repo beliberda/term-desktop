@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 120;
 }
 
 .modal {
@@ -28,6 +28,12 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   margin-bottom: 16px;
+}
+
+.error {
+  font-size: var(--font-size-sm);
+  color: #f48771;
+  margin-bottom: 12px;
 }
 
 .field {
@@ -70,44 +76,17 @@
   cursor: pointer;
 }
 
-.btnCancel {
+.btnSecondary {
   background: transparent;
   color: var(--color-text-muted);
 }
 
-.btnConnect {
+.btnPrimary {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: #fff;
 }
 
-.btnConnect:hover {
+.btnPrimary:hover {
   background: var(--color-accent-hover);
-}
-
-.rememberRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.rememberRow input {
-  margin-top: 2px;
-}
-
-.rememberLabel {
-  font-size: var(--font-size-sm);
-  color: var(--color-text);
-}
-
-.rememberHint {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
-.btnConnect:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
