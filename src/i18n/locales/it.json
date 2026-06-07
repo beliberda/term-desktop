@@ -84,7 +84,38 @@
       "general": "General",
       "terminal": "Terminal",
       "connections": "Connections",
-      "passwordManager": "Password manager"
+      "passwordManager": "Password manager",
+      "shortcuts": "Shortcuts"
+    },
+    "shortcuts": {
+      "table": "Table",
+      "json": "JSON",
+      "action": "Action",
+      "binding": "Binding",
+      "scope": "Scope",
+      "scopeGlobal": "Global",
+      "scopeFileMode": "File mode",
+      "captureHint": "Press a key combination…",
+      "clear": "Disable",
+      "reset": "Reset",
+      "resetAll": "Reset all",
+      "format": "Format",
+      "invalidJson": "Invalid shortcuts JSON",
+      "disabled": "Disabled",
+      "actions": {
+        "connectSession": "Connect session",
+        "reconnectTab": "Reconnect tab",
+        "closeTab": "Close tab",
+        "toggleSidebarTab": "Toggle sidebar tab",
+        "fileRefresh": "Refresh file panes",
+        "fileRename": "Rename selection",
+        "fileUpload": "Upload files",
+        "fileDownload": "Download files",
+        "focusLocalPane": "Focus local pane",
+        "focusRemotePane": "Focus remote pane",
+        "fileSelectAll": "Select all",
+        "toggleWorkspaceView": "Toggle terminal/files view"
+      }
     },
     "theme": "Tema",
     "themeDark": "Scuro",
@@ -297,7 +328,9 @@
     "settings": {
       "unsupportedSchema": "Versione schema impostazioni non supportata",
       "invalid": "Impostazioni non valide",
-      "saveFailed": "Impossibile salvare le impostazioni"
+      "saveFailed": "Impossibile salvare le impostazioni",
+      "shortcutsInvalid": "Invalid shortcuts configuration",
+      "shortcutsDuplicate": "Duplicate shortcut binding: {{binding}}"
     },
     "protocol": {
       "unsupported": "Protocollo non supportato: {{protocol}}",

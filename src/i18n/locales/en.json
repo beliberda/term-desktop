@@ -97,7 +97,38 @@
       "general": "General",
       "terminal": "Terminal",
       "connections": "Connections",
-      "passwordManager": "Password manager"
+      "passwordManager": "Password manager",
+      "shortcuts": "Shortcuts"
+    },
+    "shortcuts": {
+      "table": "Table",
+      "json": "JSON",
+      "action": "Action",
+      "binding": "Binding",
+      "scope": "Scope",
+      "scopeGlobal": "Global",
+      "scopeFileMode": "File mode",
+      "captureHint": "Press a key combination…",
+      "clear": "Disable",
+      "reset": "Reset",
+      "resetAll": "Reset all",
+      "format": "Format",
+      "invalidJson": "Invalid shortcuts JSON",
+      "disabled": "Disabled",
+      "actions": {
+        "connectSession": "Connect session",
+        "reconnectTab": "Reconnect tab",
+        "closeTab": "Close tab",
+        "toggleSidebarTab": "Toggle sidebar tab",
+        "fileRefresh": "Refresh file panes",
+        "fileRename": "Rename selection",
+        "fileUpload": "Upload files",
+        "fileDownload": "Download files",
+        "focusLocalPane": "Focus local pane",
+        "focusRemotePane": "Focus remote pane",
+        "fileSelectAll": "Select all",
+        "toggleWorkspaceView": "Toggle terminal/files view"
+      }
     },
     "theme": "Theme",
     "themeDark": "Dark",
@@ -200,9 +231,9 @@
       "showInExplorer": "Show in explorer"
     },
     "shortcuts": {
-      "refresh": "F5 — refresh",
-      "upload": "Ctrl+U — upload",
-      "download": "Ctrl+D — download"
+      "refresh": "Refresh file panes",
+      "upload": "Upload selected files",
+      "download": "Download selected files"
     },
     "view": {
       "files": "Files",
@@ -380,7 +411,9 @@
     "settings": {
       "unsupportedSchema": "Unsupported settings schema version",
       "invalid": "Invalid settings",
-      "saveFailed": "Failed to save settings"
+      "saveFailed": "Failed to save settings",
+      "shortcutsInvalid": "Invalid shortcuts configuration",
+      "shortcutsDuplicate": "Duplicate shortcut binding: {{binding}}"
     },
     "protocol": {
       "unsupported": "Unsupported protocol: {{protocol}}",

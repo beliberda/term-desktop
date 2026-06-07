@@ -103,10 +103,85 @@
 }
 
 .sectionTitle {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--color-text);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sectionHeaderActions {
+  display: flex;
+  gap: 8px;
+}
+
+.viewTabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.viewTab {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.viewTabActive {
+  background: var(--color-tab-inactive);
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.bindingInput {
+  min-width: 160px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-sidebar-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.bindingInputCapturing {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.jsonEditor {
+  max-width: 640px;
+}
+
+.jsonTextarea {
+  width: 100%;
+  min-height: 320px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-sidebar-bg);
+  color: var(--color-text);
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: var(--font-size-sm);
+  resize: vertical;
 }
 
 .field {

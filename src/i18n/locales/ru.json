@@ -97,7 +97,38 @@
       "general": "Общие",
       "terminal": "Терминал",
       "connections": "Подключения",
-      "passwordManager": "Менеджер паролей"
+      "passwordManager": "Менеджер паролей",
+      "shortcuts": "Шорткаты"
+    },
+    "shortcuts": {
+      "table": "Таблица",
+      "json": "JSON",
+      "action": "Действие",
+      "binding": "Комбинация",
+      "scope": "Область",
+      "scopeGlobal": "Глобально",
+      "scopeFileMode": "Файловый режим",
+      "captureHint": "Нажмите комбинацию…",
+      "clear": "Отключить",
+      "reset": "Сбросить",
+      "resetAll": "Сбросить все",
+      "format": "Форматировать",
+      "invalidJson": "Некорректный JSON шорткатов",
+      "disabled": "Отключено",
+      "actions": {
+        "connectSession": "Подключить сессию",
+        "reconnectTab": "Переподключить вкладку",
+        "closeTab": "Закрыть вкладку",
+        "toggleSidebarTab": "Переключить вкладку сайдбара",
+        "fileRefresh": "Обновить панели файлов",
+        "fileRename": "Переименовать выделение",
+        "fileUpload": "Загрузить файлы",
+        "fileDownload": "Скачать файлы",
+        "focusLocalPane": "Фокус локальной панели",
+        "focusRemotePane": "Фокус удалённой панели",
+        "fileSelectAll": "Выделить всё",
+        "toggleWorkspaceView": "Переключить терминал/файлы"
+      }
     },
     "theme": "Тема",
     "themeDark": "Тёмная",
@@ -200,9 +231,9 @@
       "showInExplorer": "Показать в проводнике"
     },
     "shortcuts": {
-      "refresh": "F5 — обновить",
-      "upload": "Ctrl+U — загрузить",
-      "download": "Ctrl+D — скачать"
+      "refresh": "Обновить панели файлов",
+      "upload": "Загрузить выделенные файлы",
+      "download": "Скачать выделенные файлы"
     },
     "view": {
       "files": "Файлы",
@@ -380,7 +411,9 @@
     "settings": {
       "unsupportedSchema": "Неподдерживаемая версия схемы настроек",
       "invalid": "Некорректные настройки",
-      "saveFailed": "Не удалось сохранить настройки"
+      "saveFailed": "Не удалось сохранить настройки",
+      "shortcutsInvalid": "Некорректная конфигурация шорткатов",
+      "shortcutsDuplicate": "Дублирующаяся комбинация: {{binding}}"
     },
     "protocol": {
       "unsupported": "Неподдерживаемый протокол: {{protocol}}",

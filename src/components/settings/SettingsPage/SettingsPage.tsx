@@ -9,12 +9,14 @@ import { SettingsGeneralSection } from './sections/SettingsGeneralSection';
 import { SettingsTerminalSection } from './sections/SettingsTerminalSection';
 import { SettingsConnectionsSection } from './sections/SettingsConnectionsSection';
 import { SettingsPasswordManagerSection } from './sections/SettingsPasswordManagerSection';
+import { SettingsShortcutsSection } from './sections/SettingsShortcutsSection';
 import styles from './SettingsPage.module.css';
 
 const GROUPS: SettingsGroup[] = [
   'general',
   'terminal',
   'connections',
+  'shortcuts',
   'passwordManager',
 ];
 
@@ -69,6 +71,8 @@ export const SettingsPage = observer(function SettingsPage() {
         return (
           <SettingsConnectionsSection values={values} onChange={update} />
         );
+      case 'shortcuts':
+        return <SettingsShortcutsSection values={values} onChange={update} />;
       case 'passwordManager':
         return <SettingsPasswordManagerSection />;
       default:
@@ -113,9 +117,11 @@ export const SettingsPage = observer(function SettingsPage() {
           ))}
         </nav>
         <div className={styles.content}>
-          {errorMessage && settingsStore.activeGroup !== 'passwordManager' && (
-            <p className={styles.error}>{errorMessage}</p>
-          )}
+          {errorMessage &&
+            settingsStore.activeGroup !== 'passwordManager' &&
+            settingsStore.activeGroup !== 'shortcuts' && (
+              <p className={styles.error}>{errorMessage}</p>
+            )}
           {renderSection()}
         </div>
       </div>
