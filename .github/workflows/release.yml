@@ -67,4 +67,5 @@ jobs:
           releaseBody: "См. прикреплённые файлы для установки."
           releaseDraft: true
           prerelease: false
+          uploadUpdaterSignatures: false
           args: ${{ matrix.args }}
