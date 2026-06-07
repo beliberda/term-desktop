@@ -69,6 +69,7 @@ pub fn run() {
             commands::credentials::credentials_set,
             commands::credentials::credentials_delete,
             commands::credentials::credentials_has,
+            commands::credentials::credentials_list,
             commands::config::sessions_list,
             commands::config::sessions_save,
             commands::config::sessions_export_to_path,

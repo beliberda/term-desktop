@@ -79,6 +79,13 @@
   },
   "settings": {
     "title": "设置",
+    "back": "Back",
+    "groups": {
+      "general": "General",
+      "terminal": "Terminal",
+      "connections": "Connections",
+      "passwordManager": "Password manager"
+    },
     "theme": "主题",
     "themeDark": "深色",
     "themeLight": "浅色",
@@ -175,6 +182,20 @@
       "title": "Password vault",
       "unlocked": "Vault is unlocked — saved passwords are available.",
       "locked": "Vault is locked — enter the master password to use saved passwords."
+    },
+    "manager": {
+      "empty": "No saved passwords",
+      "noVault": "Password vault has not been created",
+      "createVault": "Create vault",
+      "unlockToView": "Enter master password to view saved passwords",
+      "session": "Session",
+      "host": "Host",
+      "username": "Username",
+      "password": "Password",
+      "show": "Show",
+      "hide": "Hide",
+      "delete": "Delete",
+      "orphanSession": "Session not found"
     },
     "masterPasswordTooShort": "Master password must be at least 8 characters",
     "passwordMismatch": "Passwords do not match"

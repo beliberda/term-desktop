@@ -74,6 +74,21 @@ impl CredentialVaultService {
             .unwrap_or(false)
     }
 
+    pub fn list_entries(&self) -> IpcResult<Vec<(String, String)>> {
+        let state = self
+            .state
+            .as_ref()
+            .ok_or_else(|| IpcError::new("vault.locked"))?;
+
+        let mut entries: Vec<(String, String)> = state
+            .entries
+            .iter()
+            .map(|(id, password)| (id.clone(), password.clone()))
+            .collect();
+        entries.sort_by(|a, b| a.0.cmp(&b.0));
+        Ok(entries)
+    }
+
     pub fn setup(&mut self, master_password: &str) -> IpcResult<()> {
         if self.exists() {
             return Err(IpcError::new("vault.alreadyExists"));

@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import type { AppError } from '@i18n/types';
 import { getIpcErrorPayload } from '@ipc/client';
 import * as credentialsIpc from '@ipc/credentials';
+import type { CredentialEntry } from '@ipc/credentials';
 
 export type PendingCredentialSave = {
   sessionId: string;
@@ -13,9 +14,9 @@ export class VaultStore {
   isUnlocked = false;
   isUnlockOpen = false;
   isSetupOpen = false;
-  isChangeMasterOpen = false;
   error: AppError | null = null;
   pendingSave: PendingCredentialSave | null = null;
+  credentialEntries: CredentialEntry[] = [];
 
   constructor() {
     makeAutoObservable(this);
@@ -40,6 +41,29 @@ export class VaultStore {
     }
   }
 
+  clearCredentials() {
+    this.credentialEntries = [];
+  }
+
+  async loadCredentials() {
+    if (!this.isUnlocked) {
+      this.clearCredentials();
+      return;
+    }
+    try {
+      const entries = await credentialsIpc.credentialsList();
+      runInAction(() => {
+        this.credentialEntries = entries;
+        this.error = null;
+      });
+    } catch (e) {
+      runInAction(() => {
+        this.error = getIpcErrorPayload(e);
+        this.credentialEntries = [];
+      });
+    }
+  }
+
   skipUnlock() {
     this.isUnlockOpen = false;
     this.error = null;
@@ -57,16 +81,6 @@ export class VaultStore {
     this.error = null;
   }
 
-  openChangeMaster() {
-    this.isChangeMasterOpen = true;
-    this.error = null;
-  }
-
-  closeChangeMaster() {
-    this.isChangeMasterOpen = false;
-    this.error = null;
-  }
-
   async unlock(masterPassword: string) {
     try {
       await credentialsIpc.vaultUnlock(masterPassword);
@@ -75,6 +89,7 @@ export class VaultStore {
         this.isUnlockOpen = false;
         this.error = null;
       });
+      await this.loadCredentials();
     } catch (e) {
       runInAction(() => {
         this.error = getIpcErrorPayload(e);
@@ -109,6 +124,7 @@ export class VaultStore {
         this.pendingSave = null;
         this.error = null;
       });
+      await this.loadCredentials();
       return true;
     } catch (e) {
       runInAction(() => {
@@ -118,6 +134,10 @@ export class VaultStore {
     }
   }
 
+  async setupInline(masterPassword: string, confirmPassword: string) {
+    return this.setup(masterPassword, confirmPassword);
+  }
+
   async lock() {
     try {
       await credentialsIpc.vaultLock();
@@ -125,6 +145,7 @@ export class VaultStore {
         this.isUnlocked = false;
         this.error = null;
       });
+      this.clearCredentials();
     } catch (e) {
       runInAction(() => {
         this.error = getIpcErrorPayload(e);
@@ -139,6 +160,7 @@ export class VaultStore {
         this.exists = true;
         this.error = null;
       });
+      await this.loadCredentials();
     } catch (e) {
       runInAction(() => {
         this.error = getIpcErrorPayload(e);
@@ -158,6 +180,11 @@ export class VaultStore {
         }
         this.error = null;
       });
+      if (this.isUnlocked) {
+        await this.loadCredentials();
+      } else {
+        this.clearCredentials();
+      }
     } catch (e) {
       runInAction(() => {
         this.error = getIpcErrorPayload(e);
@@ -187,9 +214,9 @@ export class VaultStore {
       await credentialsIpc.vaultChangeMaster(oldPassword, newPassword);
       runInAction(() => {
         this.isUnlocked = true;
-        this.isChangeMasterOpen = false;
         this.error = null;
       });
+      await this.loadCredentials();
       return true;
     } catch (e) {
       runInAction(() => {

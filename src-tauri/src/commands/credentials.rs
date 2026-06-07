@@ -1,9 +1,17 @@
 use std::sync::{Arc, Mutex};
 
+use serde::Serialize;
 use tauri::State;
 
 use crate::error::{IpcError, IpcResult};
 use crate::services::CredentialVaultService;
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CredentialEntry {
+    pub session_id: String,
+    pub password: String,
+}
 
 type VaultState = Arc<Mutex<CredentialVaultService>>;
 
@@ -92,4 +100,19 @@ pub fn credentials_has(vault: State<'_, VaultState>, session_id: String) -> IpcR
         .lock()
         .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
     Ok(vault.has(&session_id))
+}
+
+#[tauri::command]
+pub fn credentials_list(vault: State<'_, VaultState>) -> IpcResult<Vec<CredentialEntry>> {
+    let vault = vault
+        .lock()
+        .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
+    Ok(vault
+        .list_entries()?
+        .into_iter()
+        .map(|(session_id, password)| CredentialEntry {
+            session_id,
+            password,
+        })
+        .collect())
 }

@@ -1,5 +1,10 @@
 import { safeInvoke } from './client';
 
+export type CredentialEntry = {
+  sessionId: string;
+  password: string;
+};
+
 export async function vaultExists(): Promise<boolean> {
   return safeInvoke<boolean>('vault_exists');
 }
@@ -40,4 +45,8 @@ export async function credentialsDelete(sessionId: string): Promise<void> {
 
 export async function credentialsHas(sessionId: string): Promise<boolean> {
   return safeInvoke<boolean>('credentials_has', { sessionId });
+}
+
+export async function credentialsList(): Promise<CredentialEntry[]> {
+  return safeInvoke<CredentialEntry[]>('credentials_list');
 }

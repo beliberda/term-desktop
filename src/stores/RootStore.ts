@@ -36,6 +36,7 @@ export class RootStore {
     this.transferStore = new TransferStore();
     this.workspaceStore = new WorkspaceStore();
 
+    this.settingsStore.setAppStore(this.appStore);
     this.fileBrowserStore.setSettingsStore(this.settingsStore);
     this.localBrowserStore.setSettingsStore(this.settingsStore);
     this.remoteBrowserStore.setSettingsStore(this.settingsStore);
