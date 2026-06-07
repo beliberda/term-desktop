@@ -122,3 +122,54 @@ pub fn normalize_local_path(path: &str) -> String {
     let p = PathBuf::from(path);
     p.to_string_lossy().to_string()
 }
+
+pub fn reveal_in_explorer(path: &str) -> IpcResult<()> {
+    let p = Path::new(path);
+    if !p.exists() {
+        return Err(IpcError::with_str_detail(
+            "fs.localPathNotFound",
+            "path",
+            path,
+        ));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(format!("/select,{}", p.display()))
+            .spawn()
+            .map_err(|e| {
+                IpcError::with_str_detail("fs.revealInExplorerFailed", "raw", e.to_string())
+            })?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .args(["-R", path])
+            .spawn()
+            .map_err(|e| {
+                IpcError::with_str_detail("fs.revealInExplorerFailed", "raw", e.to_string())
+            })?;
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let target = if p.is_dir() {
+            p.to_path_buf()
+        } else {
+            p.parent()
+                .filter(|parent| !parent.as_os_str().is_empty())
+                .map(|parent| parent.to_path_buf())
+                .unwrap_or_else(|| p.to_path_buf())
+        };
+        std::process::Command::new("xdg-open")
+            .arg(&target)
+            .spawn()
+            .map_err(|e| {
+                IpcError::with_str_detail("fs.revealInExplorerFailed", "raw", e.to_string())
+            })?;
+    }
+
+    Ok(())
+}

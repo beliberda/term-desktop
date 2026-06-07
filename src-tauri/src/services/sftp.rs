@@ -20,10 +20,7 @@ impl SftpSessionCache {
     }
 }
 
-async fn ensure_sftp(
-    ssh_handle: &SharedSshHandle,
-    cache: &SftpSessionCache,
-) -> IpcResult<()> {
+async fn ensure_sftp(ssh_handle: &SharedSshHandle, cache: &SftpSessionCache) -> IpcResult<()> {
     let mut guard = cache.0.lock().await;
     if guard.is_some() {
         return Ok(());
@@ -31,10 +28,9 @@ async fn ensure_sftp(
 
     let channel = {
         let handle = ssh_handle.lock().await;
-        let channel = handle
-            .channel_open_session()
-            .await
-            .map_err(|e| IpcError::with_str_detail("sftp.channelOpenFailed", "raw", e.to_string()))?;
+        let channel = handle.channel_open_session().await.map_err(|e| {
+            IpcError::with_str_detail("sftp.channelOpenFailed", "raw", e.to_string())
+        })?;
 
         channel
             .request_subsystem(true, "sftp")
@@ -95,12 +91,10 @@ pub async fn list_dir(
         })
         .collect();
 
-    entries.sort_by(|a, b| {
-        match (a.is_directory, b.is_directory) {
-            (true, false) => std::cmp::Ordering::Less,
-            (false, true) => std::cmp::Ordering::Greater,
-            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-        }
+    entries.sort_by(|a, b| match (a.is_directory, b.is_directory) {
+        (true, false) => std::cmp::Ordering::Less,
+        (false, true) => std::cmp::Ordering::Greater,
+        _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
     });
 
     Ok(entries)
@@ -142,12 +136,7 @@ pub async fn upload_file(
 
     let progress = match (app, connection_id, transfer_id) {
         (Some(app), Some(conn_id), Some(tid)) => Some(TransferProgress::new(
-            app,
-            tid,
-            conn_id,
-            &file_name,
-            "upload",
-            file_size,
+            app, tid, conn_id, &file_name, "upload", file_size,
         )),
         _ => None,
     };
@@ -226,12 +215,7 @@ pub async fn download_file(
 
     let progress = match (app, connection_id, transfer_id) {
         (Some(app), Some(conn_id), Some(tid)) => Some(TransferProgress::new(
-            app,
-            tid,
-            conn_id,
-            &file_name,
-            "download",
-            file_size,
+            app, tid, conn_id, &file_name, "download", file_size,
         )),
         _ => None,
     };
@@ -242,14 +226,12 @@ pub async fn download_file(
             .as_ref()
             .ok_or_else(|| IpcError::new("sftp.notInitialized"))?;
 
-        sftp.read(&remote_path)
-            .await
-            .map_err(|e| {
-                if let Some(ref p) = progress {
-                    p.error();
-                }
-                IpcError::with_str_detail("sftp.readFailed", "raw", e.to_string())
-            })?
+        sftp.read(&remote_path).await.map_err(|e| {
+            if let Some(ref p) = progress {
+                p.error();
+            }
+            IpcError::with_str_detail("sftp.readFailed", "raw", e.to_string())
+        })?
     };
 
     if let Some(ref p) = progress {
@@ -281,6 +263,9 @@ pub async fn download_dir(
     cache: &SftpSessionCache,
     remote_path: &str,
     local_dir: &str,
+    app: Option<&AppHandle>,
+    connection_id: Option<&str>,
+    transfer_id: Option<&str>,
 ) -> IpcResult<()> {
     let remote_path = normalize_remote_path(remote_path);
     let local_base = Path::new(local_dir);
@@ -292,12 +277,16 @@ pub async fn download_dir(
 
     for entry in entries {
         let local_path = local_base.join(&entry.name);
+        let local_path_str = local_path.to_string_lossy().into_owned();
         if entry.is_directory {
             Box::pin(download_dir(
                 ssh_handle,
                 cache,
                 &entry.path,
-                local_path.to_string_lossy().as_ref(),
+                &local_path_str,
+                app,
+                connection_id,
+                transfer_id,
             ))
             .await?;
         } else {
@@ -305,10 +294,10 @@ pub async fn download_dir(
                 ssh_handle,
                 cache,
                 &entry.path,
-                local_path.to_string_lossy().as_ref(),
-                None,
-                None,
-                None,
+                &local_path_str,
+                app,
+                connection_id,
+                transfer_id,
             )
             .await?;
         }

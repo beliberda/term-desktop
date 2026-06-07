@@ -10,8 +10,8 @@ use crate::events::emit_connection_status;
 use crate::models::sftp::SftpEntry;
 use crate::models::SessionConfig;
 use crate::services::ftp::{self, SharedFtpClient};
-use crate::services::ssh::{run_shell_session, ChannelCommand, SharedSshHandle};
 use crate::services::sftp::SftpSessionCache;
+use crate::services::ssh::{run_shell_session, ChannelCommand, SharedSshHandle};
 
 pub enum ConnectionKind {
     Ssh {
@@ -136,9 +136,11 @@ impl ConnectionPool {
     pub fn write(&self, connection_id: &str, data: Vec<u8>) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
-            ConnectionKind::Ssh { input_tx, .. } => input_tx
-                .send(ChannelCommand::Data(data))
-                .map_err(|e| IpcError::with_str_detail("connection.sendDataFailed", "raw", e.to_string())),
+            ConnectionKind::Ssh { input_tx, .. } => {
+                input_tx.send(ChannelCommand::Data(data)).map_err(|e| {
+                    IpcError::with_str_detail("connection.sendDataFailed", "raw", e.to_string())
+                })
+            }
             ConnectionKind::Ftp { .. } => Err(IpcError::new("connection.writeNotSupported")),
         }
     }
@@ -148,38 +150,28 @@ impl ConnectionPool {
         match &handle.kind {
             ConnectionKind::Ssh { input_tx, .. } => input_tx
                 .send(ChannelCommand::Resize { cols, rows })
-                .map_err(|e| IpcError::with_str_detail("connection.resizeFailed", "raw", e.to_string())),
+                .map_err(|e| {
+                    IpcError::with_str_detail("connection.resizeFailed", "raw", e.to_string())
+                }),
             ConnectionKind::Ftp { .. } => Err(IpcError::new("connection.resizeNotSupported")),
         }
     }
 
-    pub async fn list_dir(
-        &self,
-        connection_id: &str,
-        path: &str,
-    ) -> IpcResult<Vec<SftpEntry>> {
+    pub async fn list_dir(&self, connection_id: &str, path: &str) -> IpcResult<Vec<SftpEntry>> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
-                ssh_handle,
-                sftp,
-                ..
+                ssh_handle, sftp, ..
             } => crate::services::sftp::list_dir(ssh_handle, sftp, path).await,
             ConnectionKind::Ftp { client } => ftp::list_dir(client, path).await,
         }
     }
 
-    pub async fn count_files(
-        &self,
-        connection_id: &str,
-        remote_path: &str,
-    ) -> IpcResult<u64> {
+    pub async fn count_files(&self, connection_id: &str, remote_path: &str) -> IpcResult<u64> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
-                ssh_handle,
-                sftp,
-                ..
+                ssh_handle, sftp, ..
             } => crate::services::sftp::count_files(ssh_handle, sftp, remote_path).await,
             ConnectionKind::Ftp { client } => ftp::count_files(client, remote_path).await,
         }
@@ -196,9 +188,7 @@ impl ConnectionPool {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
-                ssh_handle,
-                sftp,
-                ..
+                ssh_handle, sftp, ..
             } => {
                 crate::services::sftp::upload_file(
                     ssh_handle,
@@ -237,9 +227,7 @@ impl ConnectionPool {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
-                ssh_handle,
-                sftp,
-                ..
+                ssh_handle, sftp, ..
             } => {
                 if is_directory {
                     crate::services::sftp::download_dir(
@@ -247,6 +235,9 @@ impl ConnectionPool {
                         sftp,
                         remote_path,
                         local_path,
+                        app,
+                        Some(connection_id),
+                        transfer_id,
                     )
                     .await
                 } else {
@@ -264,7 +255,15 @@ impl ConnectionPool {
             }
             ConnectionKind::Ftp { client } => {
                 if is_directory {
-                    ftp::download_dir(client, remote_path, local_path).await
+                    ftp::download_dir(
+                        client,
+                        remote_path,
+                        local_path,
+                        app,
+                        Some(connection_id),
+                        transfer_id,
+                    )
+                    .await
                 } else {
                     ftp::download_file(
                         client,
@@ -284,9 +283,7 @@ impl ConnectionPool {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
-                ssh_handle,
-                sftp,
-                ..
+                ssh_handle, sftp, ..
             } => crate::services::sftp::mkdir(ssh_handle, sftp, remote_path).await,
             ConnectionKind::Ftp { client } => ftp::mkdir(client, remote_path).await,
         }
@@ -301,9 +298,7 @@ impl ConnectionPool {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
-                ssh_handle,
-                sftp,
-                ..
+                ssh_handle, sftp, ..
             } => crate::services::sftp::delete(ssh_handle, sftp, remote_path, is_directory).await,
             ConnectionKind::Ftp { client } => ftp::delete(client, remote_path, is_directory).await,
         }
@@ -318,9 +313,7 @@ impl ConnectionPool {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
-                ssh_handle,
-                sftp,
-                ..
+                ssh_handle, sftp, ..
             } => crate::services::sftp::rename(ssh_handle, sftp, old_path, new_path).await,
             ConnectionKind::Ftp { client } => ftp::rename(client, old_path, new_path).await,
         }
@@ -335,19 +328,15 @@ impl ConnectionPool {
         let handle = self.get(connection_id)?;
         match &handle.kind {
             ConnectionKind::Ssh {
-                ssh_handle,
-                sftp,
-                ..
+                ssh_handle, sftp, ..
             } => crate::services::sftp::fetch_to_cache(app, ssh_handle, sftp, remote_path).await,
             ConnectionKind::Ftp { client } => ftp::fetch_to_cache(app, client, remote_path).await,
         }
     }
 
     fn get(&self, connection_id: &str) -> IpcResult<&ConnectionHandle> {
-        self.connections
-            .get(connection_id)
-            .ok_or_else(|| {
-                IpcError::with_str_detail("connection.notFound", "connectionId", connection_id)
-            })
+        self.connections.get(connection_id).ok_or_else(|| {
+            IpcError::with_str_detail("connection.notFound", "connectionId", connection_id)
+        })
     }
 }

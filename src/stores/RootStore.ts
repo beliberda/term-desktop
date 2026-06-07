@@ -1,13 +1,13 @@
-import { AppStore } from './AppStore';
-import { SessionStore } from './SessionStore';
-import { TerminalStore } from './TerminalStore';
-import { FileBrowserStore } from './FileBrowserStore';
-import { FileConnectionStore } from './FileConnectionStore';
-import { SettingsStore } from './SettingsStore';
-import { LocalBrowserStore } from './LocalBrowserStore';
-import { RemoteBrowserStore } from './RemoteBrowserStore';
-import { TransferStore } from './TransferStore';
-import { WorkspaceStore } from './WorkspaceStore';
+import { AppStore } from "./AppStore";
+import { SessionStore } from "./SessionStore";
+import { TerminalStore } from "./TerminalStore";
+import { FileBrowserStore } from "./FileBrowserStore";
+import { FileConnectionStore } from "./FileConnectionStore";
+import { SettingsStore } from "./SettingsStore";
+import { LocalBrowserStore } from "./LocalBrowserStore";
+import { RemoteBrowserStore } from "./RemoteBrowserStore";
+import { TransferStore } from "./TransferStore";
+import { WorkspaceStore } from "./WorkspaceStore";
 
 export class RootStore {
   appStore: AppStore;
@@ -34,8 +34,10 @@ export class RootStore {
     this.workspaceStore = new WorkspaceStore();
 
     this.fileBrowserStore.setSettingsStore(this.settingsStore);
+    this.localBrowserStore.setSettingsStore(this.settingsStore);
     this.remoteBrowserStore.setSettingsStore(this.settingsStore);
     this.remoteBrowserStore.setLocalBrowserStore(this.localBrowserStore);
+    this.localBrowserStore.setRemoteBrowserStore(this.remoteBrowserStore);
     this.sessionStore.setTerminalStore(this.terminalStore);
     this.terminalStore.setSessionStore(this.sessionStore);
     this.terminalStore.setWorkspaceStore(this.workspaceStore);

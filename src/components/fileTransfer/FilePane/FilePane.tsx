@@ -1,19 +1,19 @@
-import type { DragEvent, MouseEvent } from 'react';
-import { useState } from 'react';
-import { observer } from 'mobx-react-lite';
-import { useTranslation } from 'react-i18next';
-import type { SftpEntry } from '@/types';
-import type { LocalBrowserStore } from '@stores/LocalBrowserStore';
-import type { RemoteBrowserStore } from '@stores/RemoteBrowserStore';
-import { FileBreadcrumbs } from '@components/fileTransfer/FileBreadcrumbs/FileBreadcrumbs';
-import { FileTable } from '@components/fileTransfer/FileTable/FileTable';
-import { FilePaneContextMenu } from '@components/fileTransfer/FilePaneContextMenu/FilePaneContextMenu';
-import styles from './FilePane.module.css';
+import type { DragEvent, MouseEvent } from "react";
+import { useState } from "react";
+import { observer } from "mobx-react-lite";
+import { useTranslation } from "react-i18next";
+import type { SftpEntry } from "@/types";
+import type { LocalBrowserStore } from "@stores/LocalBrowserStore";
+import type { RemoteBrowserStore } from "@stores/RemoteBrowserStore";
+import { FileBreadcrumbs } from "@components/fileTransfer/FileBreadcrumbs/FileBreadcrumbs";
+import { FileTable } from "@components/fileTransfer/FileTable/FileTable";
+import { FilePaneContextMenu } from "@components/fileTransfer/FilePaneContextMenu/FilePaneContextMenu";
+import styles from "./FilePane.module.css";
 
 type PaneStore = LocalBrowserStore | RemoteBrowserStore;
 
 interface FilePaneProps {
-  side: 'local' | 'remote';
+  side: "local" | "remote";
   store: PaneStore;
   dropActive: boolean;
   onFocus: () => void;
@@ -43,9 +43,9 @@ export const FilePane = observer(function FilePane({
   } | null>(null);
 
   const paneLabel =
-    side === 'local'
-      ? t('fileTransfer.localPane')
-      : t('fileTransfer.remotePane');
+    side === "local"
+      ? t("fileTransfer.localPane")
+      : t("fileTransfer.remotePane");
 
   const handleContextMenu = (e: MouseEvent, entry: SftpEntry | null) => {
     e.preventDefault();
@@ -53,18 +53,35 @@ export const FilePane = observer(function FilePane({
   };
 
   const handleDragStart = (e: DragEvent, entry: SftpEntry) => {
+    const selected = store.selectedEntries;
+    const useMulti =
+      selected.some((item) => item.path === entry.path) && selected.length > 1;
+    const entries = useMulti ? selected : [entry];
+
     e.dataTransfer.setData(
-      'application/termassh-files',
+      "application/termassh-files",
       JSON.stringify({
         side,
-        paths: [entry.path],
-        names: [entry.name],
-        isDirectories: [entry.isDirectory],
-        sizes: [entry.size],
-        modifiedAts: [entry.modifiedAt ?? ''],
+        paths: entries.map((item) => item.path),
+        names: entries.map((item) => item.name),
+        isDirectories: entries.map((item) => item.isDirectory),
+        sizes: entries.map((item) => item.size),
+        modifiedAts: entries.map((item) => item.modifiedAt ?? ""),
       }),
     );
-    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
+  const openInEditor = (entry: SftpEntry) => {
+    if (side === "local") {
+      void (store as LocalBrowserStore).openEntry(entry);
+      return;
+    }
+    if (onOpen) {
+      void onOpen(entry);
+      return;
+    }
+    void (store as RemoteBrowserStore).openEntry(entry);
   };
 
   const handleOpen = (entry: SftpEntry) => {
@@ -72,9 +89,7 @@ export const FilePane = observer(function FilePane({
       store.navigateTo(entry.path);
       return;
     }
-    if (side === 'remote' && onOpen) {
-      void onOpen(entry);
-    }
+    openInEditor(entry);
   };
 
   return (
@@ -94,6 +109,8 @@ export const FilePane = observer(function FilePane({
         focused={store.focused}
         paneLabel={paneLabel}
         onSelect={(entry, opts) => store.selectEntry(entry, opts)}
+        onSelectPaths={(paths, mode) => store.selectPaths(paths, mode)}
+        onClearSelection={() => store.clearSelection()}
         onNavigateUp={() => store.navigateUp()}
         onOpen={handleOpen}
         onContextMenu={handleContextMenu}
@@ -116,12 +133,18 @@ export const FilePane = observer(function FilePane({
           onClose={() => setContextMenu(null)}
           onRefresh={() => store.refresh()}
           onMkdir={() => {
-            const name = window.prompt(t('files.mkdir.prompt'));
+            const name = window.prompt(t("files.mkdir.prompt"));
             if (name) void store.mkdir(name);
           }}
           onUpload={onUpload}
           onDownload={onDownload}
-          onOpen={onOpen}
+          onOpenInEditor={openInEditor}
+          onRevealInExplorer={
+            side === "local"
+              ? (entry) =>
+                  void (store as LocalBrowserStore).revealInExplorer(entry)
+              : undefined
+          }
           onRename={(entry) => store.startRename(entry)}
           onDelete={(entry) => void store.deleteEntry(entry)}
           onCopyPath={(path) => void store.copyPath(path)}

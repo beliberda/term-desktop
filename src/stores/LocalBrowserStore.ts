@@ -1,40 +1,59 @@
-import { makeAutoObservable, runInAction } from 'mobx';
-import type { SftpEntry } from '@/types';
-import type { AppError } from '@i18n/types';
-import { getIpcErrorPayload } from '@ipc/client';
-import * as localIpc from '@ipc/local';
-import { parentLocalPath } from '@utils/filePaths';
+import { makeAutoObservable, runInAction } from "mobx";
+import type { SftpEntry } from "@/types";
+import type { AppError } from "@i18n/types";
+import { getIpcErrorPayload } from "@ipc/client";
+import * as localIpc from "@ipc/local";
+import { parentLocalPath } from "@utils/filePaths";
+import { openInEditor } from "@utils/openInEditor";
+import {
+  isSyncBrowseEnabled,
+  isSyncBrowseGuarded,
+  mapLocalToRemote,
+  withSyncBrowseGuard,
+} from "@utils/syncBrowse";
+import type { RemoteBrowserStore } from "./RemoteBrowserStore";
+import type { SettingsStore } from "./SettingsStore";
 
 function mapLocalError(e: unknown, fallbackCode: string): AppError {
   const payload = getIpcErrorPayload(e);
-  return payload.code === 'unknown' ? { code: fallbackCode } : payload;
+  return payload.code === "unknown" ? { code: fallbackCode } : payload;
 }
 
 export class LocalBrowserStore {
-  cwd = '';
+  cwd = "";
   entries: SftpEntry[] = [];
   isLoading = false;
   error: AppError | null = null;
   selectedPaths = new Set<string>();
   lastSelectedPath: string | null = null;
   renameTargetPath: string | null = null;
-  renameDraft = '';
+  renameDraft = "";
   focused = false;
+  private settingsStore: SettingsStore | null = null;
+  private remoteBrowserStore: RemoteBrowserStore | null = null;
 
   constructor() {
     makeAutoObservable(this);
   }
 
+  setSettingsStore(settingsStore: SettingsStore) {
+    this.settingsStore = settingsStore;
+  }
+
+  setRemoteBrowserStore(remoteBrowserStore: RemoteBrowserStore) {
+    this.remoteBrowserStore = remoteBrowserStore;
+  }
+
   get breadcrumbs(): { label: string; path: string }[] {
     if (!this.cwd) return [];
-    const separator = this.cwd.includes('\\') ? '\\' : '/';
+    const separator = this.cwd.includes("\\") ? "\\" : "/";
     const parts = this.cwd.split(/[/\\]/).filter(Boolean);
     const crumbs: { label: string; path: string }[] = [];
 
-    if (separator === '\\' && /^[A-Za-z]:/.test(this.cwd)) {
+    if (separator === "\\" && /^[A-Za-z]:/.test(this.cwd)) {
       const drive = `${this.cwd.slice(0, 2)}${separator}`;
       crumbs.push({ label: drive, path: drive });
-      let acc = drive.replace(/\\$/, '');
+      let acc = drive.replace(/\\$/, "");
       for (const part of parts.slice(1)) {
         acc = `${acc}${separator}${part}`;
         crumbs.push({ label: part, path: acc });
@@ -45,7 +64,8 @@ export class LocalBrowserStore {
     let acc = separator;
     crumbs.push({ label: separator, path: separator });
     for (const part of parts) {
-      acc = acc === separator ? `${separator}${part}` : `${acc}${separator}${part}`;
+      acc =
+        acc === separator ? `${separator}${part}` : `${acc}${separator}${part}`;
       crumbs.push({ label: part, path: acc });
     }
     return crumbs;
@@ -61,7 +81,7 @@ export class LocalBrowserStore {
       return;
     }
     const home = await localIpc.localHomeDir();
-    await this.loadDir(home ?? 'C:\\');
+    await this.loadDir(home ?? "C:\\");
   }
 
   async loadDir(path?: string) {
@@ -83,12 +103,28 @@ export class LocalBrowserStore {
         this.selectedPaths.clear();
         this.lastSelectedPath = null;
       });
+      if (!isSyncBrowseGuarded()) {
+        this.syncRemoteBrowse(target);
+      }
     } catch (e) {
       runInAction(() => {
-        this.error = mapLocalError(e, 'files.listFailed');
+        this.error = mapLocalError(e, "files.listFailed");
         this.isLoading = false;
       });
     }
+  }
+
+  syncRemoteBrowse(localPath: string) {
+    const remote = this.remoteBrowserStore;
+    if (!remote?.session || !isSyncBrowseEnabled(remote.session)) return;
+    if (!remote.canBrowse) return;
+
+    const mapped = mapLocalToRemote(localPath, remote.session);
+    if (!mapped) return;
+
+    withSyncBrowseGuard(() => {
+      void remote.loadDir(mapped);
+    });
   }
 
   navigateTo(path: string) {
@@ -107,10 +143,10 @@ export class LocalBrowserStore {
 
   selectEntry(
     entry: SftpEntry,
-    opts?: { additive?: boolean; range?: boolean },
+    opts?: { additive?: boolean; range?: boolean; sortedPaths?: string[] },
   ) {
     if (opts?.range && this.lastSelectedPath) {
-      const paths = this.entries.map((e) => e.path);
+      const paths = opts.sortedPaths ?? this.entries.map((e) => e.path);
       const start = paths.indexOf(this.lastSelectedPath);
       const end = paths.indexOf(entry.path);
       if (start >= 0 && end >= 0) {
@@ -147,6 +183,18 @@ export class LocalBrowserStore {
     this.lastSelectedPath = null;
   }
 
+  selectPaths(paths: string[], mode: "replace" | "add") {
+    if (mode === "replace") {
+      this.selectedPaths.clear();
+    }
+    for (const path of paths) {
+      this.selectedPaths.add(path);
+    }
+    if (paths.length > 0) {
+      this.lastSelectedPath = paths[paths.length - 1];
+    }
+  }
+
   setFocused(value: boolean) {
     this.focused = value;
   }
@@ -158,7 +206,7 @@ export class LocalBrowserStore {
 
   cancelRename() {
     this.renameTargetPath = null;
-    this.renameDraft = '';
+    this.renameDraft = "";
   }
 
   async commitRename() {
@@ -171,8 +219,8 @@ export class LocalBrowserStore {
     }
 
     const parent = parentLocalPath(targetPath);
-    const separator = targetPath.includes('\\') ? '\\' : '/';
-    const trimmed = parent.replace(/[/\\]+$/, '');
+    const separator = targetPath.includes("\\") ? "\\" : "/";
+    const trimmed = parent.replace(/[/\\]+$/, "");
     const newPath = `${trimmed}${separator}${nextName}`;
 
     runInAction(() => {
@@ -185,7 +233,7 @@ export class LocalBrowserStore {
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
-        this.error = mapLocalError(e, 'files.renameFailed');
+        this.error = mapLocalError(e, "files.renameFailed");
         this.isLoading = false;
       });
     } finally {
@@ -204,7 +252,7 @@ export class LocalBrowserStore {
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
-        this.error = mapLocalError(e, 'files.deleteFailed');
+        this.error = mapLocalError(e, "files.deleteFailed");
         this.isLoading = false;
       });
     }
@@ -212,8 +260,8 @@ export class LocalBrowserStore {
 
   async mkdir(name: string) {
     if (!this.cwd || !name.trim()) return;
-    const separator = this.cwd.includes('\\') ? '\\' : '/';
-    const trimmed = this.cwd.replace(/[/\\]+$/, '');
+    const separator = this.cwd.includes("\\") ? "\\" : "/";
+    const trimmed = this.cwd.replace(/[/\\]+$/, "");
     const path = `${trimmed}${separator}${name.trim()}`;
     runInAction(() => {
       this.isLoading = true;
@@ -224,7 +272,7 @@ export class LocalBrowserStore {
       await this.loadDir(this.cwd);
     } catch (e) {
       runInAction(() => {
-        this.error = mapLocalError(e, 'files.mkdirFailed');
+        this.error = mapLocalError(e, "files.mkdirFailed");
         this.isLoading = false;
       });
     }
@@ -234,7 +282,34 @@ export class LocalBrowserStore {
     try {
       await navigator.clipboard.writeText(path);
     } catch (e) {
-      console.error('[LocalBrowserStore] copyPath failed:', e);
+      console.error("[LocalBrowserStore] copyPath failed:", e);
+    }
+  }
+
+  async openEntry(entry: SftpEntry) {
+    if (entry.isDirectory) {
+      this.navigateTo(entry.path);
+      return;
+    }
+    try {
+      await openInEditor(
+        entry.path,
+        this.settingsStore?.settings.defaultEditorPath,
+      );
+    } catch (e) {
+      runInAction(() => {
+        this.error = mapLocalError(e, "files.openFailed");
+      });
+    }
+  }
+
+  async revealInExplorer(entry: SftpEntry) {
+    try {
+      await localIpc.localRevealInExplorer(entry.path);
+    } catch (e) {
+      runInAction(() => {
+        this.error = mapLocalError(e, "files.openFailed");
+      });
     }
   }
 }

@@ -1,9 +1,9 @@
-import { useTranslation } from 'react-i18next';
-import type { SftpEntry } from '@/types';
-import { AnchorPopup } from '@components/ui/AnchorPopup/AnchorPopup';
-import menuStyles from '@components/ui/AnchorPopup/AnchorPopup.module.css';
+import { useTranslation } from "react-i18next";
+import type { SftpEntry } from "@/types";
+import { AnchorPopup } from "@components/ui/AnchorPopup/AnchorPopup";
+import menuStyles from "@components/ui/AnchorPopup/AnchorPopup.module.css";
 
-export type FilePaneSide = 'local' | 'remote';
+export type FilePaneSide = "local" | "remote";
 
 interface FilePaneContextMenuProps {
   side: FilePaneSide;
@@ -14,7 +14,8 @@ interface FilePaneContextMenuProps {
   onMkdir: () => void;
   onUpload?: () => void;
   onDownload?: () => void;
-  onOpen?: (entry: SftpEntry) => void;
+  onOpenInEditor?: (entry: SftpEntry) => void;
+  onRevealInExplorer?: (entry: SftpEntry) => void;
   onRename?: (entry: SftpEntry) => void;
   onDelete?: (entry: SftpEntry) => void;
   onCopyPath?: (path: string) => void;
@@ -29,7 +30,8 @@ export function FilePaneContextMenu({
   onMkdir,
   onUpload,
   onDownload,
-  onOpen,
+  onOpenInEditor,
+  onRevealInExplorer,
   onRename,
   onDelete,
   onCopyPath,
@@ -47,7 +49,7 @@ export function FilePaneContextMenu({
             onClose();
           }}
         >
-          {t('common.refresh')}
+          {t("common.refresh")}
         </button>
         <button
           type="button"
@@ -57,7 +59,7 @@ export function FilePaneContextMenu({
             onClose();
           }}
         >
-          {t('fileTransfer.context.newFolder')}
+          {t("fileTransfer.context.newFolder")}
         </button>
       </AnchorPopup>
     );
@@ -74,22 +76,34 @@ export function FilePaneContextMenu({
             onClose();
           }}
         >
-          {t('files.context.copyPath')}
+          {t("files.context.copyPath")}
         </button>
       )}
-      {side === 'remote' && onOpen && (
+      {!entry.isDirectory && onOpenInEditor && (
         <button
           type="button"
           className={menuStyles.menuItem}
           onClick={() => {
-            void onOpen(entry);
+            onOpenInEditor(entry);
             onClose();
           }}
         >
-          {t('files.context.open')}
+          {t("fileTransfer.context.openInEditor")}
         </button>
       )}
-      {side === 'local' && onUpload && (
+      {side === "local" && onRevealInExplorer && (
+        <button
+          type="button"
+          className={menuStyles.menuItem}
+          onClick={() => {
+            onRevealInExplorer(entry);
+            onClose();
+          }}
+        >
+          {t("fileTransfer.context.showInExplorer")}
+        </button>
+      )}
+      {side === "local" && onUpload && (
         <button
           type="button"
           className={menuStyles.menuItem}
@@ -98,10 +112,10 @@ export function FilePaneContextMenu({
             onClose();
           }}
         >
-          {t('fileTransfer.context.uploadToServer')}
+          {t("fileTransfer.context.uploadToServer")}
         </button>
       )}
-      {side === 'remote' && onDownload && (
+      {side === "remote" && onDownload && (
         <button
           type="button"
           className={menuStyles.menuItem}
@@ -110,7 +124,7 @@ export function FilePaneContextMenu({
             onClose();
           }}
         >
-          {t('files.context.download')}
+          {t("files.context.download")}
         </button>
       )}
       {onRename && (
@@ -122,7 +136,7 @@ export function FilePaneContextMenu({
             onClose();
           }}
         >
-          {t('files.context.rename')}
+          {t("files.context.rename")}
         </button>
       )}
       {onDelete && (
@@ -134,7 +148,7 @@ export function FilePaneContextMenu({
             onClose();
           }}
         >
-          {t('common.delete')}
+          {t("common.delete")}
         </button>
       )}
     </AnchorPopup>

@@ -50,6 +50,8 @@
 .body {
   flex: 1;
   overflow: auto;
+  position: relative;
+  user-select: none;
 }
 
 .row {
@@ -72,7 +74,34 @@
 }
 
 .row.selected {
-  background: var(--selection, rgba(74, 158, 255, 0.25));
+  background: var(--color-accent, #4a9eff);
+  color: #fff;
+}
+
+.row.selected:hover {
+  background: var(--color-accent, #4a9eff);
+}
+
+.row.selected .size,
+.row.selected .date {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.row:focus-visible {
+  outline: 1px solid var(--color-accent, #4a9eff);
+  outline-offset: -1px;
+}
+
+.row.selected:focus-visible {
+  outline-color: rgba(255, 255, 255, 0.6);
+}
+
+.marquee {
+  position: fixed;
+  border: 1px solid var(--color-accent, #4a9eff);
+  background: rgba(74, 158, 255, 0.15);
+  pointer-events: none;
+  z-index: 100;
 }
 
 .icon {

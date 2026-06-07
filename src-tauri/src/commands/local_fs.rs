@@ -36,3 +36,8 @@ pub async fn local_delete(path: String, is_directory: bool) -> IpcResult<()> {
 pub async fn local_home_dir() -> IpcResult<Option<String>> {
     Ok(local_fs::default_home_dir())
 }
+
+#[tauri::command]
+pub async fn local_reveal_in_explorer(path: String) -> IpcResult<()> {
+    local_fs::reveal_in_explorer(&path)
+}

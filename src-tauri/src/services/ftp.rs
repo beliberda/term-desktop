@@ -256,6 +256,9 @@ pub async fn download_dir(
     client: &SharedFtpClient,
     remote_path: &str,
     local_dir: &str,
+    app: Option<&AppHandle>,
+    connection_id: Option<&str>,
+    transfer_id: Option<&str>,
 ) -> IpcResult<()> {
     let remote_path = normalize_remote_path(remote_path);
     let local_base = Path::new(local_dir);
@@ -267,21 +270,25 @@ pub async fn download_dir(
 
     for entry in entries {
         let local_path = local_base.join(&entry.name);
+        let local_path_str = local_path.to_string_lossy().into_owned();
         if entry.is_directory {
             Box::pin(download_dir(
                 client,
                 &entry.path,
-                local_path.to_string_lossy().as_ref(),
+                &local_path_str,
+                app,
+                connection_id,
+                transfer_id,
             ))
             .await?;
         } else {
             download_file(
                 client,
                 &entry.path,
-                local_path.to_string_lossy().as_ref(),
-                None,
-                None,
-                None,
+                &local_path_str,
+                app,
+                connection_id,
+                transfer_id,
             )
             .await?;
         }

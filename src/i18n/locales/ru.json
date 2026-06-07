@@ -188,7 +188,9 @@
     },
     "context": {
       "newFolder": "Создать папку",
-      "uploadToServer": "Загрузить на сервер"
+      "uploadToServer": "Загрузить на сервер",
+      "openInEditor": "Открыть в редакторе",
+      "showInExplorer": "Показать в проводнике"
     },
     "shortcuts": {
       "refresh": "F5 — обновить",

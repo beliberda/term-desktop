@@ -188,7 +188,9 @@
     },
     "context": {
       "newFolder": "New folder",
-      "uploadToServer": "Upload to server"
+      "uploadToServer": "Upload to server",
+      "openInEditor": "Open in editor",
+      "showInExplorer": "Show in explorer"
     },
     "shortcuts": {
       "refresh": "F5 — refresh",

@@ -87,6 +87,7 @@ pub fn run() {
             commands::local_fs::local_rename,
             commands::local_fs::local_delete,
             commands::local_fs::local_home_dir,
+            commands::local_fs::local_reveal_in_explorer,
             commands::open::open_in_editor,
         ])
         .run(tauri::generate_context!())
