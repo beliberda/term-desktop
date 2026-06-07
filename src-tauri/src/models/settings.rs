@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -17,6 +19,25 @@ pub struct AppSettings {
     pub locale: String,
     #[serde(default = "default_file_conflict_policy")]
     pub default_file_conflict_policy: String,
+    #[serde(default = "default_shortcuts")]
+    pub shortcuts: HashMap<String, String>,
+}
+
+fn default_shortcuts() -> HashMap<String, String> {
+    HashMap::from([
+        ("connectSession".to_string(), "Ctrl+T".to_string()),
+        ("reconnectTab".to_string(), "Ctrl+R".to_string()),
+        ("closeTab".to_string(), "Ctrl+W".to_string()),
+        ("toggleSidebarTab".to_string(), "Ctrl+B".to_string()),
+        ("fileRefresh".to_string(), "F5".to_string()),
+        ("fileRename".to_string(), "F2".to_string()),
+        ("fileUpload".to_string(), "Ctrl+U".to_string()),
+        ("fileDownload".to_string(), "Ctrl+D".to_string()),
+        ("focusLocalPane".to_string(), "Ctrl+1".to_string()),
+        ("focusRemotePane".to_string(), "Ctrl+2".to_string()),
+        ("fileSelectAll".to_string(), "Ctrl+A".to_string()),
+        ("toggleWorkspaceView".to_string(), "Ctrl+Shift+T".to_string()),
+    ])
 }
 
 fn default_file_conflict_policy() -> String {
@@ -44,6 +65,7 @@ impl Default for AppSettings {
             sidebar_width: default_sidebar_width(),
             locale: default_locale(),
             default_file_conflict_policy: default_file_conflict_policy(),
+            shortcuts: default_shortcuts(),
         }
     }
 }

@@ -1,11 +1,11 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1100;
+  z-index: 120;
 }
 
 .modal {
@@ -13,60 +13,42 @@
   max-width: calc(100vw - 32px);
   background: var(--color-sidebar-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 20px;
 }
 
 .title {
-  margin: 0 0 16px;
-  font-size: var(--font-size-base);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
   color: var(--color-text);
+}
+
+.hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
 }
 
 .error {
-  margin: 0 0 12px;
-  color: #f48771;
   font-size: var(--font-size-sm);
-}
-
-.field {
+  color: #f48771;
   margin-bottom: 12px;
 }
 
-.keyRow {
+.field {
   display: flex;
-  gap: 8px;
-}
-
-.keyRow .input {
-  flex: 1;
-  min-width: 0;
-}
-
-.browseBtn {
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: var(--color-tab-inactive);
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.browseBtn:hover {
-  border-color: var(--color-accent);
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
 }
 
 .label {
-  display: block;
-  margin-bottom: 4px;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
 }
 
 .input {
-  width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
@@ -75,28 +57,36 @@
   font-size: var(--font-size-sm);
 }
 
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 16px;
 }
 
 .btn {
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: 4px;
   border: 1px solid var(--color-border);
-  cursor: pointer;
   font-size: var(--font-size-sm);
+  cursor: pointer;
 }
 
-.btnCancel {
+.btnSecondary {
   background: transparent;
-  color: var(--color-text);
+  color: var(--color-text-muted);
 }
 
-.btnSave {
+.btnPrimary {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: #fff;
+}
+
+.btnPrimary:hover {
+  background: var(--color-accent-hover);
 }

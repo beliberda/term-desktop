@@ -6,6 +6,7 @@ import { getIpcErrorPayload } from '@ipc/client';
 import * as terminalIpc from '@ipc/terminal';
 import { listenTerminalOutput } from '@ipc/events';
 import type { SessionStore } from './SessionStore';
+import type { VaultStore } from './VaultStore';
 import type { WorkspaceStore } from './WorkspaceStore';
 
 export type TerminalHandle = {
@@ -45,11 +46,19 @@ function shouldPromptPassphrase(
   return false;
 }
 
+function shouldPromptPassword(
+  authType: string | undefined,
+  error: AppError,
+): boolean {
+  return authType === 'password' && error.code === 'ssh.passwordRequired';
+}
+
 export class TerminalStore {
   tabs: TerminalTab[] = [];
   activeTabId: string | null = null;
   pendingConnect: PendingConnect | null = null;
   private sessionStore: SessionStore | null = null;
+  private vaultStore: VaultStore | null = null;
   private workspaceStore: WorkspaceStore | null = null;
   private listenersInitialized = false;
   private terminalHandles = new Map<string, TerminalHandle>();
@@ -61,6 +70,10 @@ export class TerminalStore {
 
   setSessionStore(sessionStore: SessionStore) {
     this.sessionStore = sessionStore;
+  }
+
+  setVaultStore(vaultStore: VaultStore) {
+    this.vaultStore = vaultStore;
   }
 
   setWorkspaceStore(workspaceStore: WorkspaceStore) {
@@ -165,6 +178,10 @@ export class TerminalStore {
     }
 
     if (resolved.authType === 'password') {
+      if (this.vaultStore?.isUnlocked) {
+        await this.openTab(sessionId, undefined, resolved);
+        return;
+      }
       runInAction(() => {
         this.pendingConnect = { sessionId };
       });
@@ -231,10 +248,12 @@ export class TerminalStore {
     }
 
     if (resolved.authType === 'password' && !password) {
-      runInAction(() => {
-        this.pendingConnect = { sessionId: tab.sessionId, reconnectTabId: tabId };
-      });
-      return;
+      if (!this.vaultStore?.isUnlocked) {
+        runInAction(() => {
+          this.pendingConnect = { sessionId: tab.sessionId, reconnectTabId: tabId };
+        });
+        return;
+      }
     }
 
     const oldConnectionId = tab.connectionId;
@@ -295,6 +314,30 @@ export class TerminalStore {
             this.schedulePassphrasePromptReconnect(sessionId, tabId);
           } else {
             this.schedulePassphrasePrompt(sessionId, tabId);
+          }
+        });
+        return;
+      }
+
+      if (shouldPromptPassword(resolved.authType, error)) {
+        runInAction(() => {
+          if (isReconnect) {
+            this.pendingConnect = {
+              sessionId,
+              reconnectTabId: tabId,
+            };
+            const t = this.tabs.find((x) => x.id === tabId);
+            if (t) {
+              t.status = 'error';
+              t.connectionId = undefined;
+              t.reconnecting = false;
+            }
+          } else {
+            this.tabs = this.tabs.filter((t) => t.id !== tabId);
+            if (this.activeTabId === tabId) {
+              this.activeTabId = this.tabs[this.tabs.length - 1]?.id ?? null;
+            }
+            this.pendingConnect = { sessionId };
           }
         });
         return;

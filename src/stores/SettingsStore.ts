@@ -11,19 +11,48 @@ import { detectLocale, isAppLocale } from '@i18n/config';
 import { changeLocale, initI18n } from '@i18n/index';
 import type { AppError } from '@i18n/types';
 import * as settingsIpc from '@ipc/settings';
+import { mergeShortcuts, validateShortcuts } from '@utils/shortcuts';
+import type { AppStore } from './AppStore';
+
+export type SettingsGroup =
+  | 'general'
+  | 'terminal'
+  | 'connections'
+  | 'passwordManager'
+  | 'shortcuts';
 
 export class SettingsStore {
   settings: AppSettings = { ...defaultAppSettings };
   isLoading = false;
-  isFormOpen = false;
+  activeGroup: SettingsGroup = 'general';
   error: AppError | null = null;
 
+  private appStore: AppStore | null = null;
   private saveSidebarTimer: ReturnType<typeof setTimeout> | null = null;
   private localeInitialized = false;
 
   constructor() {
     makeAutoObservable(this);
     initI18n(defaultAppSettings.locale);
+  }
+
+  setAppStore(appStore: AppStore) {
+    this.appStore = appStore;
+  }
+
+  setActiveGroup(group: SettingsGroup) {
+    this.activeGroup = group;
+  }
+
+  openSettings() {
+    this.activeGroup = 'general';
+    this.error = null;
+    this.appStore?.openSettings();
+  }
+
+  closeSettings() {
+    this.appStore?.closeSettings();
+    this.error = null;
   }
 
   async load() {
@@ -34,6 +63,9 @@ export class SettingsStore {
       const merged = parsed.success
         ? { ...defaultAppSettings, ...parsed.data }
         : { ...defaultAppSettings };
+      merged.shortcuts = mergeShortcuts(
+        parsed.success ? parsed.data.shortcuts : undefined,
+      );
 
       const needsDetect =
         !parsed.success ||
@@ -66,16 +98,6 @@ export class SettingsStore {
     }
   }
 
-  openForm() {
-    this.isFormOpen = true;
-    this.error = null;
-  }
-
-  closeForm() {
-    this.isFormOpen = false;
-    this.error = null;
-  }
-
   async save(next: AppSettings) {
     const parsed = appSettingsSchema.safeParse(next);
     if (!parsed.success) {
@@ -83,11 +105,29 @@ export class SettingsStore {
       return;
     }
 
-    try {
-      await settingsIpc.settingsSave(parsed.data);
+    const shortcutsValidation = validateShortcuts(parsed.data.shortcuts);
+    if (!shortcutsValidation.ok) {
       runInAction(() => {
-        this.settings = parsed.data;
-        this.isFormOpen = false;
+        this.error = {
+          code: `settings.${shortcutsValidation.code}`,
+          details:
+            shortcutsValidation.binding !== undefined
+              ? { binding: shortcutsValidation.binding }
+              : undefined,
+        };
+      });
+      return;
+    }
+
+    const payload: AppSettings = {
+      ...parsed.data,
+      shortcuts: shortcutsValidation.config,
+    };
+
+    try {
+      await settingsIpc.settingsSave(payload);
+      runInAction(() => {
+        this.settings = payload;
         this.error = null;
         this.applyTheme();
         this.applySidebarWidth();

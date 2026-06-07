@@ -5,7 +5,9 @@ import { Sidebar } from '@components/sidebar/Sidebar/Sidebar';
 import { ConnectionWorkspace } from '@components/workspace/ConnectionWorkspace/ConnectionWorkspace';
 import { StatusBar } from '@components/layout/StatusBar/StatusBar';
 import { ConnectPasswordModal } from '@components/terminal/ConnectPasswordModal/ConnectPasswordModal';
-import { SettingsModal } from '@components/settings/SettingsModal/SettingsModal';
+import { VaultUnlockModal } from '@components/vault/VaultUnlockModal/VaultUnlockModal';
+import { VaultSetupModal } from '@components/vault/VaultSetupModal/VaultSetupModal';
+import { SettingsPage } from '@components/settings/SettingsPage/SettingsPage';
 import { FileConflictModal } from '@components/fileTransfer/FileConflictModal/FileConflictModal';
 import { useStores } from '@stores/index';
 import { useAppShortcuts } from '@hooks/useAppShortcuts';
@@ -23,6 +25,7 @@ export const AppShell = observer(function AppShell() {
     transferStore,
     appStore,
     settingsStore,
+    vaultStore,
   } = useStores();
 
   useAppShortcuts();
@@ -30,6 +33,7 @@ export const AppShell = observer(function AppShell() {
   useEffect(() => {
     sessionStore.load();
     void settingsStore.load();
+    void vaultStore.init();
     void terminalStore.initListeners();
     void transferStore.initListeners();
 
@@ -43,6 +47,7 @@ export const AppShell = observer(function AppShell() {
     fileConnectionStore,
     transferStore,
     settingsStore,
+    vaultStore,
   ]);
 
   useEffect(() => {
@@ -97,6 +102,10 @@ export const AppShell = observer(function AppShell() {
     workspaceStore,
   ]);
 
+  if (appStore.activeView === 'settings') {
+    return <SettingsPage />;
+  }
+
   return (
     <div className={styles.shell}>
       <div className={styles.body}>
@@ -107,7 +116,8 @@ export const AppShell = observer(function AppShell() {
       </div>
       <StatusBar />
       <ConnectPasswordModal />
-      <SettingsModal />
+      <VaultUnlockModal />
+      <VaultSetupModal />
       <FileConflictModal />
     </div>
   );

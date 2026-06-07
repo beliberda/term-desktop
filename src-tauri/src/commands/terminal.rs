@@ -11,10 +11,26 @@ use crate::events::emit_connection_status;
 use crate::models::SessionConfig;
 use crate::services::config::ConfigService;
 use crate::services::ssh::{connect_and_authenticate, map_ssh_connect_error, test_connect, CONNECT_TIMEOUT_SECS};
+use crate::services::CredentialVaultService;
 use crate::utils::paths::validate_protocol;
 
 type ConfigState = Arc<std::sync::Mutex<ConfigService>>;
+type VaultState = Arc<std::sync::Mutex<CredentialVaultService>>;
 type PoolState = Arc<AsyncMutex<ConnectionPool>>;
+
+fn resolve_password(
+    session: &SessionConfig,
+    password: Option<String>,
+    vault: &CredentialVaultService,
+) -> Option<String> {
+    password.or_else(|| {
+        if session.auth_type == "password" {
+            vault.get(&session.id)
+        } else {
+            None
+        }
+    })
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -39,6 +55,7 @@ pub async fn terminal_connect(
     app: AppHandle,
     pool: State<'_, PoolState>,
     config_state: State<'_, ConfigState>,
+    vault_state: State<'_, VaultState>,
     session_id: String,
     password: Option<String>,
 ) -> IpcResult<ConnectResponse> {
@@ -52,6 +69,13 @@ pub async fn terminal_connect(
     session.validate()?;
     validate_protocol(&session.protocol)?;
 
+    let effective_password = {
+        let vault = vault_state
+            .lock()
+            .map_err(|e| IpcError::with_str_detail("unknown", "raw", e.to_string()))?;
+        resolve_password(&session, password, &vault)
+    };
+
     let connection_id = Uuid::new_v4().to_string();
     tracing::info!(
         connection_id = %connection_id,
@@ -62,7 +86,7 @@ pub async fn terminal_connect(
 
     let ssh_handle = match tokio::time::timeout(
         std::time::Duration::from_secs(CONNECT_TIMEOUT_SECS),
-        connect_and_authenticate(&session, password),
+        connect_and_authenticate(&session, effective_password),
     )
     .await
     {

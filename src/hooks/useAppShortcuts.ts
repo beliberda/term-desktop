@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useStores } from '@stores/index';
 import { connectSession } from '@utils/connectSession';
+import { matchesShortcut } from '@utils/shortcuts';
 
 function isTypingInInput(): boolean {
   const el = document.activeElement;
@@ -19,12 +20,15 @@ export function useAppShortcuts() {
     localBrowserStore,
     remoteBrowserStore,
     transferStore,
+    settingsStore,
   } = useStores();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
+      if (appStore.activeView === 'settings') return;
+
       const inInput = isTypingInInput();
+      const shortcuts = settingsStore.settings.shortcuts;
 
       const fileMode = workspaceStore.isFileMode(
         terminalStore,
@@ -33,18 +37,17 @@ export function useAppShortcuts() {
       );
 
       if (fileMode && !inInput) {
-        if (key === 'f5') {
+        if (matchesShortcut(e, shortcuts.fileRefresh)) {
           e.preventDefault();
           localBrowserStore.refresh();
           remoteBrowserStore.refresh();
           return;
         }
-        if (key === 'f2') {
+        if (matchesShortcut(e, shortcuts.fileRename)) {
           e.preventDefault();
-          const entry =
-            remoteBrowserStore.focused
-              ? remoteBrowserStore.selectedEntries[0]
-              : localBrowserStore.selectedEntries[0];
+          const entry = remoteBrowserStore.focused
+            ? remoteBrowserStore.selectedEntries[0]
+            : localBrowserStore.selectedEntries[0];
           if (entry) {
             if (remoteBrowserStore.focused) {
               remoteBrowserStore.startRename(entry);
@@ -54,29 +57,29 @@ export function useAppShortcuts() {
           }
           return;
         }
-        if (e.ctrlKey && key === 'u') {
+        if (matchesShortcut(e, shortcuts.fileUpload)) {
           e.preventDefault();
           transferStore.uploadSelected();
           return;
         }
-        if (e.ctrlKey && key === 'd') {
+        if (matchesShortcut(e, shortcuts.fileDownload)) {
           e.preventDefault();
           transferStore.downloadSelected();
           return;
         }
-        if (e.ctrlKey && key === '1') {
+        if (matchesShortcut(e, shortcuts.focusLocalPane)) {
           e.preventDefault();
           localBrowserStore.setFocused(true);
           remoteBrowserStore.setFocused(false);
           return;
         }
-        if (e.ctrlKey && key === '2') {
+        if (matchesShortcut(e, shortcuts.focusRemotePane)) {
           e.preventDefault();
           remoteBrowserStore.setFocused(true);
           localBrowserStore.setFocused(false);
           return;
         }
-        if (e.ctrlKey && key === 'a') {
+        if (matchesShortcut(e, shortcuts.fileSelectAll)) {
           e.preventDefault();
           if (remoteBrowserStore.focused) {
             remoteBrowserStore.selectAll();
@@ -85,7 +88,7 @@ export function useAppShortcuts() {
           }
           return;
         }
-        if (e.ctrlKey && e.shiftKey && key === 't') {
+        if (matchesShortcut(e, shortcuts.toggleWorkspaceView)) {
           e.preventDefault();
           const tab = terminalStore.activeTab;
           if (tab) terminalStore.toggleWorkspaceView(tab.id);
@@ -93,9 +96,9 @@ export function useAppShortcuts() {
         }
       }
 
-      if (!e.ctrlKey || inInput) return;
+      if (inInput) return;
 
-      if (key === 't') {
+      if (matchesShortcut(e, shortcuts.connectSession)) {
         e.preventDefault();
         const selected = sessionStore.selectedId
           ? sessionStore.sessions.find((s) => s.id === sessionStore.selectedId)
@@ -113,7 +116,7 @@ export function useAppShortcuts() {
         return;
       }
 
-      if (key === 'r') {
+      if (matchesShortcut(e, shortcuts.reconnectTab)) {
         const tab = terminalStore.activeTab;
         if (tab && terminalStore.canReconnect(tab)) {
           e.preventDefault();
@@ -122,8 +125,11 @@ export function useAppShortcuts() {
         return;
       }
 
-      if (key === 'w') {
-        if (workspaceStore.active?.kind === 'ftp' && fileConnectionStore.activeTabId) {
+      if (matchesShortcut(e, shortcuts.closeTab)) {
+        if (
+          workspaceStore.active?.kind === 'ftp' &&
+          fileConnectionStore.activeTabId
+        ) {
           e.preventDefault();
           void fileConnectionStore.closeTab(fileConnectionStore.activeTabId);
         } else if (terminalStore.activeTabId) {
@@ -133,7 +139,7 @@ export function useAppShortcuts() {
         return;
       }
 
-      if (key === 'b') {
+      if (matchesShortcut(e, shortcuts.toggleSidebarTab)) {
         e.preventDefault();
         appStore.setSidebarTab(
           appStore.sidebarTab === 'sessions' ? 'files' : 'sessions',
@@ -152,5 +158,6 @@ export function useAppShortcuts() {
     localBrowserStore,
     remoteBrowserStore,
     transferStore,
+    settingsStore,
   ]);
 }

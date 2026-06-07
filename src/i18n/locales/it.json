@@ -79,6 +79,44 @@
   },
   "settings": {
     "title": "Impostazioni",
+    "back": "Back",
+    "groups": {
+      "general": "General",
+      "terminal": "Terminal",
+      "connections": "Connections",
+      "passwordManager": "Password manager",
+      "shortcuts": "Shortcuts"
+    },
+    "shortcuts": {
+      "table": "Table",
+      "json": "JSON",
+      "action": "Action",
+      "binding": "Binding",
+      "scope": "Scope",
+      "scopeGlobal": "Global",
+      "scopeFileMode": "File mode",
+      "captureHint": "Press a key combination…",
+      "clear": "Disable",
+      "reset": "Reset",
+      "resetAll": "Reset all",
+      "format": "Format",
+      "invalidJson": "Invalid shortcuts JSON",
+      "disabled": "Disabled",
+      "actions": {
+        "connectSession": "Connect session",
+        "reconnectTab": "Reconnect tab",
+        "closeTab": "Close tab",
+        "toggleSidebarTab": "Toggle sidebar tab",
+        "fileRefresh": "Refresh file panes",
+        "fileRename": "Rename selection",
+        "fileUpload": "Upload files",
+        "fileDownload": "Download files",
+        "focusLocalPane": "Focus local pane",
+        "focusRemotePane": "Focus remote pane",
+        "fileSelectAll": "Select all",
+        "toggleWorkspaceView": "Toggle terminal/files view"
+      }
+    },
     "theme": "Tema",
     "themeDark": "Scuro",
     "themeLight": "Chiaro",
@@ -146,6 +184,52 @@
       "deleteDir": "Eliminare la directory «{{name}}»?\nPercorso: {{path}}\nFile: {{count}}",
       "deleteFile": "Eliminare «{{name}}»?"
     }
+  },
+  "vault": {
+    "masterPassword": "Master password",
+    "confirmPassword": "Confirm password",
+    "rememberPassword": "Remember password",
+    "rememberLockedHint": "Unlock the vault in settings to save passwords",
+    "lock": "Lock vault",
+    "unlock": {
+      "title": "Unlock password vault",
+      "hint": "Enter your master password to use saved connection passwords.",
+      "action": "Unlock",
+      "skip": "Continue without vault"
+    },
+    "setup": {
+      "title": "Create password vault",
+      "hint": "Set a master password to encrypt saved connection passwords. Minimum 8 characters.",
+      "action": "Create vault"
+    },
+    "changeMaster": {
+      "title": "Change master password",
+      "hint": "Re-encrypt the vault with a new master password.",
+      "current": "Current master password",
+      "new": "New master password",
+      "action": "Change master password"
+    },
+    "settings": {
+      "title": "Password vault",
+      "unlocked": "Vault is unlocked — saved passwords are available.",
+      "locked": "Vault is locked — enter the master password to use saved passwords."
+    },
+    "manager": {
+      "empty": "No saved passwords",
+      "noVault": "Password vault has not been created",
+      "createVault": "Create vault",
+      "unlockToView": "Enter master password to view saved passwords",
+      "session": "Session",
+      "host": "Host",
+      "username": "Username",
+      "password": "Password",
+      "show": "Show",
+      "hide": "Hide",
+      "delete": "Delete",
+      "orphanSession": "Session not found"
+    },
+    "masterPasswordTooShort": "Master password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match"
   },
   "errors": {
     "unknown": "Errore sconosciuto",
@@ -244,11 +328,22 @@
     "settings": {
       "unsupportedSchema": "Versione schema impostazioni non supportata",
       "invalid": "Impostazioni non valide",
-      "saveFailed": "Impossibile salvare le impostazioni"
+      "saveFailed": "Impossibile salvare le impostazioni",
+      "shortcutsInvalid": "Invalid shortcuts configuration",
+      "shortcutsDuplicate": "Duplicate shortcut binding: {{binding}}"
     },
     "protocol": {
       "unsupported": "Protocollo non supportato: {{protocol}}",
       "mustBeFtp": "Il protocollo della sessione deve essere ftp, ricevuto: {{protocol}}"
+    },
+    "vault": {
+      "locked": "Password vault is locked",
+      "invalidMasterPassword": "Invalid master password",
+      "alreadyExists": "Password vault already exists",
+      "notFound": "Password vault not found",
+      "unsupportedSchema": "Unsupported vault schema version",
+      "masterPasswordTooShort": "Master password must be at least 8 characters",
+      "passwordMismatch": "Passwords do not match"
     },
     "files": {
       "listFailed": "Impossibile caricare la directory",

@@ -68,7 +68,7 @@ export const SessionToolbar = observer(function SessionToolbar() {
         type="button"
         className={styles.button}
         title={t("sidebar.toolbar.settings")}
-        onClick={() => settingsStore.openForm()}
+        onClick={() => settingsStore.openSettings()}
       >
         ⚙
       </button>

@@ -1,7 +1,13 @@
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { useStores } from '@stores/index';
+import { formatShortcutLabel } from '@utils/shortcuts';
 import styles from './FileTransferToolbar.module.css';
+
+function shortcutSuffix(binding: string): string {
+  const label = formatShortcutLabel(binding);
+  return label ? ` (${label})` : '';
+}
 
 export const FileTransferToolbar = observer(function FileTransferToolbar() {
   const { t } = useTranslation();
@@ -9,7 +15,10 @@ export const FileTransferToolbar = observer(function FileTransferToolbar() {
     localBrowserStore,
     remoteBrowserStore,
     transferStore,
+    settingsStore,
   } = useStores();
+
+  const shortcuts = settingsStore.settings.shortcuts;
 
   return (
     <div className={styles.toolbar}>
@@ -22,7 +31,8 @@ export const FileTransferToolbar = observer(function FileTransferToolbar() {
           remoteBrowserStore.refresh();
         }}
       >
-        {t('common.refresh')} (F5)
+        {t('common.refresh')}
+        {shortcutSuffix(shortcuts.fileRefresh)}
       </button>
       <button
         type="button"
@@ -31,7 +41,8 @@ export const FileTransferToolbar = observer(function FileTransferToolbar() {
         onClick={() => transferStore.uploadSelected()}
         disabled={localBrowserStore.selectedEntries.length === 0}
       >
-        {t('common.upload')} (Ctrl+U)
+        {t('common.upload')}
+        {shortcutSuffix(shortcuts.fileUpload)}
       </button>
       <button
         type="button"
@@ -40,7 +51,8 @@ export const FileTransferToolbar = observer(function FileTransferToolbar() {
         onClick={() => transferStore.downloadSelected()}
         disabled={remoteBrowserStore.selectedEntries.length === 0}
       >
-        {t('fileTransfer.download')} (Ctrl+D)
+        {t('fileTransfer.download')}
+        {shortcutSuffix(shortcuts.fileDownload)}
       </button>
       <button
         type="button"
