@@ -187,9 +187,11 @@ impl ConnectionPool {
 
     pub async fn upload_file(
         &self,
+        app: Option<&AppHandle>,
         connection_id: &str,
         local_path: &str,
         remote_path: &str,
+        transfer_id: Option<&str>,
     ) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
@@ -198,21 +200,39 @@ impl ConnectionPool {
                 sftp,
                 ..
             } => {
-                crate::services::sftp::upload_file(ssh_handle, sftp, local_path, remote_path)
-                    .await
+                crate::services::sftp::upload_file(
+                    ssh_handle,
+                    sftp,
+                    local_path,
+                    remote_path,
+                    app,
+                    Some(connection_id),
+                    transfer_id,
+                )
+                .await
             }
             ConnectionKind::Ftp { client } => {
-                ftp::upload_file(client, local_path, remote_path).await
+                ftp::upload_file(
+                    client,
+                    local_path,
+                    remote_path,
+                    app,
+                    Some(connection_id),
+                    transfer_id,
+                )
+                .await
             }
         }
     }
 
     pub async fn download(
         &self,
+        app: Option<&AppHandle>,
         connection_id: &str,
         remote_path: &str,
         local_path: &str,
         is_directory: bool,
+        transfer_id: Option<&str>,
     ) -> IpcResult<()> {
         let handle = self.get(connection_id)?;
         match &handle.kind {
@@ -235,6 +255,9 @@ impl ConnectionPool {
                         sftp,
                         remote_path,
                         local_path,
+                        app,
+                        Some(connection_id),
+                        transfer_id,
                     )
                     .await
                 }
@@ -243,7 +266,15 @@ impl ConnectionPool {
                 if is_directory {
                     ftp::download_dir(client, remote_path, local_path).await
                 } else {
-                    ftp::download_file(client, remote_path, local_path).await
+                    ftp::download_file(
+                        client,
+                        remote_path,
+                        local_path,
+                        app,
+                        Some(connection_id),
+                        transfer_id,
+                    )
+                    .await
                 }
             }
         }

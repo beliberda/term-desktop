@@ -39,7 +39,7 @@ export const ConnectPasswordModal = observer(function ConnectPasswordModal() {
 
   const handleConnect = () => {
     if (isFtp) {
-      void fileConnectionStore.connect(pending.sessionId, password);
+      void fileConnectionStore.openTab(pending.sessionId, password);
     } else if (session) {
       const reconnectTabId = sshPending?.reconnectTabId;
       if (reconnectTabId) {

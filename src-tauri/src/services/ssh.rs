@@ -253,6 +253,10 @@ pub async fn test_connect(
         },
         private_key_path: private_key_path,
         default_path: None,
+        local_path: None,
+        remote_path: None,
+        sync_browse: None,
+        file_conflict_policy: None,
         created_at: String::new(),
         updated_at: String::new(),
     };

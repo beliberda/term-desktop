@@ -19,6 +19,14 @@ pub struct SessionConfig {
     pub private_key_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub local_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remote_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sync_browse: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_conflict_policy: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -73,6 +81,14 @@ struct SessionConfigImport {
     private_key_path: Option<String>,
     #[serde(default)]
     default_path: Option<String>,
+    #[serde(default)]
+    local_path: Option<String>,
+    #[serde(default)]
+    remote_path: Option<String>,
+    #[serde(default)]
+    sync_browse: Option<bool>,
+    #[serde(default)]
+    file_conflict_policy: Option<String>,
     #[serde(default)]
     created_at: Option<String>,
     #[serde(default)]
@@ -435,7 +451,14 @@ impl SessionConfigImport {
                 self.auth_type
             },
             private_key_path: self.private_key_path,
-            default_path: self.default_path,
+            default_path: self
+                .default_path
+                .clone()
+                .or_else(|| self.remote_path.clone()),
+            local_path: self.local_path,
+            remote_path: self.remote_path.or(self.default_path),
+            sync_browse: self.sync_browse,
+            file_conflict_policy: self.file_conflict_policy,
             created_at: self.created_at.filter(|v| !v.trim().is_empty()).unwrap_or_else(|| ts.clone()),
             updated_at: self.updated_at.filter(|v| !v.trim().is_empty()).unwrap_or(ts),
         }

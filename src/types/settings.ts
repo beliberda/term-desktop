@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { LOCALE_CODES } from '@i18n/config';
+import { fileConflictPolicySchema } from './session';
 
 export const SIDEBAR_WIDTH_MIN = 180;
 export const SIDEBAR_WIDTH_MAX = 520;
@@ -20,6 +21,7 @@ export const appSettingsSchema = z.object({
     .max(SIDEBAR_WIDTH_MAX)
     .default(SIDEBAR_WIDTH_DEFAULT),
   locale: z.enum(LOCALE_CODES).default('ru'),
+  defaultFileConflictPolicy: fileConflictPolicySchema.default('ask'),
 });
 
 export type AppSettings = z.infer<typeof appSettingsSchema>;
@@ -34,4 +36,5 @@ export const defaultAppSettings: AppSettings = {
   defaultEditorPath: '',
   sidebarWidth: SIDEBAR_WIDTH_DEFAULT,
   locale: 'ru',
+  defaultFileConflictPolicy: 'ask',
 };

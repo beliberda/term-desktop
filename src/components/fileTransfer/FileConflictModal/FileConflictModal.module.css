@@ -1,0 +1,73 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal {
+  width: min(420px, 92vw);
+  padding: 20px;
+  background: var(--surface-elevated, #2a2a2a);
+  border: 1px solid var(--border, #444);
+  border-radius: 8px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.fileName {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-muted, #aaa);
+  word-break: break-all;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.date {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border, #444);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text, #eee);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btnPrimary {
+  background: var(--accent, #4a9eff);
+  border-color: var(--accent, #4a9eff);
+  color: #fff;
+}

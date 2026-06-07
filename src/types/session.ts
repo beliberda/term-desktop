@@ -4,6 +4,13 @@ import { i18n } from '@i18n/index';
 export const protocolSchema = z.enum(['ssh', 'sftp', 'ftp']);
 export const authTypeSchema = z.enum(['password', 'privateKey', 'agent']);
 
+export const fileConflictPolicySchema = z.enum([
+  'ask',
+  'alwaysReplace',
+  'replaceIfDifferentSize',
+  'replaceIfDifferentSizeOrNewer',
+]);
+
 export const sessionSchema = z
   .object({
     id: z.string().uuid(),
@@ -15,6 +22,10 @@ export const sessionSchema = z
     authType: authTypeSchema,
     privateKeyPath: z.string().optional(),
     defaultPath: z.string().optional(),
+    localPath: z.string().optional(),
+    remotePath: z.string().optional(),
+    syncBrowse: z.boolean().optional(),
+    fileConflictPolicy: fileConflictPolicySchema.optional(),
     createdAt: z.string(),
     updatedAt: z.string(),
   })
@@ -55,6 +66,7 @@ export const sessionsFileSchema = z.union([
 
 export type Protocol = z.infer<typeof protocolSchema>;
 export type AuthType = z.infer<typeof authTypeSchema>;
+export type FileConflictPolicy = z.infer<typeof fileConflictPolicySchema>;
 export type SessionConfig = z.infer<typeof sessionSchema>;
 export type SessionFolder = z.infer<typeof sessionFolderSchema>;
 export type SessionsFileV2 = z.infer<typeof sessionsFileV2Schema>;
@@ -145,11 +157,22 @@ export function migrateSessionsFile(data: unknown): SessionsFileV2 {
   throw new Error('Invalid sessions file format');
 }
 
+export function getSessionRemotePath(session: SessionConfig): string {
+  const raw = (session.remotePath ?? session.defaultPath)?.trim();
+  if (!raw) return '/';
+  return raw.startsWith('/') ? raw : `/${raw}`;
+}
+
+export function getSessionLocalPath(session: SessionConfig): string | undefined {
+  return session.localPath?.trim() || undefined;
+}
+
 export function prepareSessionForSave(
   data: SessionConfig,
   isNew: boolean,
 ): SessionConfig {
   const ts = nowIso();
+  const remotePath = data.remotePath?.trim() || data.defaultPath?.trim() || undefined;
   return {
     ...data,
     port: data.port || getDefaultPort(data.protocol),
@@ -157,6 +180,10 @@ export function prepareSessionForSave(
     updatedAt: ts,
     privateKeyPath:
       data.authType === 'privateKey' ? data.privateKeyPath?.trim() : undefined,
-    defaultPath: data.defaultPath?.trim() || undefined,
+    defaultPath: remotePath,
+    remotePath,
+    localPath: data.localPath?.trim() || undefined,
+    syncBrowse: data.syncBrowse ?? true,
+    fileConflictPolicy: data.fileConflictPolicy,
   };
 }

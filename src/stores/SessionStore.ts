@@ -59,6 +59,16 @@ export class SessionStore {
     return this.sessions.find((session) => session.id === id);
   }
 
+  async updateSessionPolicy(sessionId: string, policy: SessionConfig['fileConflictPolicy']) {
+    const session = this.sessions.find((s) => s.id === sessionId);
+    if (!session || !policy) return;
+    runInAction(() => {
+      session.fileConflictPolicy = policy;
+    });
+    this.schedulePersist();
+    await this.flushPersist();
+  }
+
   getFolderById(id: string): SessionFolder | undefined {
     return this.folders.find((folder) => folder.id === id);
   }

@@ -5,6 +5,10 @@ import {
   type ConnectionStatusPayload,
   type TerminalOutputPayload,
 } from '@/types';
+import {
+  transferProgressPayloadSchema,
+  type TransferProgressPayload,
+} from '@/types/transfer';
 
 export async function listenConnectionStatus(
   handler: (payload: ConnectionStatusPayload) => void,
@@ -22,6 +26,17 @@ export async function listenTerminalOutput(
 ): Promise<UnlistenFn> {
   return listen<unknown>('terminal-output', (event) => {
     const parsed = terminalOutputPayloadSchema.safeParse(event.payload);
+    if (parsed.success) {
+      handler(parsed.data);
+    }
+  });
+}
+
+export async function listenTransferProgress(
+  handler: (payload: TransferProgressPayload) => void,
+): Promise<UnlistenFn> {
+  return listen<unknown>('transfer-progress', (event) => {
+    const parsed = transferProgressPayloadSchema.safeParse(event.payload);
     if (parsed.success) {
       handler(parsed.data);
     }

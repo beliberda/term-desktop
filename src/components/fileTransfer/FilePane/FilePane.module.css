@@ -1,0 +1,18 @@
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.paneTitle {
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-elevated, #252525);
+  border-bottom: 1px solid var(--border, #333);
+}

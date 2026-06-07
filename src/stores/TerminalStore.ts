@@ -1,11 +1,12 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import type { ConnectionStatusPayload, TerminalTab } from '@/types';
+import type { ConnectionStatusPayload, TerminalTab, WorkspaceView } from '@/types';
 import type { SessionConfig } from '@/types';
 import type { AppError } from '@i18n/types';
 import { getIpcErrorPayload } from '@ipc/client';
 import * as terminalIpc from '@ipc/terminal';
 import { listenTerminalOutput } from '@ipc/events';
 import type { SessionStore } from './SessionStore';
+import type { WorkspaceStore } from './WorkspaceStore';
 
 export type TerminalHandle = {
   write: (data: Uint8Array) => void;
@@ -49,6 +50,7 @@ export class TerminalStore {
   activeTabId: string | null = null;
   pendingConnect: PendingConnect | null = null;
   private sessionStore: SessionStore | null = null;
+  private workspaceStore: WorkspaceStore | null = null;
   private listenersInitialized = false;
   private terminalHandles = new Map<string, TerminalHandle>();
   private unlistenFns: Array<() => void> = [];
@@ -59,6 +61,10 @@ export class TerminalStore {
 
   setSessionStore(sessionStore: SessionStore) {
     this.sessionStore = sessionStore;
+  }
+
+  setWorkspaceStore(workspaceStore: WorkspaceStore) {
+    this.workspaceStore = workspaceStore;
   }
 
   clearStalePendingConnect(validSessionIds: Set<string>) {
@@ -194,6 +200,7 @@ export class TerminalStore {
       title,
       status: 'connecting',
       connectStartedAt: performance.now(),
+      workspaceView: resolved.protocol === 'sftp' ? 'files' : 'terminal',
     };
 
     runInAction(() => {
@@ -201,6 +208,7 @@ export class TerminalStore {
       this.activeTabId = tabId;
       this.pendingConnect = null;
       this.sessionStore?.selectSession(sessionId);
+      this.workspaceStore?.setActiveTerminalTab(tabId);
     });
 
     await this.connectTab(tabId, sessionId, password, resolved);
@@ -346,7 +354,13 @@ export class TerminalStore {
     runInAction(() => {
       this.tabs = this.tabs.filter((t) => t.id !== tabId);
       if (this.activeTabId === tabId) {
-        this.activeTabId = this.tabs[this.tabs.length - 1]?.id ?? null;
+        const next = this.tabs[this.tabs.length - 1];
+        this.activeTabId = next?.id ?? null;
+        if (next) {
+          this.workspaceStore?.setActiveTerminalTab(next.id);
+        } else {
+          this.workspaceStore?.clearIfTab(tabId);
+        }
       }
     });
 
@@ -365,6 +379,7 @@ export class TerminalStore {
       this.activeTabId = tabId;
       if (tab) {
         this.sessionStore?.selectSession(tab.sessionId);
+        this.workspaceStore?.setActiveTerminalTab(tabId);
       }
     });
   }
@@ -396,6 +411,19 @@ export class TerminalStore {
     } catch (e) {
       console.error('[TerminalStore] resize failed:', e);
     }
+  }
+
+  setWorkspaceView(tabId: string, view: WorkspaceView) {
+    const tab = this.tabs.find((t) => t.id === tabId);
+    if (tab) {
+      tab.workspaceView = view;
+    }
+  }
+
+  toggleWorkspaceView(tabId: string) {
+    const tab = this.tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+    tab.workspaceView = tab.workspaceView === 'files' ? 'terminal' : 'files';
   }
 
   handleConnectionStatus(payload: ConnectionStatusPayload) {

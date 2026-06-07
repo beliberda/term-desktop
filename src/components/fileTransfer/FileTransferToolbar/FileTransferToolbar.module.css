@@ -1,0 +1,26 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+.btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border, #444);
+  border-radius: 4px;
+  background: var(--surface, #2a2a2a);
+  color: var(--text, #eee);
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--hover, #333);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

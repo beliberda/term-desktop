@@ -1,0 +1,124 @@
+.tabBar {
+  display: flex;
+  align-items: stretch;
+  height: var(--tabbar-height);
+  background: var(--color-tab-inactive);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.tab {
+  display: flex;
+  align-items: stretch;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-tab-inactive);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  max-width: 280px;
+}
+
+.tab:hover {
+  background: var(--color-sidebar-bg);
+  color: var(--color-text);
+}
+
+.tabActive {
+  background: var(--color-tab-active);
+  color: var(--color-text);
+}
+
+.tabMain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px 0 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.tabTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusConnecting {
+  background: #e5c07b;
+}
+
+.statusConnected {
+  background: #89d185;
+}
+
+.statusError {
+  background: #f48771;
+}
+
+.statusDisconnected {
+  background: var(--color-text-muted);
+}
+
+.viewToggle {
+  display: flex;
+  align-self: center;
+  margin-right: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.viewBtn {
+  padding: 2px 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.viewBtnActive {
+  background: var(--color-accent, #4a9eff);
+  color: #fff;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  align-self: stretch;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  background: #5a1d1d;
+  color: #f48771;
+}

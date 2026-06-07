@@ -17,7 +17,6 @@ export function connectSession(
 
   if (session.protocol === 'ftp') {
     stores.fileConnectionStore.requestConnect(session.id);
-    stores.appStore.setSidebarTab('files');
     return;
   }
 

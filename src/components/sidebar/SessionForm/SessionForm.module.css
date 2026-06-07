@@ -130,3 +130,39 @@
 .btnSave:hover {
   background: var(--color-accent-hover);
 }
+
+.advanced {
+  border-top: 1px solid var(--color-border);
+  padding-top: 8px;
+}
+
+.advancedToggle {
+  width: 100%;
+  text-align: left;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.advancedToggle:hover {
+  color: var(--color-text);
+}
+
+.advancedBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}

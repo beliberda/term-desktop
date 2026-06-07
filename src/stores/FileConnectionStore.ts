@@ -3,6 +3,8 @@ import type { ConnectionStatus, ConnectionStatusPayload } from '@/types';
 import type { AppError } from '@i18n/types';
 import { getIpcErrorPayload } from '@ipc/client';
 import * as ftpIpc from '@ipc/ftp';
+import type { SessionStore } from './SessionStore';
+import type { WorkspaceStore } from './WorkspaceStore';
 
 export interface FtpConnectionState {
   connectionId: string;
@@ -11,13 +13,40 @@ export interface FtpConnectionState {
   connectLatencyMs?: number;
 }
 
+export interface FileTab {
+  id: string;
+  sessionId: string;
+  connectionId?: string;
+  title: string;
+  status: ConnectionStatus;
+  error?: AppError;
+  connectLatencyMs?: number;
+}
+
 export class FileConnectionStore {
   connections = new Map<string, FtpConnectionState>();
+  tabs: FileTab[] = [];
+  activeTabId: string | null = null;
   activeSessionId: string | null = null;
   pendingConnect: { sessionId: string } | null = null;
+  private sessionStore: SessionStore | null = null;
+  private workspaceStore: WorkspaceStore | null = null;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setSessionStore(sessionStore: SessionStore) {
+    this.sessionStore = sessionStore;
+  }
+
+  setWorkspaceStore(workspaceStore: WorkspaceStore) {
+    this.workspaceStore = workspaceStore;
+  }
+
+  get activeTab(): FileTab | null {
+    if (!this.activeTabId) return null;
+    return this.tabs.find((t) => t.id === this.activeTabId) ?? null;
   }
 
   get activeConnection(): FtpConnectionState | null {
@@ -33,9 +62,60 @@ export class FileConnectionStore {
     this.pendingConnect = null;
   }
 
+  setActiveTab(tabId: string) {
+    this.activeTabId = tabId;
+    const tab = this.tabs.find((t) => t.id === tabId);
+    if (tab) {
+      this.activeSessionId = tab.sessionId;
+      this.sessionStore?.selectSession(tab.sessionId);
+      this.workspaceStore?.setActiveFtpTab(tabId);
+    }
+  }
+
+  async openTab(sessionId: string, password?: string) {
+    const session = this.sessionStore?.getSessionById(sessionId);
+    if (!session) return;
+
+    const existing = this.tabs.find((t) => t.sessionId === sessionId);
+    if (existing) {
+      this.setActiveTab(existing.id);
+      if (existing.status === 'connected') return;
+    }
+
+    const tabId = crypto.randomUUID();
+    const title = `${session.name} (${session.host})`;
+    const tab: FileTab = {
+      id: tabId,
+      sessionId,
+      title,
+      status: 'connecting',
+    };
+
+    runInAction(() => {
+      if (!existing) {
+        this.tabs.push(tab);
+      }
+      this.activeTabId = existing?.id ?? tabId;
+      this.activeSessionId = sessionId;
+      this.pendingConnect = null;
+      this.sessionStore?.selectSession(sessionId);
+      this.workspaceStore?.setActiveFtpTab(existing?.id ?? tabId);
+    });
+
+    await this.connect(sessionId, password);
+  }
+
   async connect(sessionId: string, password?: string) {
     this.activeSessionId = sessionId;
     this.pendingConnect = null;
+
+    const tab = this.tabs.find((t) => t.sessionId === sessionId);
+    if (tab) {
+      runInAction(() => {
+        tab.status = 'connecting';
+        tab.error = undefined;
+      });
+    }
 
     runInAction(() => {
       this.connections.set(sessionId, {
@@ -54,18 +134,28 @@ export class FileConnectionStore {
           status: 'connected',
           connectLatencyMs: Math.round(performance.now() - startedAt),
         });
+        if (tab) {
+          tab.connectionId = connectionId;
+          tab.status = 'connected';
+          tab.connectLatencyMs = Math.round(performance.now() - startedAt);
+        }
       });
     } catch (e) {
       const error = getIpcErrorPayload(e);
       runInAction(() => {
+        const err =
+          error.code === 'unknown'
+            ? { code: 'ftp.connectFailedFrontend' }
+            : error;
         this.connections.set(sessionId, {
           connectionId: '',
           status: 'error',
-          error:
-            error.code === 'unknown'
-              ? { code: 'ftp.connectFailedFrontend' }
-              : error,
+          error: err,
         });
+        if (tab) {
+          tab.status = 'error';
+          tab.error = err;
+        }
       });
     }
   }
@@ -79,10 +169,49 @@ export class FileConnectionStore {
             status: payload.status,
             error: payload.error,
           });
+          const tab = this.tabs.find((t) => t.sessionId === sessionId);
+          if (tab) {
+            tab.status = payload.status;
+            tab.error = payload.error;
+            if (payload.status === 'connected') {
+              tab.connectionId = payload.connectionId;
+            }
+            if (payload.status === 'error' || payload.status === 'disconnected') {
+              tab.connectionId = undefined;
+            }
+          }
         });
         return;
       }
     }
+  }
+
+  async closeTab(tabId: string) {
+    const tab = this.tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+
+    if (tab.connectionId) {
+      try {
+        await ftpIpc.ftpDisconnect(tab.connectionId);
+      } catch (e) {
+        console.error('[FileConnectionStore] disconnect failed:', e);
+      }
+    }
+
+    runInAction(() => {
+      this.tabs = this.tabs.filter((t) => t.id !== tabId);
+      this.connections.delete(tab.sessionId);
+      if (this.activeTabId === tabId) {
+        const next = this.tabs[this.tabs.length - 1];
+        this.activeTabId = next?.id ?? null;
+        this.activeSessionId = next?.sessionId ?? null;
+        if (next) {
+          this.workspaceStore?.setActiveFtpTab(next.id);
+        } else {
+          this.workspaceStore?.clearIfTab(tabId);
+        }
+      }
+    });
   }
 
   async disconnect(sessionId: string) {
@@ -97,8 +226,10 @@ export class FileConnectionStore {
 
     runInAction(() => {
       this.connections.delete(sessionId);
+      this.tabs = this.tabs.filter((t) => t.sessionId !== sessionId);
       if (this.activeSessionId === sessionId) {
         this.activeSessionId = null;
+        this.activeTabId = null;
       }
     });
   }

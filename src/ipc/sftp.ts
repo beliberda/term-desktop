@@ -12,8 +12,14 @@ export async function sftpUpload(
   connectionId: string,
   localPath: string,
   remotePath: string,
+  transferId?: string,
 ): Promise<void> {
-  await safeInvoke('sftp_upload', { connectionId, localPath, remotePath });
+  await safeInvoke('sftp_upload', {
+    connectionId,
+    localPath,
+    remotePath,
+    transferId: transferId ?? null,
+  });
 }
 
 export async function sftpDownload(
@@ -21,12 +27,14 @@ export async function sftpDownload(
   remotePath: string,
   localPath: string,
   isDirectory: boolean,
+  transferId?: string,
 ): Promise<void> {
   await safeInvoke('sftp_download', {
     connectionId,
     remotePath,
     localPath,
     isDirectory,
+    transferId: transferId ?? null,
   });
 }
 

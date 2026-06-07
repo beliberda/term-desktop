@@ -1,5 +1,6 @@
 pub mod config;
 pub mod ftp;
+pub mod local_fs;
 pub mod open;
 pub mod ping;
 pub mod settings;

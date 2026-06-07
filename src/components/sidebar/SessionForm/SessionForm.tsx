@@ -7,6 +7,7 @@ import {
   getDefaultPort,
   translateSessionValidationMessage,
   type AuthType,
+  type FileConflictPolicy,
   type Protocol,
   type SessionConfig,
 } from "@/types";
@@ -16,6 +17,7 @@ export const SessionForm = observer(function SessionForm() {
   const { t } = useTranslation();
   const { sessionStore, settingsStore } = useStores();
   const [draft, setDraft] = useState<SessionConfig | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   useEffect(() => {
     if (sessionStore.isFormOpen) {
@@ -52,6 +54,13 @@ export const SessionForm = observer(function SessionForm() {
     });
     if (typeof selected === "string") {
       update({ privateKeyPath: selected });
+    }
+  };
+
+  const handleBrowseLocalPath = async () => {
+    const selected = await open({ directory: true });
+    if (typeof selected === "string") {
+      update({ localPath: selected });
     }
   };
 
@@ -223,18 +232,111 @@ export const SessionForm = observer(function SessionForm() {
             </div>
           )}
 
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="session-default-path">
-              {t("session.form.defaultPath")}
-            </label>
-            <input
-              id="session-default-path"
-              className={styles.input}
-              value={session.defaultPath ?? ""}
-              onChange={(e) => update({ defaultPath: e.target.value })}
-              placeholder={t("session.form.defaultPathPlaceholder")}
-            />
-          </div>
+          {(session.protocol === "ssh" || session.protocol === "sftp") && (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="session-default-path">
+                {t("session.form.defaultPath")}
+              </label>
+              <input
+                id="session-default-path"
+                className={styles.input}
+                value={session.defaultPath ?? ""}
+                onChange={(e) => update({ defaultPath: e.target.value })}
+                placeholder={t("session.form.defaultPathPlaceholder")}
+              />
+            </div>
+          )}
+
+          {(session.protocol === "ftp" || session.protocol === "sftp") && (
+            <div className={styles.advanced}>
+              <button
+                type="button"
+                className={styles.advancedToggle}
+                onClick={() => setAdvancedOpen((v) => !v)}
+              >
+                {t("session.form.advanced")}
+                {advancedOpen ? " ▲" : " ▼"}
+              </button>
+              {advancedOpen && (
+                <div className={styles.advancedBody}>
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="session-local-path">
+                      {t("session.form.localPath")}
+                    </label>
+                    <div className={styles.keyRow}>
+                      <input
+                        id="session-local-path"
+                        className={styles.input}
+                        value={session.localPath ?? ""}
+                        onChange={(e) => update({ localPath: e.target.value })}
+                        placeholder={t("session.form.localPathPlaceholder")}
+                      />
+                      <button
+                        type="button"
+                        className={styles.browseBtn}
+                        onClick={handleBrowseLocalPath}
+                      >
+                        {t("common.browse")}
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="session-remote-path">
+                      {t("session.form.remotePath")}
+                    </label>
+                    <input
+                      id="session-remote-path"
+                      className={styles.input}
+                      value={session.remotePath ?? session.defaultPath ?? ""}
+                      onChange={(e) =>
+                        update({
+                          remotePath: e.target.value,
+                          defaultPath: e.target.value,
+                        })
+                      }
+                      placeholder={t("session.form.defaultPathPlaceholder")}
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={session.syncBrowse !== false}
+                        onChange={(e) => update({ syncBrowse: e.target.checked })}
+                      />
+                      {t("session.form.syncBrowse")}
+                    </label>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="session-conflict-policy">
+                      {t("session.form.conflictPolicy")}
+                    </label>
+                    <select
+                      id="session-conflict-policy"
+                      className={styles.select}
+                      value={session.fileConflictPolicy ?? "ask"}
+                      onChange={(e) =>
+                        update({
+                          fileConflictPolicy: e.target.value as FileConflictPolicy,
+                        })
+                      }
+                    >
+                      <option value="ask">{t("session.form.conflictAsk")}</option>
+                      <option value="alwaysReplace">
+                        {t("session.form.conflictAlwaysReplace")}
+                      </option>
+                      <option value="replaceIfDifferentSize">
+                        {t("session.form.conflictIfSize")}
+                      </option>
+                      <option value="replaceIfDifferentSizeOrNewer">
+                        {t("session.form.conflictIfSizeOrNewer")}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className={styles.actions}>
             <button

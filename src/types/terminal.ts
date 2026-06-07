@@ -18,6 +18,8 @@ export const terminalOutputPayloadSchema = z.object({
   data: z.string(),
 });
 
+export type WorkspaceView = 'terminal' | 'files';
+
 export interface TerminalTab {
   id: string;
   sessionId: string;
@@ -28,6 +30,7 @@ export interface TerminalTab {
   connectStartedAt?: number;
   connectLatencyMs?: number;
   reconnecting?: boolean;
+  workspaceView?: WorkspaceView;
 }
 
 export type ConnectionStatusPayload = z.infer<typeof connectionStatusPayloadSchema>;

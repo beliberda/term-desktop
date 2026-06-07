@@ -2,6 +2,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use russh_sftp::client::SftpSession;
+use tauri::AppHandle;
 use tokio::sync::Mutex;
 
 use crate::error::{IpcError, IpcResult};
@@ -9,6 +10,7 @@ use crate::models::sftp::SftpEntry;
 use crate::services::ssh::SharedSshHandle;
 use crate::utils::cache_paths::open_cache_path;
 use crate::utils::sftp_paths::normalize_remote_path;
+use crate::utils::transfer::TransferProgress;
 
 pub struct SftpSessionCache(pub Arc<Mutex<Option<SftpSession>>>);
 
@@ -109,6 +111,9 @@ pub async fn upload_file(
     cache: &SftpSessionCache,
     local_path: &str,
     remote_path: &str,
+    app: Option<&AppHandle>,
+    connection_id: Option<&str>,
+    transfer_id: Option<&str>,
 ) -> IpcResult<()> {
     let local = Path::new(local_path);
     if !local.exists() {
@@ -126,8 +131,48 @@ pub async fn upload_file(
         ));
     }
 
-    let data = std::fs::read(local)
-        .map_err(|e| IpcError::with_str_detail("fs.readLocalFailed", "raw", e.to_string()))?;
+    let file_size = std::fs::metadata(local)
+        .map_err(|e| IpcError::with_str_detail("fs.statLocalFailed", "raw", e.to_string()))?
+        .len();
+
+    let file_name = local
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| local_path.to_string());
+
+    let progress = match (app, connection_id, transfer_id) {
+        (Some(app), Some(conn_id), Some(tid)) => Some(TransferProgress::new(
+            app,
+            tid,
+            conn_id,
+            &file_name,
+            "upload",
+            file_size,
+        )),
+        _ => None,
+    };
+
+    const CHUNK: usize = 64 * 1024;
+    let mut data = Vec::with_capacity(file_size as usize);
+    let mut file = std::fs::File::open(local)
+        .map_err(|e| IpcError::with_str_detail("fs.openLocalFailed", "raw", e.to_string()))?;
+    use std::io::Read;
+    let mut buf = [0u8; CHUNK];
+    let mut total_read = 0u64;
+    loop {
+        let n = file
+            .read(&mut buf)
+            .map_err(|e| IpcError::with_str_detail("fs.readLocalFailed", "raw", e.to_string()))?;
+        if n == 0 {
+            break;
+        }
+        data.extend_from_slice(&buf[..n]);
+        total_read += n as u64;
+        if let Some(ref p) = progress {
+            p.update(total_read);
+        }
+    }
+
     let remote_path = normalize_remote_path(remote_path);
 
     ensure_sftp(ssh_handle, cache).await?;
@@ -136,9 +181,18 @@ pub async fn upload_file(
         .as_ref()
         .ok_or_else(|| IpcError::new("sftp.notInitialized"))?;
 
-    sftp.write(&remote_path, &data)
+    let result = sftp
+        .write(&remote_path, &data)
         .await
-        .map_err(|e| IpcError::with_str_detail("sftp.uploadFailed", "raw", e.to_string()))
+        .map_err(|e| IpcError::with_str_detail("sftp.uploadFailed", "raw", e.to_string()));
+
+    match (&result, &progress) {
+        (Ok(()), Some(p)) => p.done(),
+        (Err(_), Some(p)) => p.error(),
+        _ => {}
+    }
+
+    result
 }
 
 pub async fn download_file(
@@ -146,10 +200,41 @@ pub async fn download_file(
     cache: &SftpSessionCache,
     remote_path: &str,
     local_path: &str,
+    app: Option<&AppHandle>,
+    connection_id: Option<&str>,
+    transfer_id: Option<&str>,
 ) -> IpcResult<()> {
     let remote_path = normalize_remote_path(remote_path);
+    let file_name = Path::new(&remote_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| remote_path.to_string());
 
     ensure_sftp(ssh_handle, cache).await?;
+
+    let file_size = {
+        let guard = cache.0.lock().await;
+        let sftp = guard
+            .as_ref()
+            .ok_or_else(|| IpcError::new("sftp.notInitialized"))?;
+        let metadata = sftp
+            .metadata(&remote_path)
+            .await
+            .map_err(|e| IpcError::with_str_detail("sftp.statFailed", "raw", e.to_string()))?;
+        metadata.len()
+    };
+
+    let progress = match (app, connection_id, transfer_id) {
+        (Some(app), Some(conn_id), Some(tid)) => Some(TransferProgress::new(
+            app,
+            tid,
+            conn_id,
+            &file_name,
+            "download",
+            file_size,
+        )),
+        _ => None,
+    };
 
     let data = {
         let guard = cache.0.lock().await;
@@ -159,8 +244,17 @@ pub async fn download_file(
 
         sftp.read(&remote_path)
             .await
-            .map_err(|e| IpcError::with_str_detail("sftp.readFailed", "raw", e.to_string()))?
+            .map_err(|e| {
+                if let Some(ref p) = progress {
+                    p.error();
+                }
+                IpcError::with_str_detail("sftp.readFailed", "raw", e.to_string())
+            })?
     };
+
+    if let Some(ref p) = progress {
+        p.update(file_size);
+    }
 
     if let Some(parent) = Path::new(local_path).parent() {
         if !parent.as_os_str().is_empty() {
@@ -170,8 +264,16 @@ pub async fn download_file(
         }
     }
 
-    std::fs::write(local_path, data)
-        .map_err(|e| IpcError::with_str_detail("fs.writeLocalFailed", "raw", e.to_string()))
+    let result = std::fs::write(local_path, data)
+        .map_err(|e| IpcError::with_str_detail("fs.writeLocalFailed", "raw", e.to_string()));
+
+    match (&result, &progress) {
+        (Ok(()), Some(p)) => p.done(),
+        (Err(_), Some(p)) => p.error(),
+        _ => {}
+    }
+
+    result
 }
 
 pub async fn download_dir(
@@ -204,6 +306,9 @@ pub async fn download_dir(
                 cache,
                 &entry.path,
                 local_path.to_string_lossy().as_ref(),
+                None,
+                None,
+                None,
             )
             .await?;
         }
@@ -376,7 +481,16 @@ async fn fetch_to_cache_inner(
         }
     }
 
-    download_file(ssh_handle, cache, &remote_path, &local_path_str).await?;
+    download_file(
+        ssh_handle,
+        cache,
+        &remote_path,
+        &local_path_str,
+        None,
+        None,
+        None,
+    )
+    .await?;
     Ok(local_path_str)
 }
 

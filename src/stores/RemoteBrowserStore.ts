@@ -1,0 +1,388 @@
+import { makeAutoObservable, runInAction } from 'mobx';
+import type { ConnectionStatus, SessionConfig, SftpEntry } from '@/types';
+import { getSessionRemotePath } from '@/types/session';
+import type { AppError } from '@i18n/types';
+import { i18n } from '@i18n/index';
+import { getIpcErrorPayload } from '@ipc/client';
+import * as sftpIpc from '@ipc/sftp';
+import * as localIpc from '@ipc/local';
+import { joinRemotePath, parentRemotePath } from '@utils/filePaths';
+import { openInEditor } from '@utils/openInEditor';
+import type { LocalBrowserStore } from './LocalBrowserStore';
+import type { SettingsStore } from './SettingsStore';
+
+function mapFileError(e: unknown, fallbackCode: string): AppError {
+  const payload = getIpcErrorPayload(e);
+  return payload.code === 'unknown' ? { code: fallbackCode } : payload;
+}
+
+export type RemoteBindSource = {
+  connectionId: string | null;
+  sessionId: string | null;
+  session: SessionConfig | null;
+  status: ConnectionStatus | null;
+  protocol: 'sftp' | 'ftp' | null;
+};
+
+export class RemoteBrowserStore {
+  connectionId: string | null = null;
+  sessionId: string | null = null;
+  session: SessionConfig | null = null;
+  protocol: 'sftp' | 'ftp' | null = null;
+  connectionStatus: ConnectionStatus | null = null;
+  cwd = '/';
+  entries: SftpEntry[] = [];
+  isLoading = false;
+  error: AppError | null = null;
+  selectedPaths = new Set<string>();
+  lastSelectedPath: string | null = null;
+  renameTargetPath: string | null = null;
+  renameDraft = '';
+  focused = false;
+  private settingsStore: SettingsStore | null = null;
+  private localBrowserStore: LocalBrowserStore | null = null;
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  setSettingsStore(settingsStore: SettingsStore) {
+    this.settingsStore = settingsStore;
+  }
+
+  setLocalBrowserStore(localBrowserStore: LocalBrowserStore) {
+    this.localBrowserStore = localBrowserStore;
+  }
+
+  get breadcrumbs(): { label: string; path: string }[] {
+    if (this.cwd === '/') {
+      return [{ label: '/', path: '/' }];
+    }
+    const parts = this.cwd.split('/').filter(Boolean);
+    const crumbs: { label: string; path: string }[] = [{ label: '/', path: '/' }];
+    let acc = '';
+    for (const part of parts) {
+      acc += `/${part}`;
+      crumbs.push({ label: part, path: acc });
+    }
+    return crumbs;
+  }
+
+  get canBrowse(): boolean {
+    return this.connectionId !== null && this.connectionStatus === 'connected';
+  }
+
+  get selectedEntries(): SftpEntry[] {
+    return this.entries.filter((e) => this.selectedPaths.has(e.path));
+  }
+
+  bind(source: RemoteBindSource) {
+    const connectionChanged =
+      this.connectionId !== source.connectionId ||
+      this.sessionId !== source.sessionId;
+
+    runInAction(() => {
+      this.connectionId = source.connectionId;
+      this.sessionId = source.sessionId;
+      this.session = source.session;
+      this.protocol = source.protocol;
+      this.connectionStatus = source.status;
+      if (connectionChanged) {
+        this.cwd = source.session ? getSessionRemotePath(source.session) : '/';
+        this.entries = [];
+        this.selectedPaths.clear();
+        this.lastSelectedPath = null;
+        this.error = null;
+      }
+    });
+
+    if (this.canBrowse) {
+      void this.loadDir();
+    }
+  }
+
+  reset() {
+    this.connectionId = null;
+    this.sessionId = null;
+    this.session = null;
+    this.protocol = null;
+    this.connectionStatus = null;
+    this.cwd = '/';
+    this.entries = [];
+    this.isLoading = false;
+    this.error = null;
+    this.selectedPaths.clear();
+    this.lastSelectedPath = null;
+    this.cancelRename();
+  }
+
+  async loadDir(path?: string) {
+    if (!this.connectionId) return;
+    const target = path ?? this.cwd;
+    this.cancelRename();
+
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+
+    try {
+      const entries = await sftpIpc.sftpListDir(this.connectionId, target);
+      runInAction(() => {
+        this.cwd = target;
+        this.entries = entries;
+        this.isLoading = false;
+        this.selectedPaths.clear();
+        this.lastSelectedPath = null;
+      });
+      this.syncLocalBrowse(target);
+    } catch (e) {
+      runInAction(() => {
+        this.error = mapFileError(e, 'files.listFailed');
+        this.isLoading = false;
+      });
+    }
+  }
+
+  syncLocalBrowse(remotePath: string) {
+    if (!this.session || this.session.syncBrowse === false) return;
+    if (!this.localBrowserStore) return;
+    const localPath = this.session.localPath?.trim();
+    if (!localPath) return;
+
+    const remoteBase = getSessionRemotePath(this.session);
+    const normalized = remotePath.startsWith('/') ? remotePath : `/${remotePath}`;
+    let relative = '';
+    if (normalized === remoteBase) {
+      relative = '';
+    } else if (remoteBase === '/') {
+      relative = normalized.slice(1);
+    } else if (normalized.startsWith(`${remoteBase}/`)) {
+      relative = normalized.slice(remoteBase.length + 1);
+    } else {
+      return;
+    }
+
+    const separator = localPath.includes('\\') ? '\\' : '/';
+    const trimmed = localPath.replace(/[/\\]+$/, '');
+    const mapped =
+      relative === ''
+        ? trimmed
+        : `${trimmed}${separator}${relative.replace(/\//g, separator)}`;
+
+    void (async () => {
+      const exists = await localIpc.localExists(mapped);
+      if (exists) {
+        await this.localBrowserStore!.loadDir(mapped);
+      }
+    })();
+  }
+
+  navigateTo(path: string) {
+    void this.loadDir(path);
+  }
+
+  navigateUp() {
+    void this.loadDir(parentRemotePath(this.cwd));
+  }
+
+  refresh() {
+    if (!this.canBrowse) return;
+    void this.loadDir(this.cwd);
+  }
+
+  selectEntry(
+    entry: SftpEntry,
+    opts?: { additive?: boolean; range?: boolean },
+  ) {
+    if (opts?.range && this.lastSelectedPath) {
+      const paths = this.entries.map((e) => e.path);
+      const start = paths.indexOf(this.lastSelectedPath);
+      const end = paths.indexOf(entry.path);
+      if (start >= 0 && end >= 0) {
+        const [from, to] = start < end ? [start, end] : [end, start];
+        for (let i = from; i <= to; i++) {
+          this.selectedPaths.add(paths[i]);
+        }
+        this.lastSelectedPath = entry.path;
+        return;
+      }
+    }
+
+    if (opts?.additive) {
+      if (this.selectedPaths.has(entry.path)) {
+        this.selectedPaths.delete(entry.path);
+      } else {
+        this.selectedPaths.add(entry.path);
+      }
+      this.lastSelectedPath = entry.path;
+      return;
+    }
+
+    this.selectedPaths.clear();
+    this.selectedPaths.add(entry.path);
+    this.lastSelectedPath = entry.path;
+  }
+
+  selectAll() {
+    this.entries.forEach((e) => this.selectedPaths.add(e.path));
+  }
+
+  clearSelection() {
+    this.selectedPaths.clear();
+    this.lastSelectedPath = null;
+  }
+
+  setFocused(value: boolean) {
+    this.focused = value;
+  }
+
+  startRename(entry: SftpEntry) {
+    this.renameTargetPath = entry.path;
+    this.renameDraft = entry.name;
+  }
+
+  cancelRename() {
+    this.renameTargetPath = null;
+    this.renameDraft = '';
+  }
+
+  async commitRename() {
+    if (!this.connectionId) return;
+    const targetPath = this.renameTargetPath;
+    if (!targetPath) return;
+    const nextName = this.renameDraft.trim();
+    if (!nextName) {
+      this.cancelRename();
+      return;
+    }
+    const parent = parentRemotePath(targetPath);
+    const newPath = joinRemotePath(parent, nextName);
+
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+
+    try {
+      await sftpIpc.sftpRename(this.connectionId, targetPath, newPath);
+      await this.loadDir(this.cwd);
+    } catch (e) {
+      runInAction(() => {
+        this.error = mapFileError(e, 'files.renameFailed');
+        this.isLoading = false;
+      });
+    } finally {
+      this.cancelRename();
+    }
+  }
+
+  async copyPath(path: string) {
+    try {
+      await navigator.clipboard.writeText(path);
+    } catch (e) {
+      console.error('[RemoteBrowserStore] copyPath failed:', e);
+    }
+  }
+
+  async openEntry(entry: SftpEntry) {
+    if (entry.isDirectory) {
+      this.navigateTo(entry.path);
+      return;
+    }
+    if (!this.connectionId || !this.settingsStore) {
+      this.error = { code: 'files.settingsNotInit' };
+      return;
+    }
+    try {
+      const { localPath } = await sftpIpc.sftpFetchToCache(
+        this.connectionId,
+        entry.path,
+      );
+      await openInEditor(localPath, this.settingsStore.settings.defaultEditorPath);
+    } catch (e) {
+      runInAction(() => {
+        this.error = mapFileError(e, 'files.openFailed');
+      });
+    }
+  }
+
+  async deleteEntry(entry: SftpEntry) {
+    if (!this.connectionId) return;
+    this.cancelRename();
+
+    if (entry.isDirectory) {
+      runInAction(() => {
+        this.isLoading = true;
+        this.error = null;
+      });
+      try {
+        const { count } = await sftpIpc.sftpCountFiles(
+          this.connectionId,
+          entry.path,
+        );
+        const ok = window.confirm(
+          i18n.t('files.confirm.deleteDir', {
+            name: entry.name,
+            path: entry.path,
+            count,
+          }),
+        );
+        if (!ok) {
+          runInAction(() => {
+            this.isLoading = false;
+          });
+          return;
+        }
+        await sftpIpc.sftpDelete(this.connectionId, entry.path, true);
+        await this.loadDir(this.cwd);
+      } catch (e) {
+        runInAction(() => {
+          this.error = mapFileError(e, 'files.deleteFailed');
+          this.isLoading = false;
+        });
+      }
+      return;
+    }
+
+    if (!window.confirm(i18n.t('files.confirm.deleteFile', { name: entry.name }))) {
+      return;
+    }
+
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+    try {
+      await sftpIpc.sftpDelete(this.connectionId, entry.path, false);
+      await this.loadDir(this.cwd);
+    } catch (e) {
+      runInAction(() => {
+        this.error = mapFileError(e, 'files.deleteFailed');
+        this.isLoading = false;
+      });
+    }
+  }
+
+  async mkdir(name: string) {
+    if (!this.connectionId || !name.trim()) return;
+    const remotePath = joinRemotePath(this.cwd, name.trim());
+    runInAction(() => {
+      this.isLoading = true;
+      this.error = null;
+    });
+    try {
+      await sftpIpc.sftpMkdir(this.connectionId, remotePath);
+      await this.loadDir(this.cwd);
+    } catch (e) {
+      runInAction(() => {
+        this.error = mapFileError(e, 'files.mkdirFailed');
+        this.isLoading = false;
+      });
+    }
+  }
+
+  manualSyncBrowse() {
+    this.syncLocalBrowse(this.cwd);
+  }
+}

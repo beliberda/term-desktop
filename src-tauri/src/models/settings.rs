@@ -15,6 +15,12 @@ pub struct AppSettings {
     pub sidebar_width: u16,
     #[serde(default = "default_locale")]
     pub locale: String,
+    #[serde(default = "default_file_conflict_policy")]
+    pub default_file_conflict_policy: String,
+}
+
+fn default_file_conflict_policy() -> String {
+    "ask".to_string()
 }
 
 fn default_sidebar_width() -> u16 {
@@ -37,6 +43,7 @@ impl Default for AppSettings {
             default_editor_path: String::new(),
             sidebar_width: default_sidebar_width(),
             locale: default_locale(),
+            default_file_conflict_policy: default_file_conflict_policy(),
         }
     }
 }

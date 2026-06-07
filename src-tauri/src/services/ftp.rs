@@ -4,6 +4,7 @@ use std::time::{Duration, UNIX_EPOCH};
 
 use suppaftp::list::ListParser;
 use suppaftp::tokio::AsyncFtpStream;
+use tauri::AppHandle;
 use tokio::io::AsyncReadExt;
 use tokio::sync::Mutex;
 
@@ -13,6 +14,7 @@ use crate::models::SessionConfig;
 use crate::services::ssh::CONNECT_TIMEOUT_SECS;
 use crate::utils::cache_paths::open_cache_path;
 use crate::utils::sftp_paths::normalize_remote_path;
+use crate::utils::transfer::TransferProgress;
 
 pub type SharedFtpClient = Arc<Mutex<AsyncFtpStream>>;
 
@@ -103,6 +105,9 @@ pub async fn upload_file(
     client: &SharedFtpClient,
     local_path: &str,
     remote_path: &str,
+    app: Option<&AppHandle>,
+    connection_id: Option<&str>,
+    transfer_id: Option<&str>,
 ) -> IpcResult<()> {
     let local = Path::new(local_path);
     if !local.exists() {
@@ -120,25 +125,65 @@ pub async fn upload_file(
         ));
     }
 
+    let file_size = tokio::fs::metadata(local)
+        .await
+        .map_err(|e| IpcError::with_str_detail("fs.statLocalFailed", "raw", e.to_string()))?
+        .len();
+
+    let file_name = local
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| local_path.to_string());
+
+    let progress = match (app, connection_id, transfer_id) {
+        (Some(app), Some(conn_id), Some(tid)) => Some(TransferProgress::new(
+            app,
+            tid,
+            conn_id,
+            &file_name,
+            "upload",
+            file_size,
+        )),
+        _ => None,
+    };
+
     let remote_path = normalize_remote_path(remote_path);
     let mut file = tokio::fs::File::open(local)
         .await
         .map_err(|e| IpcError::with_str_detail("fs.openLocalFailed", "raw", e.to_string()))?;
 
     let mut ftp = client.lock().await;
-    ftp.put_file(&remote_path, &mut file)
+    let result = ftp
+        .put_file(&remote_path, &mut file)
         .await
-        .map_err(|e| IpcError::with_str_detail("ftp.uploadFailed", "raw", e.to_string()))?;
+        .map_err(|e| IpcError::with_str_detail("ftp.uploadFailed", "raw", e.to_string()));
 
-    Ok(())
+    match (&result, &progress) {
+        (Ok(_), Some(p)) => {
+            p.update(file_size);
+            p.done();
+        }
+        (Err(_), Some(p)) => p.error(),
+        _ => {}
+    }
+
+    result.map(|_| ())
 }
 
 pub async fn download_file(
     client: &SharedFtpClient,
     remote_path: &str,
     local_path: &str,
+    app: Option<&AppHandle>,
+    connection_id: Option<&str>,
+    transfer_id: Option<&str>,
 ) -> IpcResult<()> {
     let remote_path = normalize_remote_path(remote_path);
+    let file_name = Path::new(&remote_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| remote_path.clone());
+
     let mut ftp = client.lock().await;
 
     let mut stream = ftp
@@ -147,10 +192,41 @@ pub async fn download_file(
         .map_err(|e| IpcError::with_str_detail("ftp.downloadFailed", "raw", e.to_string()))?;
 
     let mut data = Vec::new();
-    stream
-        .read_to_end(&mut data)
-        .await
-        .map_err(|e| IpcError::with_str_detail("ftp.readStreamFailed", "raw", e.to_string()))?;
+    const CHUNK: usize = 64 * 1024;
+    let mut buf = vec![0u8; CHUNK];
+    let mut total_read = 0u64;
+
+    let progress = match (app, connection_id, transfer_id) {
+        (Some(app), Some(conn_id), Some(tid)) => Some(TransferProgress::new(
+            app,
+            tid,
+            conn_id,
+            &file_name,
+            "download",
+            0,
+        )),
+        _ => None,
+    };
+
+    loop {
+        let n = stream
+            .read(&mut buf)
+            .await
+            .map_err(|e| {
+                if let Some(ref p) = progress {
+                    p.error();
+                }
+                IpcError::with_str_detail("ftp.readStreamFailed", "raw", e.to_string())
+            })?;
+        if n == 0 {
+            break;
+        }
+        data.extend_from_slice(&buf[..n]);
+        total_read += n as u64;
+        if let Some(ref p) = progress {
+            p.update(total_read);
+        }
+    }
 
     ftp.finalize_retr_stream(stream)
         .await
@@ -164,8 +240,16 @@ pub async fn download_file(
         }
     }
 
-    std::fs::write(local_path, data)
-        .map_err(|e| IpcError::with_str_detail("fs.writeLocalFailed", "raw", e.to_string()))
+    let result = std::fs::write(local_path, data)
+        .map_err(|e| IpcError::with_str_detail("fs.writeLocalFailed", "raw", e.to_string()));
+
+    match (&result, &progress) {
+        (Ok(()), Some(p)) => p.done(),
+        (Err(_), Some(p)) => p.error(),
+        _ => {}
+    }
+
+    result
 }
 
 pub async fn download_dir(
@@ -195,6 +279,9 @@ pub async fn download_dir(
                 client,
                 &entry.path,
                 local_path.to_string_lossy().as_ref(),
+                None,
+                None,
+                None,
             )
             .await?;
         }
@@ -290,7 +377,15 @@ pub async fn fetch_to_cache(
     let local_path = open_cache_path(app, &remote_path)?;
     let local_path_str = local_path.to_string_lossy().to_string();
 
-    download_file(client, &remote_path, &local_path_str).await?;
+    download_file(
+        client,
+        &remote_path,
+        &local_path_str,
+        None,
+        None,
+        None,
+    )
+    .await?;
     Ok(local_path_str)
 }
 

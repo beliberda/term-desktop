@@ -11,7 +11,10 @@ export const StatusBar = observer(function StatusBar() {
     terminalStore,
     fileConnectionStore,
     sessionStore,
-    appStore,
+    workspaceStore,
+    localBrowserStore,
+    remoteBrowserStore,
+    transferStore,
   } = useStores();
 
   const statusLabels = useMemo(
@@ -24,38 +27,36 @@ export const StatusBar = observer(function StatusBar() {
     [t],
   );
 
-  const ftpConn = fileConnectionStore.activeConnection;
-  const ftpSession = fileConnectionStore.activeSessionId
-    ? sessionStore.sessions.find(
-        (s) => s.id === fileConnectionStore.activeSessionId,
-      )
-    : null;
+  const fileMode = workspaceStore.isFileMode(
+    terminalStore,
+    fileConnectionStore,
+    sessionStore,
+  );
 
-  const activeTab = terminalStore.activeTab;
-  const sshSession = activeTab
-    ? sessionStore.sessions.find((s) => s.id === activeTab.sessionId)
-    : null;
+  let host = t('common.empty');
+  let status: ConnectionStatus = 'disconnected';
+  let latency: number | undefined;
 
-  const showFtp =
-    appStore.sidebarTab === 'files' &&
-    ftpConn &&
-    (ftpConn.status === 'connected' || ftpConn.status === 'connecting');
-
-  const host = showFtp
-    ? ftpSession
-      ? `${ftpSession.username}@${ftpSession.host}:${ftpSession.port}`
-      : t('common.empty')
-    : sshSession
-      ? `${sshSession.username}@${sshSession.host}:${sshSession.port}`
-      : t('common.empty');
-
-  const status = showFtp
-    ? ftpConn!.status
-    : activeTab?.status ?? 'disconnected';
-
-  const latency = showFtp
-    ? ftpConn?.connectLatencyMs
-    : activeTab?.connectLatencyMs;
+  if (workspaceStore.active?.kind === 'ftp') {
+    const tab = fileConnectionStore.activeTab;
+    const session = tab
+      ? sessionStore.sessions.find((s) => s.id === tab.sessionId)
+      : null;
+    if (session) {
+      host = `${session.username}@${session.host}:${session.port}`;
+    }
+    status = tab?.status ?? 'disconnected';
+    latency = tab?.connectLatencyMs;
+  } else if (terminalStore.activeTab) {
+    const session = sessionStore.sessions.find(
+      (s) => s.id === terminalStore.activeTab!.sessionId,
+    );
+    if (session) {
+      host = `${session.username}@${session.host}:${session.port}`;
+    }
+    status = terminalStore.activeTab.status;
+    latency = terminalStore.activeTab.connectLatencyMs;
+  }
 
   return (
     <footer className={styles.statusBar}>
@@ -75,6 +76,30 @@ export const StatusBar = observer(function StatusBar() {
           {latency !== undefined ? `${latency} ms` : t('common.empty')}
         </span>
       </span>
+      {fileMode && (
+        <>
+          <span className={styles.item}>
+            <span className={styles.label}>{t('fileTransfer.status.local')}:</span>
+            <span className={styles.valuePath} title={localBrowserStore.cwd}>
+              {localBrowserStore.cwd || t('common.empty')}
+            </span>
+          </span>
+          <span className={styles.item}>
+            <span className={styles.label}>{t('fileTransfer.status.remote')}:</span>
+            <span className={styles.valuePath} title={remoteBrowserStore.cwd}>
+              {remoteBrowserStore.cwd}
+            </span>
+          </span>
+        </>
+      )}
+      {transferStore.hasActiveTransfers && (
+        <span className={styles.item}>
+          <span className={styles.label}>{t('fileTransfer.transfers.active')}:</span>
+          <span className={styles.value}>
+            {transferStore.activeCount}
+          </span>
+        </span>
+      )}
     </footer>
   );
 });

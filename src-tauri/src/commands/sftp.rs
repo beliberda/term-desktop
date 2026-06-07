@@ -23,27 +23,44 @@ pub async fn sftp_list_dir(
 
 #[tauri::command]
 pub async fn sftp_upload(
+    app: AppHandle,
     pool: State<'_, PoolState>,
     connection_id: String,
     local_path: String,
     remote_path: String,
+    transfer_id: Option<String>,
 ) -> IpcResult<()> {
     let pool = pool.lock().await;
-    pool.upload_file(&connection_id, &local_path, &remote_path)
-        .await
+    pool.upload_file(
+        Some(&app),
+        &connection_id,
+        &local_path,
+        &remote_path,
+        transfer_id.as_deref(),
+    )
+    .await
 }
 
 #[tauri::command]
 pub async fn sftp_download(
+    app: AppHandle,
     pool: State<'_, PoolState>,
     connection_id: String,
     remote_path: String,
     local_path: String,
     is_directory: bool,
+    transfer_id: Option<String>,
 ) -> IpcResult<()> {
     let pool = pool.lock().await;
-    pool.download(&connection_id, &remote_path, &local_path, is_directory)
-        .await
+    pool.download(
+        Some(&app),
+        &connection_id,
+        &remote_path,
+        &local_path,
+        is_directory,
+        transfer_id.as_deref(),
+    )
+    .await
 }
 
 #[tauri::command]

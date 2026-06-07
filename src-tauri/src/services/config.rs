@@ -212,6 +212,10 @@ mod tests {
             auth_type: "password".into(),
             private_key_path: None,
             default_path: None,
+            local_path: None,
+            remote_path: None,
+            sync_browse: None,
+            file_conflict_policy: None,
             created_at: "2024-01-01T00:00:00Z".into(),
             updated_at: "2024-01-01T00:00:00Z".into(),
         }

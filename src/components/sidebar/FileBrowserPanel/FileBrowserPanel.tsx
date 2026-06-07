@@ -14,34 +14,34 @@ export const FileBrowserPanel = observer(function FileBrowserPanel() {
     fileBrowserStore,
     fileConnectionStore,
     sessionStore,
+    workspaceStore,
   } = useStores();
 
   const fileErrorMessage = useAppErrorMessage(fileBrowserStore.error);
-  const ftpActive = fileConnectionStore.activeConnection;
-  const ftpErrorMessage = useAppErrorMessage(ftpActive?.error);
   const activeTab = terminalStore.activeTab;
+  const activeSession = activeTab
+    ? sessionStore.sessions.find((s) => s.id === activeTab.sessionId)
+    : null;
 
-  if (ftpActive?.status === 'connecting') {
+  const ftpOrSftpInMain =
+    fileConnectionStore.tabs.length > 0 ||
+    (activeSession?.protocol === 'sftp' &&
+      workspaceStore.isFileMode(
+        terminalStore,
+        fileConnectionStore,
+        sessionStore,
+      ));
+
+  if (ftpOrSftpInMain) {
     return (
       <div className={styles.placeholder}>
         <p className={styles.title}>{t('files.title')}</p>
-        <p className={styles.hint}>{t('files.ftpConnecting')}</p>
+        <p className={styles.hint}>{t('fileTransfer.sidebarMoved')}</p>
       </div>
     );
   }
 
-  if (ftpActive?.status === 'error') {
-    return (
-      <div className={styles.placeholder}>
-        <p className={styles.title}>{t('files.title')}</p>
-        <p className={styles.hint}>
-          {ftpErrorMessage || t('files.ftpError')}
-        </p>
-      </div>
-    );
-  }
-
-  if (!ftpActive && !activeTab) {
+  if (!activeTab) {
     return (
       <div className={styles.placeholder}>
         <p className={styles.title}>{t('files.title')}</p>
@@ -50,7 +50,7 @@ export const FileBrowserPanel = observer(function FileBrowserPanel() {
     );
   }
 
-  if (!ftpActive && activeTab?.status === 'connecting') {
+  if (activeTab.status === 'connecting') {
     return (
       <div className={styles.placeholder}>
         <p className={styles.title}>{t('files.title')}</p>
@@ -59,10 +59,7 @@ export const FileBrowserPanel = observer(function FileBrowserPanel() {
     );
   }
 
-  if (
-    !ftpActive &&
-    (activeTab?.status === 'error' || activeTab?.status === 'disconnected')
-  ) {
+  if (activeTab.status === 'error' || activeTab.status === 'disconnected') {
     return (
       <div className={styles.placeholder}>
         <p className={styles.title}>{t('files.title')}</p>
@@ -75,13 +72,11 @@ export const FileBrowserPanel = observer(function FileBrowserPanel() {
     const session = fileBrowserStore.sessionId
       ? sessionStore.sessions.find((s) => s.id === fileBrowserStore.sessionId)
       : null;
-    const protocolLabel =
-      fileBrowserStore.protocol === 'ftp' ? 'FTP' : 'SFTP';
 
     return (
       <div className={styles.browser}>
         <p className={styles.protocol}>
-          {protocolLabel}
+          SFTP
           {session ? ` — ${session.name}` : ''}
         </p>
         <SftpToolbar />

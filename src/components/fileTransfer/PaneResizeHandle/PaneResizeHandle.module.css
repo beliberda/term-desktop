@@ -1,0 +1,11 @@
+.handle {
+  width: 5px;
+  cursor: col-resize;
+  background: var(--border, #333);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.handle:hover {
+  background: var(--accent, #4a9eff);
+}

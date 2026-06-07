@@ -1,0 +1,35 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.panes {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 8px;
+  gap: 0;
+}
+
+.localPane {
+  flex-shrink: 0;
+  display: flex;
+  min-width: 0;
+}
+
+.remotePane {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted, #999);
+  font-size: 14px;
+}

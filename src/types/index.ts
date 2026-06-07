@@ -25,10 +25,17 @@ export {
 export type {
   Protocol,
   AuthType,
+  FileConflictPolicy,
   SessionConfig,
   SessionFolder,
   SessionsFile,
   SessionsFileV2,
+} from './session';
+
+export {
+  fileConflictPolicySchema,
+  getSessionRemotePath,
+  getSessionLocalPath,
 } from './session';
 
 export {
@@ -38,6 +45,7 @@ export {
 
 export type {
   TerminalTab,
+  WorkspaceView,
   ConnectionStatusPayload,
   TerminalOutputPayload,
 } from './terminal';

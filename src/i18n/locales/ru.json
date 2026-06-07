@@ -68,7 +68,17 @@
       "authAgent": "SSH Agent",
       "keyPath": "Путь к ключу",
       "defaultPath": "Начальный путь (опционально)",
-      "defaultPathPlaceholder": "/home/user"
+      "defaultPathPlaceholder": "/home/user",
+      "advanced": "Дополнительно",
+      "localPath": "Локальный каталог",
+      "localPathPlaceholder": "C:\\Projects",
+      "remotePath": "Удалённый каталог",
+      "syncBrowse": "Синхронизация просмотра",
+      "conflictPolicy": "Конфликты при скачивании",
+      "conflictAsk": "Спрашивать",
+      "conflictAlwaysReplace": "Всегда заменять",
+      "conflictIfSize": "Заменять при отличии размера",
+      "conflictIfSizeOrNewer": "Заменять при отличии размера или если новее"
     },
     "validation": {
       "nameRequired": "Укажите название",
@@ -158,6 +168,64 @@
     "confirm": {
       "deleteDir": "Удалить каталог «{{name}}»?\nПуть: {{path}}\nФайлов: {{count}}",
       "deleteFile": "Удалить «{{name}}»?"
+    },
+    "mkdir": {
+      "prompt": "Имя новой папки"
+    }
+  },
+  "fileTransfer": {
+    "sidebarMoved": "Файловый менеджер открыт в основной области",
+    "localPane": "Локальный сайт",
+    "remotePane": "Удалённый сайт",
+    "download": "Скачать",
+    "remoteMkdir": "Папка на сервере",
+    "syncBrowse": "Синхр. просмотр",
+    "resizePanes": "Изменить ширину панелей",
+    "columns": {
+      "name": "Имя",
+      "size": "Размер",
+      "modified": "Изменён"
+    },
+    "context": {
+      "newFolder": "Создать папку",
+      "uploadToServer": "Загрузить на сервер"
+    },
+    "shortcuts": {
+      "refresh": "F5 — обновить",
+      "upload": "Ctrl+U — загрузить",
+      "download": "Ctrl+D — скачать"
+    },
+    "view": {
+      "files": "Файлы",
+      "terminal": "Терминал",
+      "filesShort": "Файлы",
+      "terminalShort": "Терм."
+    },
+    "status": {
+      "local": "Локально",
+      "remote": "Удалённо"
+    },
+    "transfers": {
+      "title": "Передачи: {{active}} / {{total}}",
+      "active": "Передаётся",
+      "clearCompleted": "Очистить завершённые",
+      "status": {
+        "queued": "В очереди",
+        "running": "Передаётся",
+        "done": "Готово",
+        "error": "Ошибка",
+        "skipped": "Пропущено",
+        "cancelled": "Отменено"
+      }
+    },
+    "conflict": {
+      "title": "Файл уже существует",
+      "local": "Локально",
+      "remote": "На сервере",
+      "remember": "Запомнить для этой сессии",
+      "skip": "Пропустить",
+      "replace": "Заменить",
+      "replaceAll": "Заменить все"
     }
   },
   "errors": {

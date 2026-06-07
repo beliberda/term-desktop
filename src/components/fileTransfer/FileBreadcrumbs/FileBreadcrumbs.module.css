@@ -1,0 +1,35 @@
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.sep {
+  margin: 0 4px;
+  color: var(--text-muted, #666);
+}
+
+.link {
+  border: none;
+  background: transparent;
+  color: var(--accent, #4a9eff);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link:hover {
+  background: var(--hover, rgba(255, 255, 255, 0.06));
+}

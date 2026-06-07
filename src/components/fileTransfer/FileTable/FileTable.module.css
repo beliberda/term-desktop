@@ -1,0 +1,109 @@
+.tableWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  outline: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.tableWrap.focused {
+  border-color: var(--accent, #4a9eff);
+}
+
+.tableWrap.dropActive {
+  border-color: var(--accent, #4a9eff);
+  background: rgba(74, 158, 255, 0.08);
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 24px 1fr 90px 140px;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border, #333);
+  font-size: 11px;
+  color: var(--text-muted, #999);
+  align-items: center;
+}
+
+.paneLabel {
+  display: none;
+}
+
+.col {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.colSize,
+.colDate {
+  text-align: right;
+}
+
+.body {
+  flex: 1;
+  overflow: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 24px 1fr 90px 140px;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: var(--text, #eee);
+  font-size: 13px;
+  text-align: left;
+  cursor: default;
+  align-items: center;
+}
+
+.row:hover {
+  background: var(--hover, rgba(255, 255, 255, 0.06));
+}
+
+.row.selected {
+  background: var(--selection, rgba(74, 158, 255, 0.25));
+}
+
+.icon {
+  font-size: 14px;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.size,
+.date {
+  text-align: right;
+  color: var(--text-muted, #999);
+  font-size: 12px;
+}
+
+.renameInput {
+  width: 100%;
+  padding: 2px 4px;
+  font-size: 13px;
+  background: var(--input-bg, #1a1a1a);
+  border: 1px solid var(--accent, #4a9eff);
+  color: var(--text, #eee);
+  border-radius: 3px;
+}
+
+.status {
+  padding: 12px;
+  color: var(--text-muted, #999);
+  font-size: 13px;
+}

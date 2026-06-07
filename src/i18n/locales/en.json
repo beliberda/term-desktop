@@ -68,7 +68,17 @@
       "authAgent": "SSH Agent",
       "keyPath": "Private key path",
       "defaultPath": "Initial path (optional)",
-      "defaultPathPlaceholder": "/home/user"
+      "defaultPathPlaceholder": "/home/user",
+      "advanced": "Advanced",
+      "localPath": "Local directory",
+      "localPathPlaceholder": "C:\\Projects",
+      "remotePath": "Remote directory",
+      "syncBrowse": "Synchronize browsing",
+      "conflictPolicy": "Download conflicts",
+      "conflictAsk": "Ask",
+      "conflictAlwaysReplace": "Always replace",
+      "conflictIfSize": "Replace if size differs",
+      "conflictIfSizeOrNewer": "Replace if size differs or newer"
     },
     "validation": {
       "nameRequired": "Enter a name",
@@ -158,6 +168,64 @@
     "confirm": {
       "deleteDir": "Delete directory «{{name}}»?\nPath: {{path}}\nFiles: {{count}}",
       "deleteFile": "Delete «{{name}}»?"
+    },
+    "mkdir": {
+      "prompt": "New folder name"
+    }
+  },
+  "fileTransfer": {
+    "sidebarMoved": "File manager is open in the main workspace",
+    "localPane": "Local site",
+    "remotePane": "Remote site",
+    "download": "Download",
+    "remoteMkdir": "Remote folder",
+    "syncBrowse": "Sync browse",
+    "resizePanes": "Resize panes",
+    "columns": {
+      "name": "Name",
+      "size": "Size",
+      "modified": "Modified"
+    },
+    "context": {
+      "newFolder": "New folder",
+      "uploadToServer": "Upload to server"
+    },
+    "shortcuts": {
+      "refresh": "F5 — refresh",
+      "upload": "Ctrl+U — upload",
+      "download": "Ctrl+D — download"
+    },
+    "view": {
+      "files": "Files",
+      "terminal": "Terminal",
+      "filesShort": "Files",
+      "terminalShort": "Term."
+    },
+    "status": {
+      "local": "Local",
+      "remote": "Remote"
+    },
+    "transfers": {
+      "title": "Transfers: {{active}} / {{total}}",
+      "active": "Transferring",
+      "clearCompleted": "Clear completed",
+      "status": {
+        "queued": "Queued",
+        "running": "Transferring",
+        "done": "Done",
+        "error": "Error",
+        "skipped": "Skipped",
+        "cancelled": "Cancelled"
+      }
+    },
+    "conflict": {
+      "title": "File already exists",
+      "local": "Local",
+      "remote": "Remote",
+      "remember": "Remember for this session",
+      "skip": "Skip",
+      "replace": "Replace",
+      "replaceAll": "Replace all"
     }
   },
   "errors": {

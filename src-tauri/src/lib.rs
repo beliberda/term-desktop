@@ -80,6 +80,13 @@ pub fn run() {
             commands::sftp::sftp_count_files,
             commands::sftp::sftp_rename,
             commands::sftp::sftp_fetch_to_cache,
+            commands::local_fs::local_list_dir,
+            commands::local_fs::local_stat,
+            commands::local_fs::local_exists,
+            commands::local_fs::local_mkdir,
+            commands::local_fs::local_rename,
+            commands::local_fs::local_delete,
+            commands::local_fs::local_home_dir,
             commands::open::open_in_editor,
         ])
         .run(tauri::generate_context!())

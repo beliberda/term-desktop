@@ -2,10 +2,11 @@ import { useEffect } from 'react';
 import { reaction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Sidebar } from '@components/sidebar/Sidebar/Sidebar';
-import { TerminalWorkspace } from '@components/terminal/TerminalWorkspace/TerminalWorkspace';
+import { ConnectionWorkspace } from '@components/workspace/ConnectionWorkspace/ConnectionWorkspace';
 import { StatusBar } from '@components/layout/StatusBar/StatusBar';
 import { ConnectPasswordModal } from '@components/terminal/ConnectPasswordModal/ConnectPasswordModal';
 import { SettingsModal } from '@components/settings/SettingsModal/SettingsModal';
+import { FileConflictModal } from '@components/fileTransfer/FileConflictModal/FileConflictModal';
 import { useStores } from '@stores/index';
 import { useAppShortcuts } from '@hooks/useAppShortcuts';
 import { listenConnectionStatus } from '@ipc/events';
@@ -17,6 +18,9 @@ export const AppShell = observer(function AppShell() {
     terminalStore,
     fileBrowserStore,
     fileConnectionStore,
+    remoteBrowserStore,
+    workspaceStore,
+    transferStore,
     appStore,
     settingsStore,
   } = useStores();
@@ -27,12 +31,19 @@ export const AppShell = observer(function AppShell() {
     sessionStore.load();
     void settingsStore.load();
     void terminalStore.initListeners();
+    void transferStore.initListeners();
 
     void listenConnectionStatus((payload) => {
       terminalStore.handleConnectionStatus(payload);
       fileConnectionStore.handleConnectionStatus(payload);
     });
-  }, [sessionStore, terminalStore, fileConnectionStore, settingsStore]);
+  }, [
+    sessionStore,
+    terminalStore,
+    fileConnectionStore,
+    transferStore,
+    settingsStore,
+  ]);
 
   useEffect(() => {
     const disposeBind = reaction(
@@ -40,9 +51,11 @@ export const AppShell = observer(function AppShell() {
         terminalStore.activeConnectionId,
         terminalStore.activeTab?.status,
         terminalStore.activeTab?.sessionId,
-        fileConnectionStore.activeSessionId,
-        fileConnectionStore.activeConnection?.status,
-        fileConnectionStore.activeConnection?.connectionId,
+        terminalStore.activeTab?.workspaceView,
+        fileConnectionStore.activeTabId,
+        fileConnectionStore.activeTab?.status,
+        fileConnectionStore.activeTab?.connectionId,
+        workspaceStore.active,
       ],
       () => {
         fileBrowserStore.bind(
@@ -50,6 +63,13 @@ export const AppShell = observer(function AppShell() {
           sessionStore,
           fileConnectionStore,
         );
+
+        const bindSource = workspaceStore.resolveRemoteBind(
+          terminalStore,
+          fileConnectionStore,
+          sessionStore,
+        );
+        remoteBrowserStore.bind(bindSource);
       },
       { fireImmediately: true },
     );
@@ -73,6 +93,8 @@ export const AppShell = observer(function AppShell() {
     terminalStore,
     fileBrowserStore,
     fileConnectionStore,
+    remoteBrowserStore,
+    workspaceStore,
   ]);
 
   return (
@@ -80,12 +102,13 @@ export const AppShell = observer(function AppShell() {
       <div className={styles.body}>
         <Sidebar />
         <main className={styles.main}>
-          <TerminalWorkspace />
+          <ConnectionWorkspace />
         </main>
       </div>
       <StatusBar />
       <ConnectPasswordModal />
       <SettingsModal />
+      <FileConflictModal />
     </div>
   );
 });
